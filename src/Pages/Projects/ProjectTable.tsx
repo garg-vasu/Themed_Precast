@@ -1,0 +1,455 @@
+import {
+  flexRender,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  useReactTable,
+  type ColumnDef,
+  type ColumnFiltersState,
+  type SortingState,
+  type VisibilityState,
+} from "@tanstack/react-table";
+import { ArrowUpDown, ChevronDown, MoreHorizontal } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { useContext, useEffect, useState } from "react";
+import axios, { AxiosError } from "axios";
+import { apiClient } from "@/utils/apiClient";
+import { toast } from "sonner";
+import { useNavigate } from "react-router";
+import { UserContext } from "@/Provider/UserProvider";
+import { formatDisplayDate } from "@/utils/formatdate";
+import { getStatusStyles } from "@/Pages/Projects/ProjectCardView";
+
+export type Project = {
+  name: string;
+  priority: string;
+  project_status: string;
+  start_date: string;
+  end_date: string;
+  logo: string;
+  description: string;
+  created_at: string;
+  updated_at: string;
+  last_updated: string;
+  last_updated_by: string;
+  client_id: number;
+  budget: string;
+  suspend: boolean;
+  template_id: number;
+  subscription_start_date: string;
+  subscription_end_date: string;
+  project_id: number;
+  total_elements: number;
+  erected_elements: number;
+  casted_elements: number;
+  in_stock: number;
+  in_production: number;
+  element_type_count: number;
+  project_members_count: number;
+  stockyards: null;
+};
+
+export const columns: ColumnDef<Project>[] = [
+  {
+    id: "select",
+    header: ({ table }) => (
+      <Checkbox
+        checked={
+          table.getIsAllPageRowsSelected() ||
+          (table.getIsSomePageRowsSelected() && "indeterminate")
+        }
+        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+        aria-label="Select all"
+      />
+    ),
+    cell: ({ row }) => (
+      <Checkbox
+        checked={row.getIsSelected()}
+        onCheckedChange={(value) => row.toggleSelected(!!value)}
+        aria-label="Select row"
+      />
+    ),
+    enableSorting: false,
+    enableHiding: false,
+  },
+  //   name column
+  {
+    accessorKey: "name",
+    header: "Name",
+    cell: ({ row }) => {
+      const navigate = useNavigate();
+      return (
+        <div
+          className="capitalize cursor-pointer"
+          onClick={() => navigate(`/project/${row.original.project_id}`)}
+        >
+          {row.getValue("name")}
+        </div>
+      );
+    },
+  },
+
+  //   description column
+  {
+    accessorKey: "description",
+    header: "Description",
+    cell: ({ row }) => (
+      <div className="capitalize">{row.getValue("description")}</div>
+    ),
+  },
+  //   budget
+  {
+    accessorKey: "budget",
+    header: () => <div className="text-right">Budget</div>,
+    cell: ({ row }) => {
+      const budget = parseFloat(row.getValue("budget"));
+      // Format the amount as a dollar amount
+      const formatted = new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: "INR",
+      }).format(budget);
+      return <div className="text-right font-medium">{formatted}</div>;
+    },
+  },
+
+  //   start date column
+  {
+    accessorKey: "start_date",
+    header: ({ column }) => (
+      <Button
+        variant="ghost"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      >
+        Start Date
+        <ArrowUpDown className="ml-1 h-4 w-4" />
+      </Button>
+    ),
+    cell: ({ row }) => {
+      const raw = row.getValue("start_date") as string | undefined;
+      return <div>{formatDisplayDate(raw)}</div>;
+    },
+  },
+  //   end date column
+  {
+    accessorKey: "end_date",
+    header: ({ column }) => (
+      <Button
+        variant="ghost"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      >
+        End Date
+        <ArrowUpDown className="ml-1 h-4 w-4" />
+      </Button>
+    ),
+    cell: ({ row }) => {
+      const raw = row.getValue("end_date") as string | undefined;
+      return <div>{formatDisplayDate(raw)}</div>;
+    },
+  },
+  //   priority column
+  {
+    accessorKey: "priority",
+    header: "Priority",
+    cell: ({ row }) => (
+      <div className="capitalize">{row.getValue("priority")}</div>
+    ),
+  },
+  //   project status column
+  {
+    accessorKey: "project_status",
+    header: ({ column }) => (
+      <Button
+        variant="ghost"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      >
+        Status
+        <ArrowUpDown className="ml-1 h-4 w-4" />
+      </Button>
+    ),
+    cell: ({ row }) => {
+      const status = row.getValue("project_status") as string | undefined;
+      const { badge, dot } = getStatusStyles(status);
+
+      return (
+        <span
+          className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide ${badge}`}
+        >
+          <span className={`h-1.5 w-1.5 rounded-full ${dot}`} />
+          {status || "Unknown"}
+        </span>
+      );
+    },
+  },
+
+  //   {
+  //     accessorKey: "amount",
+  //     header: () => <div className="text-right">Amount</div>,
+  //     cell: ({ row }) => {
+  //       const amount = parseFloat(row.getValue("amount"));
+
+  //       // Format the amount as a dollar amount
+  //       const formatted = new Intl.NumberFormat("en-US", {
+  //         style: "currency",
+  //         currency: "USD",
+  //       }).format(amount);
+
+  //       return <div className="text-right font-medium">{formatted}</div>;
+  //     },
+  //   },
+  {
+    id: "actions",
+    enableHiding: false,
+    cell: ({ row }) => {
+      const payment = row.original;
+      const navigate = useNavigate();
+
+      return (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="h-8 w-8 p-0">
+              <span className="sr-only">Open menu</span>
+              <MoreHorizontal />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+            <DropdownMenuItem
+              onClick={() => navigate(`/project/${payment.project_id}`)}
+            >
+              View Project
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => navigate(`/edit-projects/${payment.project_id}`)}
+            >
+              Edit Project
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      );
+    },
+  },
+];
+
+const getErrorMessage = (error: AxiosError | unknown, data: string): string => {
+  if (axios.isAxiosError(error)) {
+    if (error.response?.status === 401) {
+      return "Unauthorized. Please log in.";
+    }
+    if (error.response?.status === 403) {
+      return "Access denied. Please contact your administrator.";
+    }
+    if (error.code === "ECONNABORTED") {
+      return "Request timed out. Please try again later.";
+    }
+    return error.response?.data?.message || `Failed to fetch ${data}.`;
+  }
+  return "An unexpected error occurred. Please try again later.";
+};
+
+export function ProjectTable() {
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const { user } = useContext(UserContext);
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+  const [rowSelection, setRowSelection] = useState({});
+  const navigate = useNavigate();
+  const [data, setData] = useState<Project[]>([]);
+
+  useEffect(() => {
+    const source = axios.CancelToken.source();
+
+    const fetchProjects = async () => {
+      try {
+        const response = await apiClient.get("/projects_overview", {
+          cancelToken: source.token,
+        });
+
+        if (response.status === 200) {
+          setData(response.data.projects);
+        } else {
+          toast.error(response.data?.message || "Failed to fetch projects");
+        }
+      } catch (err: unknown) {
+        if (!axios.isCancel(err)) {
+          toast.error(getErrorMessage(err, "projects data"));
+        }
+      }
+    };
+
+    fetchProjects();
+
+    return () => {
+      source.cancel();
+    };
+  }, []);
+
+  const table = useReactTable({
+    data,
+    columns,
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    onColumnVisibilityChange: setColumnVisibility,
+    onRowSelectionChange: setRowSelection,
+    state: {
+      sorting,
+      columnFilters,
+      columnVisibility,
+      rowSelection,
+    },
+  });
+
+  return (
+    <div className="w-full">
+      {/* top toolbar */}
+      <div className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
+        <Input
+          placeholder="Filter by Project Name..."
+          value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
+          onChange={(event) =>
+            table.getColumn("name")?.setFilterValue(event.target.value)
+          }
+          className="w-full max-w-sm sm:max-w-xs"
+        />
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-center">
+          <Button
+            variant="outline"
+            className="w-full sm:w-auto"
+            onClick={() => navigate("/add-projects")}
+          >
+            Add Project
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="w-full sm:w-auto">
+                Columns <ChevronDown className="ml-1 h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {table
+                .getAllColumns()
+                .filter((column) => column.getCanHide())
+                .map((column) => {
+                  return (
+                    <DropdownMenuCheckboxItem
+                      key={column.id}
+                      className="capitalize"
+                      checked={column.getIsVisible()}
+                      onCheckedChange={(value) =>
+                        column.toggleVisibility(!!value)
+                      }
+                    >
+                      {column.id}
+                    </DropdownMenuCheckboxItem>
+                  );
+                })}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </div>
+      <div className="overflow-hidden rounded-md border">
+        <Table>
+          <TableHeader>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <TableRow key={headerGroup.id}>
+                {headerGroup.headers.map((header) => {
+                  return (
+                    <TableHead key={header.id}>
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
+                    </TableHead>
+                  );
+                })}
+              </TableRow>
+            ))}
+          </TableHeader>
+          <TableBody>
+            {table.getRowModel().rows?.length ? (
+              table.getRowModel().rows.map((row) => (
+                <TableRow
+                  key={row.id}
+                  data-state={row.getIsSelected() && "selected"}
+                  className={
+                    row.original.suspend && user?.role_name !== "superadmin"
+                      ? "opacity-50 cursor-not-allowed"
+                      : ""
+                  }
+                >
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id}>
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext()
+                      )}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell
+                  colSpan={columns.length}
+                  className="h-24 text-center"
+                >
+                  No results.
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
+      <div className="flex items-center justify-end space-x-2 py-4">
+        <div className="text-muted-foreground flex-1 text-sm">
+          {table.getFilteredSelectedRowModel().rows.length} of{" "}
+          {table.getFilteredRowModel().rows.length} row(s) selected.
+        </div>
+        <div className="space-x-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => table.previousPage()}
+            disabled={!table.getCanPreviousPage()}
+          >
+            Previous
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => table.nextPage()}
+            disabled={!table.getCanNextPage()}
+          >
+            Next
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
