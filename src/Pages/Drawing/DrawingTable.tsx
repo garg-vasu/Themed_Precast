@@ -56,6 +56,7 @@ import autoTable from "jspdf-autotable";
 import { formatDisplayDate } from "@/utils/formatdate";
 import { useParams } from "react-router-dom";
 import { DrawingFileModal } from "./DrawingFileModal";
+import { generatePDFFromTable } from "@/utils/pdfGenerator";
 
 export type DrawingRevision = {
   version: string;
@@ -271,64 +272,28 @@ export function DrawingTable({ refresh }: { refresh: () => void }) {
   const handleDownloadPDF = () => {
     const selectedRows = table.getFilteredSelectedRowModel().rows;
 
-    if (selectedRows.length === 0) {
-      toast.error("Please select at least one row to download");
-      return;
-    }
-
-    try {
-      const doc = new jsPDF();
-
-      // Add title
-      doc.setFontSize(18);
-      doc.text("Departments Report", 14, 20);
-
-      // Add date
-      doc.setFontSize(10);
-      doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 30);
-
-      // Prepare table data with all columns (based on Drawing fields)
-      const tableData = selectedRows.map((row) => {
-        const drawing = row.original;
+    generatePDFFromTable({
+      selectedRows,
+      title: "Drawing Report",
+      headers: ["Drawing ID", "Current Version", "Drawing Type Name", "Comments", "Drawing Revision Count"],
+      dataMapper: (row): string[] => {
+        const drawing = row.original as Drawing;
         return [
-          drawing.drawing_id ?? "—",
+          drawing.drawing_id?.toString() || "—",
           drawing.current_version || "—",
           drawing.drawing_type_name || "—",
           drawing.comments || "—",
+          drawing.drawingsRevision.length?.toString() || "0",
         ];
-      });
-
-      // Prepare headers
-      const headers = [
-        "Drawing ID",
-        "Current Version",
-        "Drawing Type",
-        "Comments",
-      ];
-
-      // Add table with all column headers
-      autoTable(doc, {
-        head: [headers],
-        body: tableData,
-        startY: 40,
-        styles: { fontSize: 7, cellPadding: 2 },
-        headStyles: { fillColor: [59, 130, 246], fontSize: 8 }, // Blue header
-        alternateRowStyles: { fillColor: [245, 247, 250] },
-      });
-
-      // Save the PDF
-      const fileName = `drawings-report-${
-        new Date().toISOString().split("T")[0]
-      }.pdf`;
-      doc.save(fileName);
-
-      toast.success(
-        `PDF downloaded successfully with ${selectedRows.length} department(s)`
-      );
-    } catch (error) {
-      console.error("Error generating PDF:", error);
-      toast.error("Failed to generate PDF. Please try again.");
-    }
+      },
+      fileName: `drawing-report-${new Date().toISOString().split("T")[0]}.pdf`,
+      successMessage: "PDF downloaded successfully with {count} drawing(s)",
+      emptySelectionMessage: "Please select at least one row to download",
+      titleFontSize: 24,
+      headerColor: "#283C6E",
+      headerHeight: 8,
+      bodyFontSize: 9,
+    });
   };
 
   return (

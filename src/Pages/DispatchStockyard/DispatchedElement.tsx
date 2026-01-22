@@ -45,6 +45,7 @@ import autoTable from "jspdf-autotable";
 import { formatDisplayDate } from "@/utils/formatdate";
 import { useParams } from "react-router";
 import PageHeader from "@/components/ui/PageHeader";
+import { generatePDFFromTable } from "@/utils/pdfGenerator";
 
 export type AcceptedDispatch = {
   id: number;
@@ -278,17 +279,17 @@ export function DispatchedElementTable() {
           setData(
             response.data.filter(
               (item: AcceptedDispatch) =>
-                item.current_status.toLowerCase() === "dispatched"
+                item.current_status.toLowerCase() === "accepted"
             )
           );
         } else {
           toast.error(
-            response.data?.message || "Failed to fetch dispatched element"
+            response.data?.message || "Failed to fetch already dispatched order data"
           );
         }
       } catch (err: unknown) {
         if (!axios.isCancel(err)) {
-          toast.error(getErrorMessage(err, "dispatched element data"));
+          toast.error(getErrorMessage(err, "already dispatched order data"));
         }
       }
     };
@@ -319,75 +320,31 @@ export function DispatchedElementTable() {
     },
   });
 
-  const handleDownloadPDF = () => {
+   const handleDownloadPDF = () => {
     const selectedRows = table.getFilteredSelectedRowModel().rows;
 
-    if (selectedRows.length === 0) {
-      toast.error("Please select at least one row to download");
-      return;
-    }
-
-    try {
-      const doc = new jsPDF();
-
-      // Add title
-      doc.setFontSize(18);
-      doc.text("Dispatched Element Report", 14, 20);
-
-      // Add date
-      doc.setFontSize(10);
-      doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 30);
-
-      // Prepare table data with all columns
-      const tableData = selectedRows.map((row) => {
-        const dispatch = row.original;
+    generatePDFFromTable({
+      selectedRows,
+      title: "Dispatched Element Report",
+      headers: ["Dispatch Order ID", "Project Name", "Dispatch Date", "Action At"],
+      dataMapper: (row): string[] => {
+        const dispatchedElement = row.original as AcceptedDispatch & { Action_at?: string };
         return [
-          dispatch.dispatch_order_id || "—",
-          dispatch.project_name || "—",
-          dispatch.driver_name || "—",
-          dispatch.vehicle_id?.toString() || "—",
-          dispatch.items?.length?.toString() || "0",
-          dispatch.current_status || "—",
-          formatDisplayDate(dispatch.dispatch_date) || "—",
+          dispatchedElement.dispatch_order_id || "—",
+          dispatchedElement.project_name || "—",
+          formatDisplayDate(dispatchedElement.dispatch_date),
+          formatDisplayDate(dispatchedElement.Action_at),
         ];
-      });
-
-      // Prepare headers
-      const headers = [
-        "Dispatch Order ID",
-        "Project Name",
-        "Driver Name",
-        "Vehicle ID",
-        "Item Count",
-        "Status",
-        "Dispatch Date",
-      ];
-
-      // Add table with all column headers
-      autoTable(doc, {
-        head: [headers],
-        body: tableData,
-        startY: 40,
-        styles: { fontSize: 7, cellPadding: 2 },
-        headStyles: { fillColor: [59, 130, 246], fontSize: 8 }, // Blue header
-        alternateRowStyles: { fillColor: [245, 247, 250] },
-      });
-
-      // Save the PDF
-      const fileName = `dispatched-element-report-${
-        new Date().toISOString().split("T")[0]
-      }.pdf`;
-      doc.save(fileName);
-
-      toast.success(
-        `PDF downloaded successfully with ${selectedRows.length} dispatched element(s)`
-      );
-    } catch (error) {
-      console.error("Error generating PDF:", error);
-      toast.error("Failed to generate PDF. Please try again.");
-    }
+      },
+      fileName: `dispatched-element-report-${new Date().toISOString().split("T")[0]}.pdf`,
+      successMessage: "PDF downloaded successfully with {count} dispatched element(s)",
+      emptySelectionMessage: "Please select at least one row to download",
+      titleFontSize: 24,
+      headerColor: "#283C6E",
+      headerHeight: 8,
+      bodyFontSize: 9,
+    });
   };
-
   return (
     <div className="w-full">
       {/* top toolbar */}

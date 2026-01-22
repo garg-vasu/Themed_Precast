@@ -45,6 +45,8 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import AddDrawingtype from "./AddDrawingtype";
 import { useParams } from "react-router";
+import { formatDisplayDate } from "@/utils/formatdate";
+import { generatePDFFromTable } from "@/utils/pdfGenerator";
 
 export type DrawingType = {
   drawings_type_id: number;
@@ -234,59 +236,27 @@ export function DrawingTypeTable({ refresh }: { refresh: () => void }) {
   const handleDownloadPDF = () => {
     const selectedRows = table.getFilteredSelectedRowModel().rows;
 
-    if (selectedRows.length === 0) {
-      toast.error("Please select at least one row to download");
-      return;
-    }
-
-    try {
-      const doc = new jsPDF();
-
-      // Add title
-      doc.setFontSize(18);
-      doc.text("Drawing Types Report", 14, 20);
-
-      // Add date
-      doc.setFontSize(10);
-      doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 30);
-
-      // Prepare table data with all columns
-      const tableData = selectedRows.map((row) => {
-        const drawingType = row.original;
+    generatePDFFromTable({
+      selectedRows,
+      title: "Drawing Type Report",
+      headers: ["Drawing Type Name", "Drawing Type ID", "Project ID"],
+      dataMapper: (row): string[] => {
+        const drawingType = row.original as DrawingType;
         return [
-          drawingType.drawing_type_name || "—",
+              drawingType.drawing_type_name || "—",
           drawingType.drawings_type_id?.toString() || "—",
           drawingType.project_id?.toString() || "—",
         ];
-      });
-
-      // Prepare headers
-      const headers = ["Drawing Type Name", "Drawing Type ID", "Project ID"];
-
-      // Add table with all column headers
-      autoTable(doc, {
-        head: [headers],
-        body: tableData,
-        startY: 40,
-        styles: { fontSize: 7, cellPadding: 2 },
-        headStyles: { fillColor: [59, 130, 246], fontSize: 8 }, // Blue header
-        alternateRowStyles: { fillColor: [245, 247, 250] },
-      });
-
-      // Save the PDF
-      const fileName = `drawing-types-report-${
-        new Date().toISOString().split("T")[0]
-      }.pdf`;
-      doc.save(fileName);
-
-      toast.success(
-        `PDF downloaded successfully with ${selectedRows.length} drawing type(s)`
-      );
-    } catch (error) {
-      console.error("Error generating PDF:", error);
-      toast.error("Failed to generate PDF. Please try again.");
-    }
-  };
+      },
+      fileName: `drawing-type-report-${new Date().toISOString().split("T")[0]}.pdf`,
+      successMessage: "PDF downloaded successfully with {count} drawing type(s)",
+      emptySelectionMessage: "Please select at least one row to download",
+      titleFontSize: 24,
+      headerColor: "#283C6E",
+      headerHeight: 8,
+      bodyFontSize: 9,
+    });
+  };  
 
   return (
     <div className="w-full">

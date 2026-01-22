@@ -46,7 +46,7 @@ export default function MixInvoice() {
   return (
     <div className="flex flex-col gap-2 py-4 px-4">
       <div className="flex item-center justify-between">
-        <PageHeader title="Mix Invoice" />
+        <PageHeader title="Invoice" />
       </div>
       {/* pills section  */}
       <div className="flex flex-col gap-2">

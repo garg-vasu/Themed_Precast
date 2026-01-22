@@ -14,7 +14,7 @@ import { WorkorderInvoiceTable } from "./WorkorderInvoiceTable";
 import { toast } from "sonner";
 import axios, { AxiosError } from "axios";
 import { apiClient } from "@/utils/apiClient";
-import { useParams } from "react-router";
+import { useNavigate, useParams } from "react-router";
 import WoTimelinePage from "./WoTimelinePage";
 
 const getErrorMessage = (error: AxiosError | unknown, data: string): string => {
@@ -88,6 +88,7 @@ interface TabLink {
 }
 
 export default function MixWorkorder() {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<string>("1");
   const [workOrder, setWorkOrder] = useState<SingLeClient | null>(null);
   const { workOrderId } = useParams();
@@ -157,7 +158,7 @@ export default function MixWorkorder() {
         <PageHeader title="Work Order Detail" />
       </div>
       {/* pills section  */}
-      <div className="flex flex-col gap-2">
+      <div className="flex  justify-between items-center gap-2">
         {/* FOR DESKTOP and TABLET  */}
 
         <div className=" hidden md:flex flex-wrap gap-2">
@@ -187,6 +188,11 @@ export default function MixWorkorder() {
               ))}
             </SelectContent>
           </Select>
+        </div>
+        <div>
+          <Button variant="outline" onClick={() => navigate(`/edit-work-order/${workOrderId}`)} className="w-full">
+            Add Amendment
+          </Button>
         </div>
       </div>
       {/*content area   */}

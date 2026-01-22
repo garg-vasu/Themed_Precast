@@ -60,6 +60,7 @@ import { formatDisplayDate } from "@/utils/formatdate";
 import AddBom from "./AddBom";
 import { Label } from "@/components/ui/label";
 import UploadDialog from "./Upload";
+import { generatePDFFromTable } from "@/utils/pdfGenerator";
 
 export type Bom = {
   bom_id: number;
@@ -285,78 +286,41 @@ export function BomTable({ refresh }: { refresh: () => void }) {
     },
   });
 
-  const handleDownloadPDF = () => {
+    const handleDownloadPDF = () => {
     const selectedRows = table.getFilteredSelectedRowModel().rows;
 
-    if (selectedRows.length === 0) {
-      toast.error("Please select at least one row to download");
-      return;
-    }
-
-    try {
-      const doc = new jsPDF();
-
-      // Add title
-      doc.setFontSize(18);
-      doc.text("BOM Report", 14, 20);
-
-      // Add date
-      doc.setFontSize(10);
-      doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 30);
-
-      // Prepare table data with BOM columns
-      const tableData = selectedRows.map((row) => {
+    generatePDFFromTable({
+      selectedRows,
+      title: "BOM Report",
+      headers: ["Material Name", "Material Type", "Unit", "Created At", "Updated At"],
+      dataMapper: (row): string[] => {
         const bom = row.original as Bom;
         return [
           bom.bom_name || "—",
           bom.bom_type || "—",
           bom.unit || "—",
-          bom.rate != null ? bom.rate.toString() : "—",
-          formatDisplayDate(bom.created_at) || "—",
-          formatDisplayDate(bom.updated_at) || "—",
+          formatDisplayDate(bom.created_at),
+          formatDisplayDate(bom.updated_at),
         ];
-      });
-
-      // Prepare headers
-      const headers = [
-        "Material Name",
-        "Material Type",
-        "Unit",
-        "Rate",
-        "Created At",
-        "Updated At",
-      ];
-
-      // Add table with all column headers
-      autoTable(doc, {
-        head: [headers],
-        body: tableData,
-        startY: 40,
-        styles: { fontSize: 7, cellPadding: 2 },
-        headStyles: { fillColor: [59, 130, 246], fontSize: 8 }, // Blue header
-        alternateRowStyles: { fillColor: [245, 247, 250] },
-      });
-
-      // Save the PDF
-      const fileName = `bom-report-${
-        new Date().toISOString().split("T")[0]
-      }.pdf`;
-      doc.save(fileName);
-
-      toast.success(
-        `PDF downloaded successfully with ${selectedRows.length} BOM item(s)`
-      );
-    } catch (error) {
-      console.error("Error generating PDF:", error);
-      toast.error("Failed to generate PDF. Please try again.");
-    }
+      },
+      fileName: `bom-report-${new Date().toISOString().split("T")[0]}.pdf`,
+      successMessage: "PDF downloaded successfully with {count} bom(s)",
+      emptySelectionMessage: "Please select at least one row to download",
+      titleFontSize: 24,
+      headerColor: "#283C6E", 
+      headerHeight: 10,
+      bodyFontSize: 9,
+    });
   };
+
+ 
 
   return (
     <div className="flex flex-col gap-2 py-4 px-4">
       <div className="flex item-center justify-between">
         <PageHeader title="BOM" />
         <div className="flex gap-2 items-center justify-center">
+         
           <Button
             variant="outline"
             className="w-full sm:w-auto"

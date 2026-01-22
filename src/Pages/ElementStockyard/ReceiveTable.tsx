@@ -56,6 +56,7 @@ import autoTable from "jspdf-autotable";
 import { formatDisplayDate } from "@/utils/formatdate";
 import { useParams } from "react-router";
 import { useProject } from "@/Provider/ProjectProvider";
+import { generatePDFFromTable } from "@/utils/pdfGenerator";
 
 export type Stockyard = {
   id: number;
@@ -410,6 +411,37 @@ export function ReceiveTable() {
     },
   });
 
+   const handleDownloadPDF = () => {
+    const selectedRows = table.getFilteredSelectedRowModel().rows;
+
+    generatePDFFromTable({
+      selectedRows,
+      title: "Receive Report",
+      headers: ["Element Name", "Element Type", "Thickness", "Length", "Height", "Mass", "Production Date", "Floor Name", "Tower Name"],
+      dataMapper: (row): string[] => {
+        const receive = row.original as Element;
+        return [
+          receive.element_id?.toString() || "—",
+          receive.element_type || "—",
+          receive.thickness?.toString() || "—",
+          receive.length?.toString() || "—",
+          receive.height?.toString() || "—",
+          receive.mass?.toString() || "—",
+          formatDisplayDate(receive.production_date),
+          receive.floor_name || "—",
+          receive.tower_name || "—",
+        ];
+      },
+      fileName: `receive-report-${new Date().toISOString().split("T")[0]}.pdf`,
+      successMessage: "PDF downloaded successfully with {count} received(s)",
+      emptySelectionMessage: "Please select at least one row to download",
+      titleFontSize: 24,
+      headerColor: "#283C6E",
+      headerHeight: 8,
+      bodyFontSize: 9,
+    });
+  };
+
   const handleApproveStockyard = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -444,78 +476,7 @@ export function ReceiveTable() {
     }
   };
 
-  const handleDownloadPDF = () => {
-    const selectedRows = table.getFilteredSelectedRowModel().rows;
-
-    if (selectedRows.length === 0) {
-      toast.error("Please select at least one row to download");
-      return;
-    }
-
-    try {
-      const doc = new jsPDF();
-
-      // Add title
-      doc.setFontSize(18);
-      doc.text("Stockyard Report", 14, 20);
-
-      // Add date
-      doc.setFontSize(10);
-      doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 30);
-
-      // Prepare table data with all columns
-      const tableData = selectedRows.map((row) => {
-        const stockyard = row.original;
-        return [
-          stockyard.element_name || "—",
-          stockyard.element_type || "—",
-          stockyard.thickness?.toString() || "—",
-          stockyard.length?.toString() || "—",
-          stockyard.height?.toString() || "—",
-          stockyard.mass ? stockyard.mass.toFixed(3) : "—",
-          formatDisplayDate(stockyard.production_date),
-          stockyard.floor_name || "—",
-          stockyard.tower_name || "—",
-        ];
-      });
-
-      // Prepare headers
-      const headers = [
-        "Element Name",
-        "Element Type",
-        "Thickness",
-        "Length",
-        "Height",
-        "Mass",
-        "Production Date",
-        "Floor Name",
-        "Tower Name",
-      ];
-
-      // Add table with all column headers
-      autoTable(doc, {
-        head: [headers],
-        body: tableData,
-        startY: 40,
-        styles: { fontSize: 7, cellPadding: 2 },
-        headStyles: { fillColor: [59, 130, 246], fontSize: 8 }, // Blue header
-        alternateRowStyles: { fillColor: [245, 247, 250] },
-      });
-
-      // Save the PDF
-      const fileName = `stockyard-report-${
-        new Date().toISOString().split("T")[0]
-      }.pdf`;
-      doc.save(fileName);
-
-      toast.success(
-        `PDF downloaded successfully with ${selectedRows.length} stockyard element(s)`
-      );
-    } catch (error) {
-      console.error("Error generating PDF:", error);
-      toast.error("Failed to generate PDF. Please try again.");
-    }
-  };
+ 
 
   return (
     <div className="w-full">

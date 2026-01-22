@@ -10,7 +10,7 @@ import {
   type SortingState,
   type VisibilityState,
 } from "@tanstack/react-table";
-import { ArrowUpDown, ChevronDown, MoreHorizontal } from "lucide-react";
+import { ArrowUpDown, ChevronDown, Download, MoreHorizontal } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -43,6 +43,7 @@ import {
   DialogHeader,
 } from "@/components/ui/dialog";
 import AddStoreWarehouse from "./AddStoreWarehouse";
+import { generatePDFFromTable } from "@/utils/pdfGenerator";
 
 export type StoreWarehouse = {
   id: number;
@@ -276,6 +277,26 @@ export function StoreWareHouseTable() {
     },
   });
 
+  const handleDownloadPDF = () => {
+    const selectedRows = table.getFilteredSelectedRowModel().rows;
+    generatePDFFromTable({
+      selectedRows,
+      title: "Store / Warehouse Report",
+      headers: ["Name", "Email", "Description", "Location", "Contact Number", "Used Capacity"],
+      dataMapper: (row) => {
+        const storeWarehouse = row.original;
+        return [storeWarehouse.name, storeWarehouse.email, storeWarehouse.description, storeWarehouse.location, storeWarehouse.contact_number, storeWarehouse.used_capacity];
+      },
+      fileName: `store-warehouse-report-${new Date().toISOString().split("T")[0]}.pdf`,
+      successMessage: "PDF downloaded successfully with {count} store / warehouse(s)",
+      emptySelectionMessage: "Please select at least one row to download",
+      titleFontSize: 24,
+      headerColor: "#283C6E",
+      headerHeight: 10,
+      bodyFontSize: 9,
+    });
+  }
+
   return (
     <div className="w-full">
       {/* top toolbar */}
@@ -289,6 +310,16 @@ export function StoreWareHouseTable() {
           className="w-full max-w-sm sm:max-w-xs"
         />
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-center">
+           {table.getFilteredSelectedRowModel().rows.length > 0 && (
+            <Button
+              variant="default"
+              className="w-full sm:w-auto"
+              onClick={handleDownloadPDF}
+            >
+              <Download className="mr-2 h-4 w-4" />
+              Download PDF ({table.getFilteredSelectedRowModel().rows.length})
+            </Button>
+          )}
           <Button
             variant="outline"
             className="w-full sm:w-auto"

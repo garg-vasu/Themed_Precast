@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as d3 from "d3";
-import PageHeader from "@/components/ui/PageHeader";
 import { apiClient } from "@/utils/apiClient";
 
 type QcRadialDatum = {
@@ -9,43 +8,40 @@ type QcRadialDatum = {
   count: number; // value
 };
 
-const fallbackData: QcRadialDatum[] = [
-  { stage: "mesh_mold", status: "approved", count: 1200 },
-  { stage: "mesh_mold", status: "hold", count: 30 },
-  { stage: "mesh_mold", status: "rejected", count: 100   },
+type QcStagewiseApiRow = {
+  stage: string;
+  status: string;
+  count: number;
+};
 
-  { stage: "reinforcement", status: "approved", count: 9000 },
-  { stage: "reinforcement", status: "hold", count: 400 },
-  { stage: "reinforcement", status: "rejected", count: 200 },
+type QcStagewiseApiResponse = {
+  data: QcStagewiseApiRow[];
+};
 
-  { stage: "mep", status: "approved", count: 1500 },
-  { stage: "mep", status: "hold", count: 2345 },
-  { stage: "mep", status: "rejected", count: 100 },
+function formatStageLabel(stage: string): string {
+  // ex: "mesh_&_mould" -> "mesh & mould", "pre_pour" -> "pre pour"
+  return String(stage)
+    .replace(/_/g, " ")
+    .replace(/\s*&\s*/g, " & ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
 
-  { stage: "prepour", status: "approved", count: 7000 },
-  { stage: "prepour", status: "hold", count: 500 },
-  { stage: "prepour", status: "rejected", count: 0 },
+async function fetchQcStagewiseRadialData(
+  projectId: string,
+  buildQueryParams: () => string
+): Promise<QcRadialDatum[]> {
+  const res = await apiClient.get<QcStagewiseApiResponse>(
+    `/qc_reports_stagewise/${projectId}?${buildQueryParams()}`
+  );
+  const rows = res.data?.data;
+  if (!Array.isArray(rows)) return [];
 
-  { stage: "postpour", status: "approved", count: 10000 },
-  { stage: "postpour", status: "hold", count: 1020 },
-  { stage: "postpour", status: "rejected", count: 1300 },
-];
-
-async function fetchQcRadialData(): Promise<QcRadialDatum[]> {
-  // “Mimic API call” via apiClient, but keep UI working without backend.
-  // If the backend route exists later, just make it return: { data: QcRadialDatum[] }
-  try {
-    const res = await apiClient.get<{ data: QcRadialDatum[] }>(
-      "/project-report/qc-radial"
-    );
-    const rows = res.data?.data;
-    if (Array.isArray(rows) && rows.length) return rows;
-    return fallbackData;
-  } catch {
-    // simulate network latency so loader states feel real
-    await new Promise((r) => setTimeout(r, 350));
-    return fallbackData;
-  }
+  return rows.map((r) => ({
+    stage: formatStageLabel(r.stage),
+    status: String(r.status),
+    count: Number(r.count ?? 0),
+  }));
 }
 
 type StageStatusIndex = d3.InternMap<string, d3.InternMap<string, QcRadialDatum>>;
@@ -88,11 +84,21 @@ function renderRadialStackedBarChart(
     .domain([0, d3.max(series, (s) => d3.max(s, (p) => p[1]) ?? 0) ?? 0])
     .range([innerRadius, outerRadius]);
 
+  const isDark =
+    typeof document !== "undefined" &&
+    document.documentElement.classList.contains("dark");
+
+  const basePalette = isDark ? d3.schemeTableau10 : d3.schemeSet2;
+  const colorRange =
+    basePalette && basePalette.length
+      ? statuses.map((_, i) => basePalette[i % basePalette.length]!)
+      : statuses.map(() => "#3b82f6"); // fallback blue
+
   const color = d3
     .scaleOrdinal<string, string>()
     .domain(statuses)
-    .range(d3.schemeSpectral[Math.max(3, Math.min(11, statuses.length))] as any)
-    .unknown("#ccc");
+    .range(colorRange)
+    .unknown(isDark ? "#4b5563" : "#9ca3af");
 
   const arc = d3
     .arc<StackPoint>()
@@ -232,10 +238,17 @@ function renderRadialStackedBarChart(
   el.appendChild(svg.node() as SVGSVGElement);
 }
 
-export function QcChart() {
+export type QcChartProps = {
+  projectId: string;
+  buildQueryParams: () => string;
+  className?: string;
+};
+
+export function QcChart({ projectId, buildQueryParams, className }: QcChartProps) {
   const chartHostRef = useRef<HTMLDivElement | null>(null);
   const [rows, setRows] = useState<QcRadialDatum[] | null>(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const normalized = useMemo(() => {
     if (!rows) return [];
@@ -248,9 +261,13 @@ export function QcChart() {
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    fetchQcRadialData()
+    setError(null);
+    fetchQcStagewiseRadialData(projectId, buildQueryParams)
       .then((d) => {
         if (!cancelled) setRows(d);
+      })
+      .catch((e: unknown) => {
+        if (!cancelled) setError(e instanceof Error ? e.message : "Failed to load QC chart");
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -258,23 +275,36 @@ export function QcChart() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [projectId, buildQueryParams]);
 
   useEffect(() => {
     if (!chartHostRef.current) return;
-    if (!normalized.length) return;
+    if (!normalized.length) {
+      chartHostRef.current.innerHTML = "";
+      return;
+    }
     renderRadialStackedBarChart(chartHostRef.current, normalized);
   }, [normalized]);
 
+  const containerClassName = [
+    "rounded-lg border bg-card p-4 flex justify-center text-foreground",
+    className,
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   return (
-    <div className="w-full p-4">
-      <PageHeader title="Quality Control Chart" />
-      <div className="mt-4 rounded-lg border bg-background p-4 flex justify-center">
-        {loading && (
-          <div className="text-sm text-muted-foreground">Loading chart…</div>
-        )}
-        <div ref={chartHostRef} className="flex justify-center" />
-      </div>
+    <div className={containerClassName}>
+      {loading && (
+        <div className="text-sm text-muted-foreground">Loading chart…</div>
+      )}
+      {!loading && error && (
+        <div className="text-sm text-destructive">Failed to load QC chart.</div>
+      )}
+      {!loading && !error && !normalized.length && (
+        <div className="text-sm text-muted-foreground">No qc data available.</div>
+      )}
+      <div ref={chartHostRef} className="flex justify-center" />
     </div>
   );
 }

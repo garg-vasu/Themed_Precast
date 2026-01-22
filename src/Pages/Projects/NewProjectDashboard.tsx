@@ -18,6 +18,8 @@ import {
   Package,
   Layers,
   FileText,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import {
   Dialog,
@@ -53,9 +55,14 @@ export type Tower = {
 };
 
 interface ElementDetails {
-  element_type: string;
-  element_type_id: number;
-  element_type_name: string;
+  balance: number;
+  balance_concrete: number;
+  dispatch: number;
+  dispatch_concrete: number;
+  erected: number;
+  erected_concrete: number;
+  erectedbalance: number;
+  erectedbalance_concrete: number;
   erection: number;
   erection_concrete: number;
   notinproduction: number;
@@ -70,30 +77,46 @@ interface ElementDetails {
 
 interface FloorSummary {
   [elementType: string]: ElementDetails | number;
-  erection: number;
-  erection_concrete: number;
-  notinproduction: number;
-  notinproduction_concrete: number;
-  production: number;
-  production_concrete: number;
-  stockyard: number;
-  stockyard_concrete: number;
-  totalelement: number;
-  totalelement_concrete: number;
+balance: 8412,
+        balance_concrete: number;
+    dispatch: number;
+    dispatch_concrete: number;
+    erected: 286,
+    erected_concrete: 131.817248312,
+    erectedbalance: number;
+    erectedbalance_concrete: number;
+    erection: number;
+    erection_concrete: number;
+    notinproduction: number;
+    notinproduction_concrete: number;
+    production: number;
+    production_concrete: number;
+    stockyard: 688,
+    stockyard_concrete: number;
+    totalelement: number;
+    totalelement_concrete: number;
 }
 
 interface FloorData {
   [floor: string]: FloorSummary | number;
-  erection: number;
-  erection_concrete: number;
-  notinproduction: number;
-  notinproduction_concrete: number;
-  production: number;
-  production_concrete: number;
-  stockyard: number;
-  stockyard_concrete: number;
-  totalelement: number;
-  totalelement_concrete: number;
+ balance: number,
+ balance_concrete: number,
+    dispatch: number;
+    dispatch_concrete: number;
+    erected: number;
+    erected_concrete: number;
+    erectedbalance: number;
+    erectedbalance_concrete: number;
+    erection: number;
+    erection_concrete: number;
+    notinproduction: number;
+    notinproduction_concrete: number;
+    production: number;
+    production_concrete: number;
+    stockyard: number;
+    stockyard_concrete: number;
+    totalelement: number;
+    totalelement_concrete: number;
 }
 
 export default function NewProjectDashboard() {
@@ -116,6 +139,14 @@ export default function NewProjectDashboard() {
   const [selectedElementType, setSelectedElementType] = useState<string | null>(
     "all"
   );
+  const [collapsedFloors, setCollapsedFloors] = useState<Record<string, boolean>>({});
+
+  const toggleFloorCollapse = (floorName: string) => {
+    setCollapsedFloors((prev) => ({
+      ...prev,
+      [floorName]: !prev[floorName],
+    }));
+  };
 
   const openPdfDialog = () => setPdfDialogOpen(true);
   const closePdfDialog = () => setPdfDialogOpen(false);
@@ -283,15 +314,19 @@ export default function NewProjectDashboard() {
   const renderFiltersRow = () => {
     if (!data) return null;
     const summaryKeys = [
-      "erection",
-      "notinproduction",
+      "balance",
+      "balance_concrete",
+      "dispatch",
+      "dispatch_concrete",
+      "erected",
+      "erected_concrete",
+      "erectedbalance",
+      "erectedbalance_concrete",
       "production",
-      "stockyard",
-      "totalelement",
-      "erection_concrete",
-      "notinproduction_concrete",
       "production_concrete",
+      "stockyard",
       "stockyard_concrete",
+      "totalelement",
       "totalelement_concrete",
     ];
     const floorNames = Object.keys(data).filter(
@@ -377,38 +412,52 @@ export default function NewProjectDashboard() {
         icon: Layers,
       },
       {
-        label: "In Production",
+        label: "Produced",
         value: floorData.production,
         concrete: floorData.production_concrete,
         icon: Factory,
       },
       {
-        label: "In Stockyard",
+        label: "Balance",
+        value: floorData.balance,
+        concrete: floorData.balance_concrete,
+        icon: Package,
+      },
+      {
+        label: "Dispatched",
+        value: floorData.dispatch,
+        concrete: floorData.dispatch_concrete,
+        icon: ArrowUpCircle,
+      },
+      {
+        label: "Stockyard",
         value: floorData.stockyard,
         concrete: floorData.stockyard_concrete,
         icon: Warehouse,
       },
+      
       {
-        label: "Erection",
-        value: floorData.erection,
-        concrete: floorData.erection_concrete,
+        label: "Erected",
+        value: floorData.erected,
+        concrete: floorData.erected_concrete,
         icon: ArrowUpCircle,
       },
       {
-        label: "Not in Production",
-        value: floorData.notinproduction,
-        concrete: floorData.notinproduction_concrete,
+        label: "Erected Balance",
+        value: floorData.erectedbalance,
+        concrete: floorData.erectedbalance_concrete,
         icon: Package,
       },
+
     ];
 
     return (
-      <div className="grid gap-2 sm:gap-4 mb-3 sm:mb-4 grid-cols-2 sm:grid-cols-2 md:grid-cols-5">
+      <div className="grid gap-2 sm:gap-4 mb-3 sm:mb-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
         {cardConfig.map((config, index) => {
           const Icon = config.icon;
           return (
-            <Card key={index} className="hover:bg-muted/50 transition-colors">
-              <CardContent className="p-3 sm:p-4">
+            <Card key={index}>
+              <CardContent>
                 <div className="flex items-center gap-2 mb-2">
                   <Icon className="h-4 w-4 text-muted-foreground" />
                   <div className="text-xs sm:text-sm text-muted-foreground">
@@ -457,17 +506,19 @@ export default function NewProjectDashboard() {
           <TableRow>
             <TableHead>Element Type</TableHead>
             <TableHead>Total Elements</TableHead>
-            <TableHead>In Production</TableHead>
-            <TableHead>In Stockyard</TableHead>
-            <TableHead>Erection</TableHead>
-            <TableHead>Not in Production</TableHead>
+            <TableHead>Produced</TableHead>
+            <TableHead>Balance</TableHead>
+            <TableHead>Dispatched</TableHead>
+            <TableHead>Stockyard</TableHead>
+            <TableHead>Erected</TableHead>
+            <TableHead>Erected Balance</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {elementTypes.map(([key, value]) => {
             const el = value as ElementDetails;
             return (
-              <TableRow key={key} className="hover:bg-muted/50">
+              <TableRow key={key}>
                 <TableCell className="font-medium">{key}</TableCell>
                 <TableCell>
                   <span className="text-sm sm:text-base font-semibold">
@@ -482,18 +533,30 @@ export default function NewProjectDashboard() {
                 </TableCell>
                 <TableCell>
                   <span className="text-sm sm:text-base font-semibold">
+                    {el.balance} / {(el.balance_concrete ?? 0).toFixed(2)}
+                  </span>
+                </TableCell>
+                  <TableCell>
+                  <span className="text-sm sm:text-base font-semibold">
+                    {el.dispatch} / {(el.dispatch_concrete ?? 0).toFixed(2)}
+                  </span>
+                </TableCell>
+                
+                <TableCell>
+                  <span className="text-sm sm:text-base font-semibold">
                     {el.stockyard} / {(el.stockyard_concrete ?? 0).toFixed(2)}
                   </span>
                 </TableCell>
+              
                 <TableCell>
                   <span className="text-sm sm:text-base font-semibold">
-                    {el.erection} / {(el.erection_concrete ?? 0).toFixed(2)}
+                    {el.erected} / {(el.erected_concrete ?? 0).toFixed(2)}
                   </span>
                 </TableCell>
                 <TableCell>
                   <span className="text-sm sm:text-base font-semibold">
-                    {el.notinproduction} /{" "}
-                    {(el.notinproduction_concrete ?? 0).toFixed(2)}
+                    {el.erectedbalance} /{" "}
+                    {(el.erectedbalance_concrete ?? 0).toFixed(2)}
                   </span>
                 </TableCell>
               </TableRow>
@@ -505,16 +568,29 @@ export default function NewProjectDashboard() {
   };
 
   const renderFloorDetails = (floorData: FloorSummary, floorName: string) => {
+    const isCollapsed = collapsedFloors[floorName] ?? false;
+    
     return (
-      <Card key={floorName} className="mb-3 sm:mb-4">
-        <CardHeader>
-          <CardTitle className="text-base sm:text-lg">{floorName}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {renderFloorSummaryCards(floorData)}
-          {renderElementTable(floorData)}
-        </CardContent>
-      </Card>
+      <div key={floorName} className="mb-3 sm:mb-4 border rounded-lg overflow-hidden">
+        <button
+          onClick={() => toggleFloorCollapse(floorName)}
+          className="w-full flex items-center justify-between px-4 py-3 bg-muted/50 hover:bg-muted transition-colors"
+        >
+          <h5 className="text-xl font-bold text-primary">{floorName}</h5>
+          {isCollapsed ? (
+            <ChevronDown className="h-5 w-5 text-muted-foreground" />
+          ) : (
+            <ChevronUp className="h-5 w-5 text-muted-foreground" />
+          )}
+        </button>
+        
+        {!isCollapsed && (
+          <div className="p-4">
+            {renderFloorSummaryCards(floorData)}
+            {renderElementTable(floorData)}
+          </div>
+        )}
+      </div>
     );
   };
 
@@ -527,15 +603,19 @@ export default function NewProjectDashboard() {
           // Skip the summary properties
           if (
             typeof value === "number" ||
-            key === "erection" ||
-            key === "notinproduction" ||
+            key === "balance" ||
+            key === "balance_concrete" ||
+            key === "dispatch" ||
+            key === "dispatch_concrete" ||
+            key === "erected" ||
+            key === "erected_concrete" ||
+            key === "erectedbalance" ||
+            key === "erectedbalance_concrete" ||
             key === "production" ||
-            key === "stockyard" ||
-            key === "totalelement" ||
-            key === "erection_concrete" ||
-            key === "notinproduction_concrete" ||
             key === "production_concrete" ||
+            key === "stockyard" ||
             key === "stockyard_concrete" ||
+            key === "totalelement" ||
             key === "totalelement_concrete"
           ) {
             return null;
@@ -591,7 +671,7 @@ export default function NewProjectDashboard() {
 
   // --- MAIN RENDER ---
   return (
-    <div className="p-1 sm:p-2 md:p-4">
+    <div className="w-full p-4">
       <div className="w-full mx-auto">
         <div className="flex items-center justify-between">
           <div>
@@ -601,7 +681,6 @@ export default function NewProjectDashboard() {
             variant="outline"
             onClick={openPdfDialog}
             disabled={downloading}
-            className="flex h-10 items-center gap-2"
           >
             {downloading ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -613,7 +692,7 @@ export default function NewProjectDashboard() {
         </div>
 
         <Dialog open={pdfDialogOpen} onOpenChange={setPdfDialogOpen}>
-          <DialogContent className="sm:max-w-md">
+          <DialogContent>
             <DialogHeader>
               <DialogTitle>Select period</DialogTitle>
             </DialogHeader>
@@ -660,9 +739,8 @@ export default function NewProjectDashboard() {
                     <RadioGroupItem
                       id="view-all"
                       value="all"
-                      className="h-4 w-4"
                     />
-                    <Label htmlFor="view-all" className="text-sm">
+                    <Label htmlFor="view-all">
                       All
                     </Label>
                   </div>
@@ -670,9 +748,8 @@ export default function NewProjectDashboard() {
                     <RadioGroupItem
                       id="view-production"
                       value="production"
-                      className="h-4 w-4"
                     />
-                    <Label htmlFor="view-production" className="text-sm">
+                    <Label htmlFor="view-production">
                       Production
                     </Label>
                   </div>
@@ -680,9 +757,8 @@ export default function NewProjectDashboard() {
                     <RadioGroupItem
                       id="view-stockyard"
                       value="stockyard"
-                      className="h-4 w-4"
                     />
-                    <Label htmlFor="view-stockyard" className="text-sm">
+                    <Label htmlFor="view-stockyard">
                       Stockyard
                     </Label>
                   </div>
@@ -690,9 +766,8 @@ export default function NewProjectDashboard() {
                     <RadioGroupItem
                       id="view-dispatch"
                       value="dispatch"
-                      className="h-4 w-4"
                     />
-                    <Label htmlFor="view-dispatch" className="text-sm">
+                    <Label htmlFor="view-dispatch">
                       Dispatch
                     </Label>
                   </div>
@@ -700,9 +775,8 @@ export default function NewProjectDashboard() {
                     <RadioGroupItem
                       id="view-erected"
                       value="erected"
-                      className="h-4 w-4"
                     />
-                    <Label htmlFor="view-erected" className="text-sm">
+                    <Label htmlFor="view-erected">
                       Erected
                     </Label>
                   </div>
@@ -735,14 +809,12 @@ export default function NewProjectDashboard() {
         {renderTowerPills()}
         {/* Overview section always visible */}
         {data && (
-          <Card className="mb-4 sm:mb-6">
-            <CardHeader>
-              <CardTitle className="text-lg sm:text-xl">Overview</CardTitle>
-            </CardHeader>
-            <CardContent>
+          <div>
+           <h4 className="text-xl font-bold mb-2 ">Overview</h4>
+            <div>
               {renderFloorSummaryCards(data as FloorSummary)}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         )}
         {/* Filters Row */}
         {renderFiltersRow()}

@@ -43,8 +43,7 @@ import axios, { AxiosError } from "axios";
 import { apiClient } from "@/utils/apiClient";
 import { toast } from "sonner";
 import { useNavigate } from "react-router";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
+import { generatePDFFromTable } from "@/utils/pdfGenerator";
 
 export interface User {
   id: number;
@@ -331,24 +330,11 @@ export function TenantsTable() {
   const handleDownloadPDF = () => {
     const selectedRows = table.getFilteredSelectedRowModel().rows;
 
-    if (selectedRows.length === 0) {
-      toast.error("Please select at least one row to download");
-      return;
-    }
-
-    try {
-      const doc = new jsPDF();
-
-      // Add title
-      doc.setFontSize(18);
-      doc.text("Tenants Report", 14, 20);
-
-      // Add date
-      doc.setFontSize(10);
-      doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 30);
-
-      // Prepare table data
-      const tableData = selectedRows.map((row) => {
+    generatePDFFromTable({
+      selectedRows,
+      title: "Tenants Report",
+      headers: ["Name", "Organization", "Email", "Phone", "Location", "Role"],
+      dataMapper: (row) => {
         const tenant = row.original;
         const user = tenant.user;
         const name =
@@ -366,31 +352,15 @@ export function TenantsTable() {
           location,
           user?.role_name || "Tenant",
         ];
-      });
-
-      // Add table
-      autoTable(doc, {
-        head: [["Name", "Organization", "Email", "Phone", "Location", "Role"]],
-        body: tableData,
-        startY: 40,
-        styles: { fontSize: 9 },
-        headStyles: { fillColor: [59, 130, 246] }, // Blue header
-        alternateRowStyles: { fillColor: [245, 247, 250] },
-      });
-
-      // Save the PDF
-      const fileName = `tenants-report-${
-        new Date().toISOString().split("T")[0]
-      }.pdf`;
-      doc.save(fileName);
-
-      toast.success(
-        `PDF downloaded successfully with ${selectedRows.length} tenant(s)`
-      );
-    } catch (error) {
-      console.error("Error generating PDF:", error);
-      toast.error("Failed to generate PDF. Please try again.");
-    }
+      },
+      fileName: `tenants-report-${new Date().toISOString().split("T")[0]}.pdf`,
+      successMessage: "PDF downloaded successfully with {count} tenant(s)",
+      emptySelectionMessage: "Please select at least one row to download",
+      titleFontSize: 24,
+      headerColor: "#283C6E",
+      headerHeight: 12,
+      bodyFontSize: 9,
+    });
   };
 
   return (

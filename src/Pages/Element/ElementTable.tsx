@@ -9,7 +9,7 @@ import {
   type SortingState,
   type VisibilityState,
 } from "@tanstack/react-table";
-import { ChevronDown, MoreHorizontal } from "lucide-react";
+import { ChevronDown, Download, MoreHorizontal } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -33,9 +33,6 @@ import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useCallback, useEffect, useState } from "react";
@@ -47,6 +44,7 @@ import type { FilterStateElement } from "./ElementFilter";
 import ElementFilter from "./ElementFilter";
 import { Dialog, DialogTrigger, DialogContent } from "@/components/ui/dialog";
 import ElementDrawing from "../Elementtype/ElementDrawing";
+import { generatePDFFromTable } from "@/utils/pdfGenerator";
 
 export type File = {
   drawing_id: number;
@@ -368,6 +366,34 @@ export function ElementTable() {
     },
   });
 
+   const handleDownloadPDF = () => {
+    const selectedRows = table.getFilteredSelectedRowModel().rows;
+
+    generatePDFFromTable({
+      selectedRows,
+      title: "Element Report",
+      headers: ["Element Name", "Element Type Name", "Status", "Drawing", "Tower Name", "Floor Name"],
+      dataMapper: (row): string[] => {
+        const element = row.original as Element;
+        return [
+          element.element_id || "—",
+          element.element_name || "—",
+          element.status || "—",
+          element.drawings?.length?.toString() || "0",
+          element.tower || "—",
+          element.floor || "—",
+        ];
+      },
+      fileName: `element-report-${new Date().toISOString().split("T")[0]}.pdf`,
+      successMessage: "PDF downloaded successfully with {count} element(s)",
+      emptySelectionMessage: "Please select at least one row to download",
+      titleFontSize: 24,
+      headerColor: "#283C6E",
+      headerHeight: 8,
+      bodyFontSize: 9,
+    });
+  };
+
   return (
     <div className="w-full">
       {/* top toolbar */}
@@ -397,6 +423,16 @@ export function ElementTable() {
           {hasActiveFilters() && (
             <Button variant="outline" onClick={clearAllFilters}>
               Clear Filters
+            </Button>
+          )}
+          {table.getFilteredSelectedRowModel().rows.length > 0 && (
+            <Button
+              variant="default"
+              className="w-full sm:w-auto"
+              onClick={handleDownloadPDF}
+            >
+              <Download className="mr-2 h-4 w-4" />
+              Download PDF ({table.getFilteredSelectedRowModel().rows.length})
             </Button>
           )}
           <DropdownMenu>

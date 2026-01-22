@@ -10,7 +10,7 @@ import {
   type SortingState,
   type VisibilityState,
 } from "@tanstack/react-table";
-import { ArrowUpDown, ChevronDown } from "lucide-react";
+import { ArrowUpDown, ChevronDown, Download } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -36,6 +36,7 @@ import axios, { AxiosError } from "axios";
 import { apiClient } from "@/utils/apiClient";
 import { toast } from "sonner";
 import { formatDisplayDate } from "@/utils/formatdate";
+import { generatePDFFromTable } from "@/utils/pdfGenerator";
 
 export type Attendance = {
   id: number;
@@ -317,6 +318,37 @@ export function AttendanceTable() {
     },
   });
 
+   const handleDownloadPDF = () => {
+    const selectedRows = table.getFilteredSelectedRowModel().rows;
+
+    generatePDFFromTable({
+      selectedRows,
+      title: "Attendance Report",
+      headers: ["Project Name", "Tower Name", "Department Name", "Category Name", "People Name", "Skill Type Name", "Skill Name", "Count", "Date"],
+      dataMapper: (row): string[] => {
+        const attendance = row.original as Attendance;
+        return [
+          attendance.project_name || "—",
+          attendance.tower_name || "—",
+          attendance.department_name || "—",
+          attendance.category_name || "—",
+          attendance.people_name || "—",
+          attendance.skill_type_name || "—",
+          attendance.skill_name || "—",
+          attendance.count != null ? String(attendance.count) : "—",
+          attendance.date || "—",
+        ];
+      },
+      fileName: `attendance-report-${new Date().toISOString().split("T")[0]}.pdf`,
+      successMessage: "PDF downloaded successfully with {count} attendance(s)",
+      emptySelectionMessage: "Please select at least one row to download",
+      titleFontSize: 24,
+      headerColor: "#283C6E",
+      headerHeight: 12,
+      bodyFontSize: 9,
+    });
+  };
+
   return (
     <div className="w-full">
       {/* top toolbar */}
@@ -332,6 +364,16 @@ export function AttendanceTable() {
           className="w-full max-w-sm sm:max-w-xs"
         />
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-center">
+           {table.getFilteredSelectedRowModel().rows.length > 0 && (
+            <Button
+              variant="default"
+              className="w-full sm:w-auto"
+              onClick={handleDownloadPDF}
+            >
+              <Download className="mr-2 h-4 w-4" />
+              Download PDF ({table.getFilteredSelectedRowModel().rows.length})
+            </Button>
+          )}
           <Button
             variant={hasActiveFilters() ? "default" : "outline"}
             className="w-full sm:w-auto"

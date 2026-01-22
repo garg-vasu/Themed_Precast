@@ -193,6 +193,48 @@ export default function ProjectSidebar({
       href: `/project/${projectId}/dashboard`,
       icon: BarChart,
     },
+    { name: "Plan", href: `/project/${projectId}/plan`, icon: Calendar },
+     {
+      name: "Stockyard Assign",
+      href: `/project/${projectId}/stockyard-assign`,
+      icon: Users,
+    },
+       {
+      name: "Stockyard",
+      href: `/project/${projectId}/element-stockyard`,
+      icon: List,
+    },
+     {
+      name: "Approval",
+      href: `/project/${projectId}/planning-approval`,
+      icon: FileText,
+    },
+    {
+      name: "Rectification",
+      href: `/project/${projectId}/retification`,
+      icon: List,
+    },
+     {
+      name: "Erection Request",
+      href: `/project/${projectId}/errection-request`,
+      icon: List,
+    },
+     {
+      name: "Dispatch",
+      href: `/project/${projectId}/dispatch-log`,
+      icon: List,
+    },
+     {
+      name: "Erect Log",
+      href: `/project/${projectId}/errection-receving`,
+      icon: List,
+    },
+      {
+      name: "Erection Element",
+      href: `/project/${projectId}/erection-element`,
+      icon: List,
+    },
+
     {
       name: "Config",
       icon: Home,
@@ -224,47 +266,15 @@ export default function ProjectSidebar({
         },
       ],
     },
-    {
-      name: "Stockyard",
-      href: `/project/${projectId}/element-stockyard`,
-      icon: List,
-    },
-    {
-      name: "Stockyard Assign",
-      href: `/project/${projectId}/stockyard-assign`,
-      icon: Users,
-    },
-    {
-      name: "Approval",
-      href: `/project/${projectId}/planning-approval`,
-      icon: FileText,
-    },
-    {
-      name: "Erect Log",
-      href: `/project/${projectId}/errection-receving`,
-      icon: List,
-    },
-    {
-      name: "Rectification",
-      href: `/project/${projectId}/retification`,
-      icon: List,
-    },
-    {
-      name: "Erection Request",
-      href: `/project/${projectId}/errection-request`,
-      icon: List,
-    },
-    {
-      name: "Dispatch",
-      href: `/project/${projectId}/dispatch-log`,
-      icon: List,
-    },
-    { name: "Plan", href: `/project/${projectId}/plan`, icon: Calendar },
-    {
-      name: "Erection Element",
-      href: `/project/${projectId}/erection-element`,
-      icon: List,
-    },
+ 
+   
+   
+   
+    
+   
+   
+    
+  
     {
       name: "Reports",
       icon: Home,

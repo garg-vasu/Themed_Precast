@@ -483,13 +483,7 @@ export function InvoiceTable() {
               Download PDF ({table.getFilteredSelectedRowModel().rows.length})
             </Button>
           )}
-          <Button
-            variant="outline"
-            className="w-full sm:w-auto"
-            onClick={() => navigate("/warehouse/create")}
-          >
-            Add Warehouse
-          </Button>
+         
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" className="w-full sm:w-auto">

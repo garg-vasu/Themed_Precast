@@ -42,7 +42,7 @@ export default function MixDispatch() {
     if (permissions?.includes("ViewDispatchedElement")) {
       tabs.push({
         id: "2",
-        label: "Received Element",
+        label: "Received",
         number: 24,
         icon: MoreHorizontal,
         content: <DispatchedElementTable />,

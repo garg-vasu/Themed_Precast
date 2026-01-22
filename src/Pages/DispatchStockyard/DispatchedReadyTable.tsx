@@ -45,6 +45,7 @@ import autoTable from "jspdf-autotable";
 import { formatDisplayDate } from "@/utils/formatdate";
 import { useParams } from "react-router";
 import PageHeader from "@/components/ui/PageHeader";
+import { generatePDFFromTable } from "@/utils/pdfGenerator";
 
 export type DispatchedReady = {
   element_element_id: string;
@@ -216,70 +217,30 @@ export function DispatchedReadyTable() {
   const handleDownloadPDF = () => {
     const selectedRows = table.getFilteredSelectedRowModel().rows;
 
-    if (selectedRows.length === 0) {
-      toast.error("Please select at least one row to download");
-      return;
-    }
-
-    try {
-      const doc = new jsPDF();
-
-      // Add title
-      doc.setFontSize(18);
-      doc.text("Dispatched Ready Report", 14, 20);
-
-      // Add date
-      doc.setFontSize(10);
-      doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 30);
-
-      // Prepare table data with all columns
-      const tableData = selectedRows.map((row) => {
-        const dispatch = row.original;
+    generatePDFFromTable({
+      selectedRows,
+      title: "Dispatched Ready Report",
+      headers: ["Element Name", "Element Type", "Element Type Name", "Weight", "Floor Name", "Tower Name"],
+      dataMapper: (row): string[] => {
+        const dispatchedReady = row.original as DispatchedReady;
         return [
-          dispatch.element_element_id || "—",
-          dispatch.element_type || "—",
-          dispatch.element_type_name || "—",
-          dispatch.weight || "—",
-          dispatch.floor_name || "—" || "Common Floor",
-          dispatch.tower_name || "—" || "Common Tower",
+          dispatchedReady.element_element_id || "—",
+          dispatchedReady.element_type || "—",
+          dispatchedReady.element_type_name || "—",
+          dispatchedReady.weight?.toString() || "—",
+          dispatchedReady.floor_name || "—",
+          dispatchedReady.tower_name || "—",
         ];
-      });
-
-      // Prepare headers
-      const headers = [
-        "Dispatch Order ID",
-        "Element Type",
-        "Element Type Name",
-        "Weight",
-        "Floor Name",
-        "Tower Name",
-      ];
-
-      // Add table with all column headers
-      autoTable(doc, {
-        head: [headers],
-        body: tableData,
-        startY: 40,
-        styles: { fontSize: 7, cellPadding: 2 },
-        headStyles: { fillColor: [59, 130, 246], fontSize: 8 }, // Blue header
-        alternateRowStyles: { fillColor: [245, 247, 250] },
-      });
-
-      // Save the PDF
-      const fileName = `dispatched-ready-report-${
-        new Date().toISOString().split("T")[0]
-      }.pdf`;
-      doc.save(fileName);
-
-      toast.success(
-        `PDF downloaded successfully with ${selectedRows.length} dispatched ready(s)`
-      );
-    } catch (error) {
-      console.error("Error generating PDF:", error);
-      toast.error("Failed to generate PDF. Please try again.");
-    }
+      },
+      fileName: `dispatched-ready-report-${new Date().toISOString().split("T")[0]}.pdf`,
+      successMessage: "PDF downloaded successfully with {count} dispatched ready(s)",
+      emptySelectionMessage: "Please select at least one row to download",
+      titleFontSize: 24,
+      headerColor: "#283C6E",
+      headerHeight: 8,
+      bodyFontSize: 9,
+    });
   };
-
   return (
     <div className="w-full">
       {/* top toolbar */}

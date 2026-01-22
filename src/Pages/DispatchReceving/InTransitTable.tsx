@@ -44,6 +44,7 @@ import autoTable from "jspdf-autotable";
 import { formatDisplayDate } from "@/utils/formatdate";
 import { useParams } from "react-router-dom";
 import ItemDialog from "./ItemDialog";
+import { generatePDFFromTable } from "@/utils/pdfGenerator";
 
 type DispatchLog = {
   id: number;
@@ -403,70 +404,30 @@ export function InTransitTable({ refresh }: { refresh: () => void }) {
   const handleDownloadPDF = () => {
     const selectedRows = table.getFilteredSelectedRowModel().rows;
 
-    if (selectedRows.length === 0) {
-      toast.error("Please select at least one row to download");
-      return;
-    }
-
-    try {
-      const doc = new jsPDF();
-
-      // Add title
-      doc.setFontSize(18);
-      doc.text("In Transit Dispatch Orders Report", 14, 20);
-
-      // Add date
-      doc.setFontSize(10);
-      doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 30);
-
-      // Prepare table data with all columns
-      const tableData = selectedRows.map((row) => {
-        const dispatchLog = row.original;
+    generatePDFFromTable({
+      selectedRows,
+      title: "In Transit Report",
+      headers: ["Dispatch Order ID", "Project Name", "Driver Name", "Vehicle ID", "Item Count", "Status", "Dispatch Date"],
+      dataMapper: (row): string[] => {
+        const inTransit = row.original as DispatchLog;
         return [
-          dispatchLog.dispatch_order_id || "—",
-          dispatchLog.project_name || "—",
-          dispatchLog.driver_name || "—",
-          dispatchLog.vehicle_id?.toString() || "—",
-          dispatchLog.items?.length?.toString() || "0",
-          dispatchLog.current_status || "—",
-          formatDisplayDate(dispatchLog.dispatch_date) || "—",
+          inTransit.dispatch_order_id || "—",
+          inTransit.project_name || "—",
+          inTransit.driver_name || "—",
+          inTransit.vehicle_id?.toString() || "—",
+          inTransit.items?.length?.toString() || "0",
+          inTransit.current_status || "—",
+          formatDisplayDate(inTransit.dispatch_date) || "—",
         ];
-      });
-
-      // Prepare headers
-      const headers = [
-        "Dispatch Order ID",
-        "Project Name",
-        "Driver Name",
-        "Vehicle ID",
-        "Item Count",
-        "Status",
-        "Dispatch Date",
-      ];
-
-      // Add table with all column headers
-      autoTable(doc, {
-        head: [headers],
-        body: tableData,
-        startY: 40,
-        styles: { fontSize: 7, cellPadding: 2 },
-        headStyles: { fillColor: [59, 130, 246], fontSize: 8 }, // Blue header
-        alternateRowStyles: { fillColor: [245, 247, 250] },
-      });
-
-      // Save the PDF
-      const fileName = `in-transit-dispatch-orders-report-${
-        new Date().toISOString().split("T")[0]
-      }.pdf`;
-      doc.save(fileName);
-
-      toast.success(
-        `PDF downloaded successfully with ${selectedRows.length} dispatch order(s)`
-      );
-    } catch (error) {
-      console.error("Error generating PDF:", error);
-      toast.error("Failed to generate PDF. Please try again.");
-    }
+      },
+      fileName: `in-transit-report-${new Date().toISOString().split("T")[0]}.pdf`,
+      successMessage: "PDF downloaded successfully with {count} in transit order(s)",
+      emptySelectionMessage: "Please select at least one row to download",
+      titleFontSize: 24,
+      headerColor: "#283C6E",
+      headerHeight: 8,
+      bodyFontSize: 9,
+    });
   };
 
   return (

@@ -10,7 +10,7 @@ import {
   type SortingState,
   type VisibilityState,
 } from "@tanstack/react-table";
-import { ArrowUpDown, ChevronDown, MoreHorizontal } from "lucide-react";
+import { ArrowUpDown, ChevronDown, Download, MoreHorizontal } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -38,6 +38,8 @@ import axios, { AxiosError } from "axios";
 import { apiClient } from "@/utils/apiClient";
 import { toast } from "sonner";
 import { useNavigate } from "react-router";
+import { formatDisplayDate } from "@/utils/formatdate";
+import { generatePDFFromTable } from "@/utils/pdfGenerator";
 
 export type EndClient = {
   id: number;
@@ -280,6 +282,38 @@ export function EndClientTable() {
     },
   });
 
+  const handleDownloadPDF = () => {
+    const selectedRows = table.getFilteredSelectedRowModel().rows;
+
+    generatePDFFromTable({
+      selectedRows, 
+      title: "End Client Report",
+      headers: ["Contact Person", "Organization", "Email", "Phone", "Address", "CIN", "GST Number", "Created At", "Updated At"],
+      dataMapper: (row): string[] => {
+        const endClient = row.original as EndClient;
+        return [
+          endClient.contact_person || "—",
+          endClient.organization || "—",
+          endClient.email || "—",
+          endClient.phone_no || "—",
+          endClient.address || "—",
+          endClient.cin || "—",
+          endClient.gst_number || "—",
+          endClient.attachment?.length?.toString() || "0",
+          formatDisplayDate(endClient.created_at),
+          formatDisplayDate(endClient.updated_at),
+        ];
+      },
+      fileName: `end-client-report-${new Date().toISOString().split("T")[0]}.pdf`,
+      successMessage: "PDF downloaded successfully with {count} end client(s)",
+      emptySelectionMessage: "Please select at least one row to download",
+      titleFontSize: 24,
+      headerColor: "#283C6E",
+      headerHeight: 8,
+      bodyFontSize: 9,
+    });
+  };
+
   return (
     <div className="w-full">
       {/* top toolbar */}
@@ -295,12 +329,22 @@ export function EndClientTable() {
           className="w-full max-w-sm sm:max-w-xs"
         />
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-center">
+          {table.getFilteredSelectedRowModel().rows.length > 0 && (
+            <Button
+              variant="default"
+              className="w-full sm:w-auto"
+              onClick={handleDownloadPDF}
+            >
+              <Download className="mr-2 h-4 w-4" />
+              Download PDF ({table.getFilteredSelectedRowModel().rows.length})
+            </Button>
+          )}
           <Button
             variant="outline"
             className="w-full sm:w-auto"
-            onClick={() => navigate("/warehouse/create")}
+            onClick={() => navigate("/add-end-client")}
           >
-            Add Warehouse
+            Add End Client 
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

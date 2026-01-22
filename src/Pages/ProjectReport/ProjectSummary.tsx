@@ -1,6 +1,6 @@
 import { apiClient } from "@/utils/apiClient";
 import axios, { AxiosError } from "axios";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import PageHeader from "@/components/ui/PageHeader";
 import {
@@ -23,6 +23,7 @@ import {
 } from "recharts";
 import type { TooltipProps } from "recharts";
 import { useParams } from "react-router-dom";
+import * as d3 from "d3";
 
 export interface FirstLine {
   total_manpower: number;
@@ -35,10 +36,11 @@ type ProductionOverviewDate = {
   name: string;
 };
 
-export interface QcOverviewData {
-  [key: string]: number | string;
-  name: string;
-}
+type QcRadialDatum = {
+  stage: string;
+  status: string;
+  count: number;
+};
 
 export interface elementOverviewData {
   [key: string]: number | string;
@@ -189,16 +191,9 @@ const getErrorMessage = (error: AxiosError | unknown, data: string): string => {
 
 export default function ProjectSummary() {
   const { projectId } = useParams();
-  const [labourDays, setLabourDays] = useState<FirstLine>({
-    total_skills: 0,
-    total_vendors: 0,
-    total_manpower: 0,
-  });
   const [productionOverviewDate, setProductionOverviewDate] = useState<
     ProductionOverviewDate[]
   >([]);
-  // qc overview data
-  const [qcOverviewData, setQcOverviewData] = useState<QcOverviewData[]>([]);
   // element overview data
   const [elementOverviewData, setElementOverviewData] = useState<
     elementOverviewData[]
@@ -213,6 +208,12 @@ export default function ProjectSummary() {
   >([]);
   // steel usage data
   const [steelUsageData, setSteelUsageData] = useState<SteelUsageData[]>([]);
+
+  // QC radial chart state
+  const qcChartHostRef = useRef<HTMLDivElement | null>(null);
+  const [qcRadialRows, setQcRadialRows] = useState<QcRadialDatum[] | null>(null);
+  const [qcRadialLoading, setQcRadialLoading] = useState(false);
+  const [qcRadialError, setQcRadialError] = useState<string | null>(null);
 
   // Date Filter State
   const [dateFilter, setDateFilter] = useState<{
@@ -290,71 +291,6 @@ export default function ProjectSummary() {
       return item;
     });
   }, [productionOverviewDate, dateFilter.type]);
-
-  // qc overview data keys
-  const qcOverviewDataKeys = useMemo(() => {
-    if (!qcOverviewData || qcOverviewData.length === 0) return [];
-
-    const sample = qcOverviewData[0];
-    const excludedKeys = [
-      "name",
-      "day",
-      "total_concrete_balance",
-      "total_concrete_required",
-      "total_concrete_used",
-    ];
-    return Object.keys(sample).filter((key) => !excludedKeys.includes(key));
-  }, [qcOverviewData]);
-
-  const qcOverviewDataChartData = useMemo(() => {
-    if (!qcOverviewData || qcOverviewData.length === 0) {
-      return [];
-    }
-
-    // Format dates based on filter type
-    return qcOverviewData.map((item) => {
-      const nameStr = String(item.name || "");
-
-      // Check if name is a date range (for monthly type): "YYYY-MM-DD to YYYY-MM-DD"
-      if (
-        dateFilter.type === "monthly" &&
-        /^\d{4}-\d{2}-\d{2}\s+to\s+\d{4}-\d{2}-\d{2}$/.test(nameStr)
-      ) {
-        return {
-          ...item,
-          name: formatDateRange(nameStr),
-        };
-      }
-
-      // Check if name is a date string (YYYY-MM-DD format) and format it
-      if (/^\d{4}-\d{2}-\d{2}$/.test(nameStr)) {
-        const date = new Date(nameStr);
-        if (!isNaN(date.getTime())) {
-          const day = date.getDate();
-          const monthNames = [
-            "Jan",
-            "Feb",
-            "Mar",
-            "Apr",
-            "May",
-            "Jun",
-            "Jul",
-            "Aug",
-            "Sep",
-            "Oct",
-            "Nov",
-            "Dec",
-          ];
-          const month = monthNames[date.getMonth()];
-          return {
-            ...item,
-            name: `${day} ${month}`,
-          };
-        }
-      }
-      return item;
-    });
-  }, [qcOverviewData, dateFilter.type]);
 
   // human overview data keys
   const humanOverviewDataKeys = useMemo(() => {
@@ -479,6 +415,13 @@ export default function ProjectSummary() {
     const sample = steelUsageData[0];
     return Object.keys(sample).filter((key) => key !== "name" && key !== "day");
   }, [steelUsageData]);
+
+  const qcRadialNormalized = useMemo(() => {
+    if (!qcRadialRows) return [];
+    return [...qcRadialRows].sort((a, b) =>
+      a.stage === b.stage ? a.status.localeCompare(b.status) : a.stage.localeCompare(b.stage)
+    );
+  }, [qcRadialRows]);
 
   const steelUsageDataChartData = useMemo(() => {
     if (!steelUsageData || steelUsageData.length === 0) {
@@ -611,37 +554,282 @@ export default function ProjectSummary() {
     return params;
   }, [dateFilter]);
 
-  //   fetch labour days
+  // fetch QC stagewise radial data (independent from QcChart.tsx)
   useEffect(() => {
+    if (!projectId) return;
+
     const source = axios.CancelToken.source();
 
-    const fetchLabourDays = async () => {
+    const fetchQcStagewiseRadialData = async () => {
       try {
-        const response = await apiClient.get(
-          `/manpower/dashboard?${buildQueryParams()}`,
-          {
-            cancelToken: source.token,
-          }
-        );
+        setQcRadialLoading(true);
+        setQcRadialError(null);
 
-        if (response.status === 200) {
-          setLabourDays(response.data);
+        const response = await apiClient.get<{
+          data: { stage: string; status: string; count: number }[];
+        }>(`/qc_reports_stagewise/${projectId}?${buildQueryParams()}`, {
+          cancelToken: source.token,
+        });
+
+        if (response.status === 200 && Array.isArray(response.data?.data)) {
+          const rows = response.data.data.map((r) => ({
+            stage: String(r.stage)
+              .replace(/_/g, " ")
+              .replace(/\s*&\s*/g, " & ")
+              .replace(/\s+/g, " ")
+              .trim(),
+            status: String(r.status),
+            count: Number(r.count ?? 0),
+          }));
+          setQcRadialRows(rows);
         } else {
-          toast.error(response.data?.message || "Failed to fetch labour days");
+          setQcRadialRows([]);
+          toast.error(
+            // @ts-expect-error backend shape
+            response.data?.message || "Failed to fetch qc stagewise data"
+          );
         }
       } catch (err: unknown) {
         if (!axios.isCancel(err)) {
-          toast.error(getErrorMessage(err, "labour days data"));
+          setQcRadialError(getErrorMessage(err as AxiosError, "qc stagewise data"));
         }
+      } finally {
+        setQcRadialLoading(false);
       }
     };
 
-    fetchLabourDays();
+    fetchQcStagewiseRadialData();
 
     return () => {
       source.cancel();
     };
-  }, [dateFilter, buildQueryParams]);
+  }, [projectId, buildQueryParams]);
+
+  // render QC radial chart with D3
+  useEffect(() => {
+    const host = qcChartHostRef.current;
+    if (!host) return;
+
+    if (!qcRadialNormalized.length) {
+      host.innerHTML = "";
+      return;
+    }
+
+    host.innerHTML = "";
+
+    const width = 600;
+    const height = width;
+    const innerRadius = 120;
+    const outerRadius = Math.min(width, height) / 2;
+
+    const stages = Array.from(new Set(qcRadialNormalized.map((d) => d.stage)));
+    const statuses = Array.from(new Set(qcRadialNormalized.map((d) => d.status)));
+
+    type StageStatusIndex = d3.InternMap<
+      string,
+      d3.InternMap<string, QcRadialDatum>
+    >;
+    type StackDatum = readonly [string, d3.InternMap<string, QcRadialDatum>];
+    type StackSeries = d3.Series<StackDatum, string>;
+    type StackPoint = d3.SeriesPoint<StackDatum> & { key: string };
+
+    const series: StackSeries[] = d3
+      .stack<StackDatum, string>()
+      .keys(statuses)
+      .value(([, byStatus], key) => byStatus.get(key)?.count ?? 0)(
+      d3.index(
+        qcRadialNormalized,
+        (d) => d.stage,
+        (d) => d.status
+      ) as StageStatusIndex
+    );
+
+    const x = d3
+      .scaleBand<string>()
+      .domain(stages)
+      .range([0, 2 * Math.PI])
+      .align(0);
+
+    const y = d3
+      .scaleRadial()
+      .domain([0, d3.max(series, (s) => d3.max(s, (p) => p[1]) ?? 0) ?? 0])
+      .range([innerRadius, outerRadius]);
+
+    const isDark =
+      typeof document !== "undefined" &&
+      document.documentElement.classList.contains("dark");
+
+    const basePalette = isDark ? d3.schemeTableau10 : d3.schemeSet2;
+
+    const statusColorMap: Record<string, string> = {
+      approved: "#15803d", // dark green
+      hold: "#b45309", // dark amber
+      pending: "#1d4ed8", // dark blue
+    };
+
+    const colorRange = statuses.map((s, i) => {
+      const key = String(s).toLowerCase();
+      if (statusColorMap[key]) return statusColorMap[key];
+      if (basePalette && basePalette.length) {
+        return basePalette[i % basePalette.length]!;
+      }
+      return "#3b82f6";
+    });
+
+    const color = d3
+      .scaleOrdinal<string, string>()
+      .domain(statuses)
+      .range(colorRange)
+      .unknown(isDark ? "#4b5563" : "#9ca3af");
+
+    const arc = d3
+      .arc<StackPoint>()
+      .innerRadius((d) => y(d[0]))
+      .outerRadius((d) => y(d[1]))
+      .startAngle((d) => x(d.data[0]) ?? 0)
+      .endAngle((d) => (x(d.data[0]) ?? 0) + x.bandwidth())
+      .padAngle(1.5 / innerRadius)
+      .padRadius(innerRadius);
+
+    const svg = d3
+      .create("svg")
+      .attr("width", width)
+      .attr("height", height)
+      .attr("viewBox", [-width / 2, -height / 2, width, height].join(" "))
+      .attr(
+        "style",
+        "width: 100%; height: auto; max-width: 600px; font: 9px Lexend, sans-serif; overflow: visible;"
+      );
+
+    svg
+      .append("g")
+      .selectAll("g")
+      .data(series)
+      .join("g")
+      .attr("fill", (d) => color(d.key))
+      .selectAll("path")
+      .data((S) => S.map((p) => Object.assign(p, { key: S.key } as const)))
+      .join("path")
+      .attr("d", arc)
+      .append("title")
+      .text((d) => {
+        const stage = d.data[0];
+        const key = d.key;
+        const val = d.data[1].get(key)?.count ?? 0;
+        return `${stage} ${key}\n${val.toLocaleString("en")}`;
+      });
+
+    svg
+      .append("g")
+      .attr("text-anchor", "middle")
+      .selectAll("g")
+      .data(x.domain())
+      .join("g")
+      .attr(
+        "transform",
+        (d) => `
+          rotate(${(((x(d) ?? 0) + x.bandwidth() / 2) * 180) / Math.PI - 90})
+          translate(${innerRadius},0)
+        `
+      )
+      .call((g) =>
+        g
+          .append("line")
+          .attr("x2", -5)
+          .attr("stroke", "currentColor")
+          .attr("opacity", 0.7)
+      )
+      .call((g) =>
+        g
+          .append("text")
+          .attr("fill", "currentColor")
+          .attr(
+            "transform",
+            (d) =>
+              (((x(d) ?? 0) + x.bandwidth() / 2 + Math.PI / 2) % (2 * Math.PI)) <
+              Math.PI
+                ? "rotate(90)translate(0,16)"
+                : "rotate(-90)translate(0,-9)"
+          )
+          .text((d) => d)
+      );
+
+    svg
+      .append("g")
+      .attr("text-anchor", "middle")
+      .call((g) =>
+        g
+          .append("text")
+          .attr("y", -y(y.ticks(5).pop() ?? 0))
+          .attr("dy", "-1em")
+          .attr("font-weight", 600)
+          .attr("fill", "currentColor")
+          .text("Count")
+      )
+      .call((g) => {
+        const ticks = y.ticks(5);
+        
+        // Render all tick circles
+        g.selectAll("g")
+          .data(ticks.slice(1))
+          .join("g")
+          .attr("fill", "none")
+          .call((gg) =>
+            gg
+              .append("circle")
+              .attr("stroke", "currentColor")
+              .attr("stroke-opacity", 0.3)
+              .attr("stroke-width", 1)
+              .attr("r", y)
+          )
+          .call((gg) =>
+            gg
+              .append("text")
+              .attr("y", (d) => -y(d))
+              .attr("dy", "0.35em")
+              .attr("stroke", "currentColor")
+              .attr("stroke-opacity", 0.25)
+              .attr("stroke-width", 1)
+              .text(y.tickFormat(5, "s"))
+              .clone(true)
+              .attr("fill", "currentColor")
+              .attr("stroke", "none")
+          );
+        
+        // Explicitly render the outermost circle at max value to ensure visibility
+        g.append("circle")
+          .attr("stroke", "currentColor")
+          .attr("stroke-opacity", 0.3)
+          .attr("stroke-width", 1)
+          .attr("r", outerRadius)
+          .attr("fill", "none");
+      });
+
+    svg
+      .append("g")
+      .selectAll("g")
+      .data(color.domain())
+      .join("g")
+      .attr(
+        "transform",
+        (_d, i, nodes) =>
+          `translate(-40,${((nodes.length ?? 0) / 2 - i - 1) * 20})`
+      )
+      .call((g) =>
+        g.append("rect").attr("width", 18).attr("height", 18).attr("fill", color)
+      )
+      .call((g) =>
+        g
+          .append("text")
+          .attr("x", 24)
+          .attr("y", 9)
+          .attr("dy", "0.35em")
+          .attr("fill", "currentColor")
+          .text((d) => d)
+      );
+
+    host.appendChild(svg.node() as SVGSVGElement);
+  }, [qcRadialNormalized]);
 
   //   fetch Production Overview
   useEffect(() => {
@@ -676,40 +864,6 @@ export default function ProjectSummary() {
       source.cancel();
     };
   }, [dateFilter, buildQueryParams]);
-
-  //   fetch Qc Overview
-  useEffect(() => {
-    const source = axios.CancelToken.source();
-
-    const fetchQcOverviewData = async () => {
-      try {
-        const response = await apiClient.get(
-          `/qc_reports/${projectId}?${buildQueryParams()}`,
-          {
-            cancelToken: source.token,
-          }
-        );
-
-        if (response.status === 200) {
-          setQcOverviewData(response.data);
-        } else {
-          toast.error(
-            response.data?.message || "Failed to fetch qc overview data"
-          );
-        }
-      } catch (err: unknown) {
-        if (!axios.isCancel(err)) {
-          toast.error(getErrorMessage(err, "qc overview data"));
-        }
-      }
-    };
-
-    fetchQcOverviewData();
-
-    return () => {
-      source.cancel();
-    };
-  }, [dateFilter]);
 
   //   fetch Element Overview
   useEffect(() => {
@@ -1004,90 +1158,36 @@ export default function ProjectSummary() {
           <CardHeader className="space-y-1">
             <CardTitle className="text-lg md:text-xl">QC Overview</CardTitle>
             <CardDescription className="text-sm">
-              {dateFilter.type === "yearly"
-                ? "Monthly quality control distribution by element. X-axis shows month names."
-                : dateFilter.type === "weekly"
-                ? "Daily quality control distribution by element. X-axis shows dates."
-                : "Date range quality control distribution by element. X-axis shows date ranges."}
+              Stagewise QC distribution (approved/hold/pending) for the selected
+              period.
             </CardDescription>
           </CardHeader>
 
           <CardContent>
-            {qcOverviewDataChartData.length ? (
-              <>
-                {qcOverviewDataKeys.length > 0 && (
-                  <div className="mb-4 w-full overflow-x-auto">
-                    <div className="flex flex-wrap gap-3 pb-2">
-                      {qcOverviewDataKeys.map((key, index) => (
-                        <div
-                          key={key}
-                          className="flex items-center gap-2 text-xs md:text-sm text-muted-foreground"
-                        >
-                          <span
-                            className="h-2 w-2 rounded-full flex-shrink-0"
-                            style={{
-                              backgroundColor:
-                                labourColors[index % labourColors.length],
-                            }}
-                          />
-                          <span
-                            className="whitespace-normal break-words"
-                            title={key}
-                          >
-                            {key}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
+            {!projectId && (
+              <p className="text-sm text-foreground">Missing project id.</p>
+            )}
+            {projectId && (
+              <div className="flex justify-center text-primary">
+                {qcRadialLoading && (
+                  <div className="text-sm text-foreground">
+                    Loading chart…
                   </div>
                 )}
-
-                <div className="w-full overflow-x-auto overflow-y-hidden pb-2">
-                  <div className="h-[480px] min-w-[720px] md:min-w-0 md:w-full">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={qcOverviewDataChartData}>
-                        <CartesianGrid
-                          strokeDasharray="3 3"
-                          vertical={false}
-                          className="stroke-muted"
-                        />
-                        <XAxis
-                          dataKey="name"
-                          tickLine={false}
-                          axisLine={false}
-                          tickMargin={8}
-                          angle={dateFilter.type === "monthly" ? -45 : 0}
-                          textAnchor={
-                            dateFilter.type === "monthly" ? "end" : "middle"
-                          }
-                          height={dateFilter.type === "monthly" ? 60 : 30}
-                        />
-                        <YAxis
-                          allowDecimals={false}
-                          tickLine={false}
-                          axisLine={false}
-                        />
-                        <Tooltip content={<LabourTooltip />} />
-                        {qcOverviewDataKeys.map((key, index) => (
-                          <Line
-                            key={key}
-                            type="monotone"
-                            dataKey={key}
-                            stroke={labourColors[index % labourColors.length]}
-                            strokeWidth={2}
-                            dot={{ r: 4 }}
-                            activeDot={{ r: 6 }}
-                          />
-                        ))}
-                      </LineChart>
-                    </ResponsiveContainer>
+                {!qcRadialLoading && qcRadialError && (
+                  <div className="text-sm text-destructive">
+                    Failed to load QC chart.
                   </div>
-                </div>
-              </>
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                No qc overview data available for this period.
-              </p>
+                )}
+                {!qcRadialLoading &&
+                  !qcRadialError &&
+                  !qcRadialNormalized.length && (
+                    <div className="text-sm text-foreground">
+                      No qc data available.
+                    </div>
+                  )}
+                <div ref={qcChartHostRef} className="flex justify-center text-foreground" />
+              </div>
             )}
           </CardContent>
         </Card>

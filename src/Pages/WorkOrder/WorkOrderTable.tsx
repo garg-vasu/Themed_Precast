@@ -431,9 +431,9 @@ export function WorkOrderTable() {
           <Button
             variant="outline"
             className="w-full sm:w-auto"
-            onClick={() => navigate("/warehouse/create")}
+            onClick={() => navigate("/add-work-order")}
           >
-            Add Warehouse
+            Add Work Order
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

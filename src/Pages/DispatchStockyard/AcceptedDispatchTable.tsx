@@ -45,6 +45,14 @@ import autoTable from "jspdf-autotable";
 import { formatDisplayDate } from "@/utils/formatdate";
 import { useParams } from "react-router";
 import PageHeader from "@/components/ui/PageHeader";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import ItemDialog from "../DispatchReceving/ItemDialog";
+import { generatePDFFromTable } from "@/utils/pdfGenerator";
 
 export type AcceptedDispatch = {
   id: number;
@@ -64,6 +72,33 @@ type Item = {
   element_type_name: string;
   weight: number;
 };
+
+function ViewItemsButton({ dispatchLog }: { dispatchLog: AcceptedDispatch }) {
+  const [isItemsDialogOpen, setIsItemsDialogOpen] = useState(false);
+
+  return (
+    <>
+      <Button
+        variant="link"
+        className="h-auto p-0 text-primary"
+        onClick={() => setIsItemsDialogOpen(true)}
+      >
+        View Items ({dispatchLog.items?.length || 0})
+      </Button>
+      <Dialog open={isItemsDialogOpen} onOpenChange={setIsItemsDialogOpen}>
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Items - {dispatchLog.dispatch_order_id}</DialogTitle>
+          </DialogHeader>
+          <ItemDialog
+            items={dispatchLog.items || []}
+            onClose={() => setIsItemsDialogOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
 
 const getColumns = (
   setDownloading: React.Dispatch<React.SetStateAction<Record<number, boolean>>>
@@ -105,6 +140,21 @@ const getColumns = (
     cell: ({ row }) => (
       <div className="capitalize">{row.getValue("project_name")}</div>
     ),
+  },
+  
+   {
+    accessorKey: "item count",
+    header: "Item Count",
+    cell: ({ row }) => (
+      <div className="capitalize">{row.original.items?.length || 0}</div>
+    ),
+  },
+  {
+    id: "view_items",
+    header: "Items",
+    cell: ({ row }) => {
+      return <ViewItemsButton dispatchLog={row.original} />;
+    },
   },
   {
     accessorKey: "dispatch_date",
@@ -278,17 +328,17 @@ export function AcceptedDispatchTable() {
           setData(
             response.data.filter(
               (item: AcceptedDispatch) =>
-                item.current_status.toLowerCase() === "accepted"
+                item.current_status.toLowerCase() === "dispatched"
             )
           );
         } else {
           toast.error(
-            response.data?.message || "Failed to fetch accepted dispatch"
+            response.data?.message || "Failed to fetch dispatch order data"
           );
         }
       } catch (err: unknown) {
         if (!axios.isCancel(err)) {
-          toast.error(getErrorMessage(err, "accepted dispatch data"));
+          toast.error(getErrorMessage(err, "dispatch order data"));
         }
       }
     };
@@ -322,70 +372,27 @@ export function AcceptedDispatchTable() {
   const handleDownloadPDF = () => {
     const selectedRows = table.getFilteredSelectedRowModel().rows;
 
-    if (selectedRows.length === 0) {
-      toast.error("Please select at least one row to download");
-      return;
-    }
-
-    try {
-      const doc = new jsPDF();
-
-      // Add title
-      doc.setFontSize(18);
-      doc.text("Accepted Dispatch Orders Report", 14, 20);
-
-      // Add date
-      doc.setFontSize(10);
-      doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 30);
-
-      // Prepare table data with all columns
-      const tableData = selectedRows.map((row) => {
-        const dispatch = row.original;
+    generatePDFFromTable({
+      selectedRows,
+      title: "Accepted Dispatch Report",
+      headers: ["Dispatch Order ID", "Project Name", "Dispatch Date", "Action At"],
+      dataMapper: (row): string[] => {
+        const acceptedDispatch = row.original as AcceptedDispatch & { Action_at?: string };
         return [
-          dispatch.dispatch_order_id || "—",
-          dispatch.project_name || "—",
-          dispatch.driver_name || "—",
-          dispatch.vehicle_id?.toString() || "—",
-          dispatch.items?.length?.toString() || "0",
-          dispatch.current_status || "—",
-          formatDisplayDate(dispatch.dispatch_date) || "—",
+          acceptedDispatch.dispatch_order_id || "—",
+          acceptedDispatch.project_name || "—",
+          formatDisplayDate(acceptedDispatch.dispatch_date),
+          formatDisplayDate(acceptedDispatch.Action_at),
         ];
-      });
-
-      // Prepare headers
-      const headers = [
-        "Dispatch Order ID",
-        "Project Name",
-        "Driver Name",
-        "Vehicle ID",
-        "Item Count",
-        "Status",
-        "Dispatch Date",
-      ];
-
-      // Add table with all column headers
-      autoTable(doc, {
-        head: [headers],
-        body: tableData,
-        startY: 40,
-        styles: { fontSize: 7, cellPadding: 2 },
-        headStyles: { fillColor: [59, 130, 246], fontSize: 8 }, // Blue header
-        alternateRowStyles: { fillColor: [245, 247, 250] },
-      });
-
-      // Save the PDF
-      const fileName = `accepted-dispatch-orders-report-${
-        new Date().toISOString().split("T")[0]
-      }.pdf`;
-      doc.save(fileName);
-
-      toast.success(
-        `PDF downloaded successfully with ${selectedRows.length} dispatch order(s)`
-      );
-    } catch (error) {
-      console.error("Error generating PDF:", error);
-      toast.error("Failed to generate PDF. Please try again.");
-    }
+      },
+      fileName: `accepted-dispatch-report-${new Date().toISOString().split("T")[0]}.pdf`,
+      successMessage: "PDF downloaded successfully with {count} accepted dispatch(s)",
+      emptySelectionMessage: "Please select at least one row to download",
+      titleFontSize: 24,
+      headerColor: "#283C6E",
+      headerHeight: 8,
+      bodyFontSize: 9,
+    });
   };
 
   return (

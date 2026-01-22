@@ -46,6 +46,7 @@ import { useNavigate } from "react-router";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { formatDisplayDate } from "@/utils/formatdate";
+import { generatePDFFromTable } from "@/utils/pdfGenerator";
 
 export type User = {
   id: number;
@@ -199,36 +200,36 @@ export const columns: ColumnDef<User>[] = [
     },
   },
 
-  {
-    id: "actions",
-    enableHiding: false,
-    cell: ({ row }) => {
-      const payment = row.original;
-      const navigate = useNavigate();
+  // {
+  //   id: "actions",
+  //   enableHiding: false,
+  //   cell: ({ row }) => {
+  //     const payment = row.original;
+  //     const navigate = useNavigate();
 
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <MoreHorizontal />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem
-              onClick={() => navigate(`/user-detail/${payment.id}`)}
-            >
-              View User
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>View customer</DropdownMenuItem>
-            <DropdownMenuItem>View payment details</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      );
-    },
-  },
+  //     return (
+  //       <DropdownMenu>
+  //         <DropdownMenuTrigger asChild>
+  //           <Button variant="ghost" className="h-8 w-8 p-0">
+  //             <span className="sr-only">Open menu</span>
+  //             <MoreHorizontal />
+  //           </Button>
+  //         </DropdownMenuTrigger>
+  //         <DropdownMenuContent align="end">
+  //           <DropdownMenuLabel>Actions</DropdownMenuLabel>
+  //           <DropdownMenuItem
+  //             onClick={() => navigate(`/user-detail/${payment.id}`)}
+  //           >
+  //             View User
+  //           </DropdownMenuItem>
+  //           <DropdownMenuSeparator />
+  //           <DropdownMenuItem>View customer</DropdownMenuItem>
+  //           <DropdownMenuItem>View payment details</DropdownMenuItem>
+  //         </DropdownMenuContent>
+  //       </DropdownMenu>
+  //     );
+  //   },
+  // },
 ];
 
 const getErrorMessage = (error: AxiosError | unknown, data: string): string => {
@@ -302,81 +303,33 @@ export function UserTable() {
     },
   });
 
-  const handleDownloadPDF = () => {
+ const handleDownloadPDF = () => {
     const selectedRows = table.getFilteredSelectedRowModel().rows;
 
-    if (selectedRows.length === 0) {
-      toast.error("Please select at least one row to download");
-      return;
-    }
-
-    try {
-      const doc = new jsPDF();
-
-      // Add title
-      doc.setFontSize(18);
-      doc.text("Users Report", 14, 20);
-
-      // Add date
-      doc.setFontSize(10);
-      doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 30);
-
-      // Prepare table data
-      const tableData = selectedRows.map((row) => {
-        const user = row.original;
-        const name =
-          `${user.first_name ?? ""} ${user.last_name ?? ""}`.trim() ||
-          "Unknown";
-        const phone = user.phone_code
-          ? `${user.phone_code} ${user.phone_no ?? ""}`
-          : user.phone_no ?? "—";
-        const location =
-          [user.city, user.country].filter(Boolean).join(", ") || "—";
-
+    generatePDFFromTable({
+      selectedRows,
+      title: "User Report",
+      headers: ["First Name", "Last Name", "Email", "Phone", "Address", "Role"],
+      dataMapper: (row): string[] => {
+        const user = row.original as User;
         return [
-          name,
+          user.first_name || "—",
+          user.last_name || "—",
           user.email || "—",
-          phone,
+          user.phone_no || "—",
           user.address || "—",
-          location,
           user.role_name || "—",
-          formatDisplayDate(user.created_at),
+          
         ];
-      });
-
-      // Add table
-      autoTable(doc, {
-        head: [
-          [
-            "Name",
-            "Email",
-            "Phone",
-            "Address",
-            "Location",
-            "Role",
-            "Created At",
-          ],
-        ],
-        body: tableData,
-        startY: 40,
-        styles: { fontSize: 9 },
-        headStyles: { fillColor: [59, 130, 246] }, // Blue header
-        alternateRowStyles: { fillColor: [245, 247, 250] },
-      });
-
-      // Save the PDF
-      const fileName = `users-report-${
-        new Date().toISOString().split("T")[0]
-      }.pdf`;
-      doc.save(fileName);
-
-      toast.success(
-        `PDF downloaded successfully with ${selectedRows.length} user(s)`
-      );
-    } catch (error) {
-      console.error("Error generating PDF:", error);
-      toast.error("Failed to generate PDF. Please try again.");
-    }
+      },
+      fileName: `user-report-${new Date().toISOString().split("T")[0]}.pdf`,
+      successMessage: "PDF downloaded successfully with {count} user(s)",
+      emptySelectionMessage: "Please select at least one row to download",
+      titleFontSize: 24,
+      headerColor: "#283C6E",
+      headerHeight: 8,  
+      bodyFontSize: 9,
+    });
   };
 
   return (

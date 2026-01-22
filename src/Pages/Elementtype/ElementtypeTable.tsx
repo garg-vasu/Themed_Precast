@@ -9,7 +9,7 @@ import {
   type SortingState,
   type VisibilityState,
 } from "@tanstack/react-table";
-import { ChevronDown, MoreHorizontal } from "lucide-react";
+import { ChevronDown, Download, MoreHorizontal } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -47,6 +47,8 @@ import type { FilterStateElementtype } from "./ElementtypeFilter";
 import ElementtypeFilter from "./ElementtypeFilter";
 import { Dialog, DialogTrigger, DialogContent } from "@/components/ui/dialog";
 import ElementDrawing from "./ElementDrawing";
+import { formatDisplayDate } from "@/utils/formatdate";
+import { generatePDFFromTable } from "@/utils/pdfGenerator";
 
 export type File = {
   drawing_id: number;
@@ -435,6 +437,49 @@ export function ElementtypeTable() {
     },
   });
 
+   const handleDownloadPDF = () => {
+    const selectedRows = table.getFilteredSelectedRowModel().rows;
+
+    generatePDFFromTable({
+      selectedRows,
+      title: "Element Type Report",
+      headers: [
+        "Ele. Type",
+        "Type Name",
+        "Total Count",
+        "Production",
+        "Stockyard",
+        "Request",
+        "Dispatch",
+        "Erection",
+        "Tower",
+       
+      ],
+      dataMapper: (row): string[] => {
+        const elementType = row.original as Elementtype;
+        return [
+          elementType.element_type || "—",
+          elementType.element_type_name || "—",
+          elementType.quantity?.toString() || "0",
+          elementType.production_count?.toString() || "0",
+          elementType.stockyard_count?.toString() || "0",
+          elementType.in_request_count?.toString() || "0",
+          elementType.dispatch_count?.toString() || "0",
+          elementType.erection_count?.toString() || "0",
+          elementType.tower_name || "—",
+        
+        ];
+      },
+      fileName: `element-type-report-${new Date().toISOString().split("T")[0]}.pdf`,
+      successMessage: "PDF downloaded successfully with {count} element type(s)",
+      emptySelectionMessage: "Please select at least one row to download",
+      titleFontSize: 24,
+      headerColor: "#283C6E",
+      headerHeight: 8,
+      bodyFontSize: 7,
+    });
+  };
+
   return (
     <div className="w-full">
       {/* top toolbar */}
@@ -464,6 +509,16 @@ export function ElementtypeTable() {
           {hasActiveFilters() && (
             <Button variant="outline" onClick={clearAllFilters}>
               Clear Filters
+            </Button>
+          )}
+          {table.getFilteredSelectedRowModel().rows.length > 0 && (
+            <Button
+              variant="default"
+              className="w-full sm:w-auto"
+              onClick={handleDownloadPDF}
+            >
+              <Download className="mr-2 h-4 w-4" />
+              Download PDF ({table.getFilteredSelectedRowModel().rows.length})
             </Button>
           )}
           <DropdownMenu>
