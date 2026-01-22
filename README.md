@@ -1,73 +1,176 @@
-# React + TypeScript + Vite
+# Precast Management System - Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A modern web application for managing precast concrete manufacturing operations, built with React, TypeScript, and Vite.
 
-Currently, two official plugins are available:
+## Overview
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+This frontend application provides a comprehensive interface for managing all aspects of precast concrete manufacturing, including project management, element tracking, work orders, dispatch operations, and more.
 
-## React Compiler
+## Tech Stack
 
-The React Compiler is currently not compatible with SWC. See [this issue](https://github.com/vitejs/vite-plugin-react/issues/428) for tracking the progress.
+- **Framework:** React 19
+- **Language:** TypeScript
+- **Build Tool:** Vite 7
+- **Styling:** Tailwind CSS 4
+- **UI Components:** Radix UI + shadcn/ui
+- **State Management:** React Context
+- **Forms:** React Hook Form + Zod validation
+- **Data Tables:** TanStack Table
+- **Charts:** Recharts + D3
+- **HTTP Client:** Axios
+- **Routing:** React Router 7
+- **PDF Generation:** jsPDF
 
-## Expanding the ESLint configuration
+## Features
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### Project Management
+- Multi-project dashboard
+- Project hierarchy (Towers, Floors)
+- Project reports and summaries
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+### Element Management
+- Element Type configuration
+- Element tracking
+- BOM (Bill of Materials) management
+- Template export (Excel/CSV)
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+### Work Orders
+- Work order creation and tracking
+- Stage-based workflow management
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### Dispatch & Receiving
+- Dispatch scheduling
+- In-transit tracking
+- Delivery confirmation
+- Stockyard management
+
+### Quality Control
+- QC reporting and charts
+- Inspection tracking
+
+### Additional Modules
+- User management
+- Attendance tracking
+- Drawing management
+- Invoice management
+- Tenant management
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js 18+ 
+- npm or yarn
+
+### Installation
+
+1. Clone the repository:
+```bash
+git clone <repository-url>
+cd precastfront
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+2. Install dependencies:
+```bash
+npm install
 ```
+
+3. Create environment file:
+```bash
+cp .env.example .env
+```
+
+4. Configure environment variables:
+```env
+VITE_BASE_URL=<your-api-base-url>
+```
+
+### Development
+
+Start the development server:
+```bash
+npm run dev
+```
+
+The application will be available at `http://localhost:9000`
+
+### Build
+
+Build for production:
+```bash
+npm run build
+```
+
+Preview production build:
+```bash
+npm run preview
+```
+
+### Linting
+
+Run ESLint:
+```bash
+npm run lint
+```
+
+## Project Structure
+
+```
+src/
+├── components/          # Reusable UI components
+│   ├── ui/             # Base UI components (shadcn/ui)
+│   └── ...             # Feature-specific components
+├── hooks/              # Custom React hooks
+├── Layout/             # Main layout components
+├── lib/                # Utility functions
+├── Pages/              # Page components
+│   ├── Attendance/
+│   ├── Bom/
+│   ├── Department/
+│   ├── DispatchReceving/
+│   ├── DispatchStockyard/
+│   ├── Drawing/
+│   ├── Element/
+│   ├── Elementtype/
+│   ├── Invoice/
+│   ├── People/
+│   ├── Projects/
+│   ├── Users/
+│   ├── WorkOrder/
+│   └── ...
+├── ProjectLayout/      # Project-specific layout
+├── Provider/           # React Context providers
+├── types/              # TypeScript type definitions
+├── utils/              # Utility functions
+│   ├── apiClient.ts    # Axios instance configuration
+│   └── ...
+├── Routes.tsx          # Application routing
+├── App.tsx             # Root component
+└── main.tsx            # Application entry point
+```
+
+## Environment Variables
+
+| Variable | Description |
+|----------|-------------|
+| `VITE_BASE_URL` | Backend API base URL |
+
+## Scripts
+
+| Script | Description |
+|--------|-------------|
+| `npm run dev` | Start development server |
+| `npm run build` | Build for production |
+| `npm run preview` | Preview production build |
+| `npm run lint` | Run ESLint |
+
+## Contributing
+
+1. Create a feature branch from `main`
+2. Make your changes
+3. Ensure linting passes
+4. Submit a pull request
+
+## License
+
+Private - All rights reserved
