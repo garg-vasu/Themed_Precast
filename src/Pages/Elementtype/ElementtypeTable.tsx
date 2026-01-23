@@ -265,6 +265,8 @@ export const columns: ColumnDef<Elementtype>[] = [
     id: "actions",
     enableHiding: false,
     cell: ({ row }) => {
+      const navigate = useNavigate();
+      const { projectId } = useParams();
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -276,7 +278,7 @@ export const columns: ColumnDef<Elementtype>[] = [
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>Edit Element Type</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate(`/project/${projectId}/edit-element-type/${row.original.element_type_id}/${row.original.hierarchy_id}`)}>Edit Element Type</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       );

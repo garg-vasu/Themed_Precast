@@ -2,15 +2,27 @@ import {
   Home,
   Users,
   FileText,
-  ShoppingBasket,
   Calendar,
-  ShoppingBag,
   Menu,
   X,
   ChevronDown,
-  List,
   ChevronsUpDown,
   BarChart,
+  Warehouse,
+  ClipboardCheck,
+  Wrench,
+  Send,
+  Truck,
+  History,
+  Building2,
+  Settings,
+  GitBranch,
+  Layers,
+  PenTool,
+  Boxes,
+  ClipboardList,
+  PieChart,
+  UserCheck,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -194,90 +206,85 @@ export default function ProjectSidebar({
       icon: BarChart,
     },
     { name: "Plan", href: `/project/${projectId}/plan`, icon: Calendar },
-     {
+    {
       name: "Stockyard Assign",
       href: `/project/${projectId}/stockyard-assign`,
-      icon: Users,
+      icon: UserCheck,
     },
-       {
+    {
       name: "Stockyard",
       href: `/project/${projectId}/element-stockyard`,
-      icon: List,
+      icon: Warehouse,
     },
-     {
+    {
       name: "Approval",
       href: `/project/${projectId}/planning-approval`,
-      icon: FileText,
+      icon: ClipboardCheck,
     },
     {
       name: "Rectification",
       href: `/project/${projectId}/retification`,
-      icon: List,
+      icon: Wrench,
     },
-     {
+    {
       name: "Erection Request",
       href: `/project/${projectId}/errection-request`,
-      icon: List,
+      icon: Send,
     },
-     {
+    {
       name: "Dispatch",
       href: `/project/${projectId}/dispatch-log`,
-      icon: List,
+      icon: Truck,
     },
-     {
+    {
       name: "Erect Log",
       href: `/project/${projectId}/errection-receving`,
-      icon: List,
+      icon: History,
     },
-      {
+    {
       name: "Erection Element",
       href: `/project/${projectId}/erection-element`,
-      icon: List,
+      icon: Building2,
     },
-
     {
       name: "Config",
-      icon: Home,
+      icon: Settings,
       children: [
+        {
+          name: "Hierarchy",
+          href: `/project/${projectId}/hierarchy`,
+          icon: GitBranch,
+        },
         {
           name: "Members",
           href: `/project/${projectId}/member`,
-          icon: Calendar,
+          icon: Users,
         },
         {
           name: "Stages",
           href: `/project/${projectId}/stages`,
-          icon: List,
+          icon: Layers,
         },
         {
           name: "Drawing",
           href: `/project/${projectId}/drawing`,
-          icon: List,
+          icon: PenTool,
         },
         {
           name: "Element Type",
           href: `/project/${projectId}/element-type`,
-          icon: List,
+          icon: Boxes,
         },
         {
           name: "Bom",
           href: `/project/${projectId}/bom`,
-          icon: List,
+          icon: ClipboardList,
         },
       ],
     },
- 
-   
-   
-   
-    
-   
-   
-    
-  
     {
       name: "Reports",
-      icon: Home,
+      icon: PieChart,
       children: [
         {
           name: "Project Summary",
@@ -287,7 +294,7 @@ export default function ProjectSidebar({
         {
           name: "Stockyard Summary",
           href: `/project/${projectId}/stockyard-summary`,
-          icon: FileText,
+          icon: Warehouse,
         },
       ],
     },

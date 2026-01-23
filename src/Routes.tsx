@@ -66,6 +66,9 @@ import { TenantviaEndclientDashboard } from "./Pages/Projects/TenantviaEndclient
 import { QcChart } from "./Pages/ProjectReport/QcChart";
 import AddWorkOrder from "./Pages/WorkOrder/AddWorkOrder";
 import EditWorkOrder from "./Pages/WorkOrder/EditWorkOrder";
+import EditElementType from "./Pages/Elementtype/EditElementtype";
+import HierarchyTable from "./Pages/Hierarchy/HierarchyTable";
+import MixHierarchy from "./Pages/Hierarchy/MixHierarchy";
 
 
 const routes: RouteObject[] = [
@@ -178,6 +181,8 @@ const routes: RouteObject[] = [
       },
       { path: "dispatch-request", element: <RequestHandler /> },
       { path: "erection-element", element: <MixErrectedElement /> },
+      {path:"edit-element-type/:elementTypeId/:floorId", element: <EditElementType /> },
+      {path:"hierarchy", element: <MixHierarchy /> },
     
     ],
   },

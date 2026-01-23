@@ -612,7 +612,7 @@ export default function Home() {
             )}
           </CardContent>
         </Card>
-        <div className="grid grid-rows-1 md:grid-rows-2 gap-4 mt-4">
+        <div className="grid grid-rows-1 md:grid-rows-2 gap-4 ">
           {/* first column with 4 card in grid layout  */}
           <div className="grid grid-cols-2 gap-4">
             {/* first card  */}

@@ -3,14 +3,24 @@ import {
   Users,
   Settings,
   FileText,
-  ShoppingBasket,
   Calendar,
-  ShoppingBag,
   Menu,
   X,
   ChevronDown,
-  List,
   ChevronsUpDown,
+  Warehouse,
+  Building2,
+  UserCircle,
+  Receipt,
+  ClipboardList,
+  PieChart,
+  CalendarCheck,
+  Award,
+  Building,
+  LayoutTemplate,
+  ScrollText,
+  BarChart,
+  FolderKanban,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -73,52 +83,53 @@ const navigationItems: NavigationItem[] = [
       {
         name: "Overview",
         href: "/projectOverview",
-        icon: Calendar,
+        icon: BarChart,
       },
     ],
   },
   {
     name: "All Projects",
     href: "/projects",
-    icon: FileText,
+    icon: FolderKanban,
   },
   {
     name: "Store / Warehouse",
     href: "/store-warehouse",
-    icon: Users,
+    icon: Warehouse,
   },
   {
     name: "Stockyard",
     href: "/stockyard",
-    icon: Users,
+    icon: Warehouse,
   },
   {
     name: "Clients",
     href: "/tenants",
-    icon: ShoppingBasket,
+    icon: Building2,
   },
   {
     name: "End Clients",
     href: "/end-clients",
-    icon: ShoppingBag,
+    icon: UserCircle,
   },
   {
     name: "All Users",
     href: "/users",
-    icon: ShoppingBag,
+    icon: Users,
   },
   {
     name: "All Invoices",
     href: "/invoices",
-    icon: FileText,
+    icon: Receipt,
   },
   {
     name: "Work Order",
     href: "/work-order",
-    icon: FileText,
+    icon: ClipboardList,
   },
   {
     name: "Reports",
+    icon: PieChart,
     children: [
       {
         name: "Labour Summary",
@@ -128,52 +139,51 @@ const navigationItems: NavigationItem[] = [
       {
         name: "Attendance Report",
         href: "/attendance-report",
-        icon: FileText,
+        icon: CalendarCheck,
       },
     ],
-    icon: FileText,
   },
   {
     name: "Human Resource",
+    icon: Users,
     children: [
       {
         name: "Attendance",
         href: "/attendance",
-        icon: List,
+        icon: CalendarCheck,
       },
       {
         name: "Skills",
         href: "/skills",
-        icon: List,
+        icon: Award,
       },
       {
         name: "People",
         href: "/people",
-        icon: List,
+        icon: Users,
       },
       {
         name: "Departments",
         href: "/departments",
-        icon: List,
+        icon: Building,
       },
     ],
-    icon: Users,
   },
   {
     name: "Setting",
+    icon: Settings,
     children: [
       {
         name: "Templates",
         href: "/templates",
-        icon: FileText,
+        icon: LayoutTemplate,
       },
       {
         name: "Logs",
         href: "/logs",
-        icon: List,
+        icon: ScrollText,
       },
     ],
-    icon: Settings,
   },
 ];
 
