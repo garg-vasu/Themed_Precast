@@ -363,11 +363,11 @@ export default function ProjectSidebar({
           style={{ willChange: "opacity, width, transform" }}
         >
           <div className="w-8 h-8 bg-primary flex items-center justify-center rounded">
-            <span className="text-primary-foreground font-medium text-sm">
+            <span className="text-primary-foreground font-normal text-sm">
               PC
             </span>
           </div>
-          <span className="font-medium text-lg whitespace-nowrap">Precast</span>
+          <span className="font-normal text-lg whitespace-nowrap">Precast</span>
         </div>
 
         <button

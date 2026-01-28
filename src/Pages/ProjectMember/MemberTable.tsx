@@ -42,7 +42,7 @@ import { useEffect, useState } from "react";
 import axios, { AxiosError } from "axios";
 import { apiClient } from "@/utils/apiClient";
 import { toast } from "sonner";
-import { useParams } from "react-router";
+import { useNavigate, useParams } from "react-router";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
@@ -68,6 +68,7 @@ export type Member = {
   zip_code?: string;
   phone_no: string;
   role: string;
+  role_name: string;
 };
 
 const getInitials = (first?: string, last?: string) => {
@@ -113,10 +114,11 @@ export const columns: ColumnDef<Member>[] = [
       const name = `${member.first_name ?? ""} ${
         member.last_name ?? ""
       }`.trim();
-      return `${name} ${member.email} ${member.role}`.toLowerCase();
+      return `${name} ${member.email} ${member.role_name}`.toLowerCase();
     },
     cell: ({ row }) => {
-      const { first_name, last_name, profile_picture, role } = row.original;
+      const { first_name, last_name, profile_picture, role_name } =
+        row.original;
       const name = `${first_name ?? ""} ${last_name ?? ""}`.trim() || "Unknown";
       const avatarSrc = buildAvatarSrc(profile_picture);
 
@@ -131,7 +133,7 @@ export const columns: ColumnDef<Member>[] = [
           <div className="flex flex-col">
             <span className="font-medium capitalize">{name}</span>
             <span className="text-xs text-muted-foreground">
-              {role ?? "Member"}
+              {role_name ?? "Member"}
             </span>
           </div>
         </div>
@@ -160,6 +162,15 @@ export const columns: ColumnDef<Member>[] = [
     ),
   },
   {
+    id: "state",
+    header: "State  ",
+    accessorFn: (member) => member.state ?? "",
+    cell: ({ row }) => (
+      <div className="capitalize">{row.original.state ?? "—"}</div>
+    ),
+  },
+
+  {
     id: "phone_no",
     header: "Phone Number",
     accessorFn: (member) => member.phone_no ?? "",
@@ -169,9 +180,9 @@ export const columns: ColumnDef<Member>[] = [
   {
     id: "role",
     header: "Role",
-    accessorFn: (member) => member.role ?? "",
+    accessorFn: (member) => member.role_name ?? "",
     cell: ({ row }) => (
-      <div className="capitalize">{row.original.role ?? "Member"}</div>
+      <div className="capitalize">{row.original.role_name ?? "Member"}</div>
     ),
   },
 
@@ -196,6 +207,8 @@ export const columns: ColumnDef<Member>[] = [
     cell: ({ row }) => {
       const member = row.original;
 
+      const { projectId } = useParams<{ projectId: string }>();
+      const navigate = useNavigate();
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -206,30 +219,11 @@ export const columns: ColumnDef<Member>[] = [
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem
-              onClick={() => {
-                navigator.clipboard.writeText(member.email);
-                toast.success("Email copied to clipboard");
-              }}
-            >
-              Copy Email
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => {
-                if (member.phone_no) {
-                  navigator.clipboard.writeText(member.phone_no);
-                  toast.success("Phone number copied to clipboard");
-                }
-              }}
-              disabled={!member.phone_no}
-            >
-              Copy Phone
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
+
             <DropdownMenuItem
               onClick={() => {
                 // TODO: Implement edit member functionality
-                toast.info("Edit member functionality coming soon");
+                navigate(`/project/${projectId}/edit-member/${member.user_id}`);
               }}
             >
               Edit Member
@@ -268,6 +262,7 @@ const getErrorMessage = (error: AxiosError | unknown, data: string): string => {
 
 export function MemberTable() {
   const [sorting, setSorting] = useState<SortingState>([]);
+  const navigate = useNavigate();
   const { projectId } = useParams<{ projectId: string }>();
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
@@ -381,7 +376,7 @@ export function MemberTable() {
       doc.save(fileName);
 
       toast.success(
-        `PDF downloaded successfully with ${selectedRows.length} member(s)`
+        `PDF downloaded successfully with ${selectedRows.length} member(s)`,
       );
     } catch (error) {
       console.error("Error generating PDF:", error);
@@ -417,7 +412,7 @@ export function MemberTable() {
             className="w-full sm:w-auto"
             onClick={() => {
               // TODO: Implement add member functionality
-              toast.info("Add member functionality coming soon");
+              navigate(`/project/${projectId}/add-project-member`);
             }}
           >
             Add Member
@@ -462,7 +457,7 @@ export function MemberTable() {
                         ? null
                         : flexRender(
                             header.column.columnDef.header,
-                            header.getContext()
+                            header.getContext(),
                           )}
                     </TableHead>
                   );
@@ -481,7 +476,7 @@ export function MemberTable() {
                     <TableCell key={cell.id}>
                       {flexRender(
                         cell.column.columnDef.cell,
-                        cell.getContext()
+                        cell.getContext(),
                       )}
                     </TableCell>
                   ))}

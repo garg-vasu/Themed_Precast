@@ -37,6 +37,7 @@ import { apiClient } from "@/utils/apiClient";
 import { toast } from "sonner";
 import { formatDisplayDate } from "@/utils/formatdate";
 import { generatePDFFromTable } from "@/utils/pdfGenerator";
+import { useNavigate } from "react-router";
 
 export type Attendance = {
   id: number;
@@ -245,6 +246,7 @@ export function AttendanceTable() {
       filterState.selectedSkill > 0
     );
   };
+  const navigate = useNavigate();
 
   useEffect(() => {
     const source = axios.CancelToken.source();
@@ -386,6 +388,14 @@ export function AttendanceTable() {
               Clear Filters
             </Button>
           )}
+           <Button
+              variant="default"
+              className="w-full sm:w-auto"
+              onClick={() => navigate("/add-attendance")}
+            >
+              <Download className="mr-2 h-4 w-4" />
+              Mark Attendance
+            </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" className="w-full sm:w-auto">

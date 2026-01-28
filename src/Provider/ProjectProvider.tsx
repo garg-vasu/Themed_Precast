@@ -142,6 +142,12 @@ export const ProjectProvider = ({ children }: ProjectProviderProps) => {
         if (!axios.isCancel(err)) {
           if (axios.isAxiosError(err) && err.response?.status === 403) {
             setError("access_denied");
+          } else if (axios.isAxiosError(err) && err.response?.status === 404) {
+            // Project does not exist - show toast and redirect to home
+            const errorMessage =
+              err.response?.data?.error || "Project not found.";
+            toast.error(errorMessage);
+            navigate("/", { replace: true });
           } else {
             setError(getErrorMessage(err));
             // Only navigate to login for 401 errors
@@ -160,7 +166,7 @@ export const ProjectProvider = ({ children }: ProjectProviderProps) => {
     return () => {
       source.cancel();
     };
-  }, [projectId]);
+  }, [projectId, navigate]);
 
   // Retry function
   const retry = () => {
@@ -196,6 +202,12 @@ export const ProjectProvider = ({ children }: ProjectProviderProps) => {
           if (!axios.isCancel(err)) {
             if (axios.isAxiosError(err) && err.response?.status === 403) {
               setError("access_denied");
+            } else if (axios.isAxiosError(err) && err.response?.status === 404) {
+              // Project does not exist - show toast and redirect to home
+              const errorMessage =
+                err.response?.data?.error || "Project not found.";
+              toast.error(errorMessage);
+              navigate("/", { replace: true });
             } else {
               setError(getErrorMessage(err));
               if (axios.isAxiosError(err) && err.response?.status === 401) {

@@ -11,6 +11,13 @@ import {
   type VisibilityState,
 } from "@tanstack/react-table";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   ArrowUpDown,
   ChevronDown,
   MoreHorizontal,
@@ -38,7 +45,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import axios, { AxiosError } from "axios";
 import { apiClient } from "@/utils/apiClient";
 import { toast } from "sonner";
@@ -46,6 +53,10 @@ import { useNavigate } from "react-router";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { formatDisplayDate } from "@/utils/formatdate";
+import type { FilterStateWorkOrder } from "./AdvanceWorkOrder";
+import type { FilterStateElementtype } from "../Elementtype/ElementtypeFilter";
+import ElementtypeFilter from "../Elementtype/ElementtypeFilter";
+import AdvanceWorkOrderFilter from "./AdvanceWorkOrder";
 
 export interface Material {
   id: number;
@@ -61,6 +72,7 @@ export type WorkOrder = {
   work_order_id?: number;
   wo_number: string;
   wo_date: string;
+  project_name: string;
   wo_validate: string;
   total_value: number;
   contact_person: string;
@@ -74,6 +86,13 @@ export type WorkOrder = {
   wo_attachment: string[];
   // Below are client-side only flags to render revision rows inline
   revision_no: number;
+};
+
+type PaginationInfo = {
+  current_page: number;
+  per_page: number;
+  total: number;
+  total_pages: number;
 };
 
 // Payment status badge styling function
@@ -158,7 +177,8 @@ export const columns: ColumnDef<WorkOrder>[] = [
     accessorKey: "wo_date",
     header: ({ column }) => (
       <Button
-        variant="ghost"
+        variant="customPadding"
+        size="noPadding"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
       >
         Work Order Date
@@ -174,7 +194,8 @@ export const columns: ColumnDef<WorkOrder>[] = [
     accessorKey: "wo_validate",
     header: ({ column }) => (
       <Button
-        variant="ghost"
+        variant="customPadding"
+        size="noPadding"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
       >
         Work Order Validate
@@ -190,7 +211,8 @@ export const columns: ColumnDef<WorkOrder>[] = [
     accessorKey: "created_at",
     header: ({ column }) => (
       <Button
-        variant="ghost"
+        variant="customPadding"
+        size="noPadding"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
       >
         Created At
@@ -206,7 +228,8 @@ export const columns: ColumnDef<WorkOrder>[] = [
     accessorKey: "updated_at",
     header: ({ column }) => (
       <Button
-        variant="ghost"
+        variant="customPadding"
+        size="noPadding"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
       >
         Updated At
@@ -225,6 +248,15 @@ export const columns: ColumnDef<WorkOrder>[] = [
     header: "Contact Person",
     cell: ({ row }) => (
       <div className="capitalize">{row.original.contact_person || "—"}</div>
+    ),
+  },
+
+  // project name column 
+   {
+    id: "project_name",
+    header: "Project Name",
+    cell: ({ row }) => (
+      <div className="capitalize">{row.original.project_name || "—"}</div>
     ),
   },
 
@@ -266,20 +298,119 @@ export function WorkOrderTable() {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState({});
+  const [filterOpen, setFilterOpen] = useState(false);
   const navigate = useNavigate();
   const [data, setData] = useState<WorkOrder[]>([]);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [limit, setLimit] = useState<number>(10);
+  const [pagination, setPagination] = useState<PaginationInfo | null>(null);
+
+    //   filter state
+  const [filterState, setFilterState] = useState<FilterStateWorkOrder>({
+    selectedProject: 0,
+    workordernumber: "",
+    revisionnumber: 0,
+    contactperson: "",
+    wo_date: "",
+    wo_validate: "",
+    totalvalue: 0,
+    totalvalueFilterType: "exact",
+    createdat: "",
+  });
+
+   const handleFilterChange = useCallback(
+    (filters: FilterStateWorkOrder) => {
+      // Only update if filters actually changed
+      if (JSON.stringify(filters) !== JSON.stringify(filterState)) {
+        setFilterState(filters);
+        setCurrentPage(1); // Reset to first page when filters change
+      }
+    },
+    [filterState]
+  );
+
+  const handleFilterClose = useCallback(() => {
+    setFilterOpen(false);
+  }, []);
+
+  const clearAllFilters = useCallback(() => {
+    setFilterState({
+      selectedProject: 0,
+      workordernumber: "",
+      revisionnumber: 0,
+      contactperson: "",
+      wo_date: "",
+      wo_validate: "",
+      totalvalue: 0,
+      totalvalueFilterType: "exact",
+      createdat: "",
+    });
+    setCurrentPage(1);
+  }, []);
+
+  // Check if any filters are active
+  const hasActiveFilters = () => {
+    return (
+      filterState.selectedProject > 0 ||
+      filterState.workordernumber !== "" ||
+      filterState.revisionnumber > 0 ||
+      filterState.contactperson !== "" ||
+      filterState.wo_date !== "" ||
+      filterState.wo_validate !== "" ||
+      filterState.totalvalue > 0 ||
+      filterState.createdat !== ""
+    );
+  };
 
   useEffect(() => {
     const source = axios.CancelToken.source();
 
     const fetchInvoices = async () => {
       try {
-        const response = await apiClient.get("/workorders", {
+        const params: Record<string, number | string> = {
+          page: currentPage,
+          page_size: limit,
+        };
+
+        if (filterState.selectedProject > 0) {
+          params.project_id = filterState.selectedProject;
+        }
+        if (filterState.workordernumber !== "") {
+          params.wo_number = filterState.workordernumber;
+        }
+        if (filterState.revisionnumber > 0) {
+          params.revision_no = filterState.revisionnumber;
+        }
+        if (filterState.contactperson !== "") {
+          params.contact_person = filterState.contactperson;
+        }
+        if (filterState.wo_date !== "") {
+          params.wo_date = filterState.wo_date;
+        }
+        if (filterState.wo_validate !== "") {
+          params.wo_validate = filterState.wo_validate;
+        }
+        if (filterState.totalvalue > 0) {
+          params.total_value = filterState.totalvalue;
+          if (filterState.totalvalueFilterType === "upto") {
+            params.total_value_filter_type = "lt";
+          } else {
+            params.total_value_filter_type = "eq";
+          }
+        }
+        if (filterState.createdat !== "") {
+          params.created_at = filterState.createdat;
+        }
+        const response = await apiClient.get("/work-orders/search", {
           cancelToken: source.token,
+          params,
         });
 
         if (response.status === 200) {
-          setData(response.data);
+          setData(response.data.data);
+          if (response.data.pagination) {
+            setPagination(response.data.pagination);
+          }
         } else {
           toast.error(response.data?.message || "Failed to fetch work orders");
         }
@@ -295,7 +426,7 @@ export function WorkOrderTable() {
     return () => {
       source.cancel();
     };
-  }, []);
+  }, [currentPage, limit, filterState]);
 
   const table = useReactTable({
     data,
@@ -418,6 +549,18 @@ export function WorkOrderTable() {
           className="w-full max-w-sm sm:max-w-xs"
         />
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-center">
+           <Button
+            variant={hasActiveFilters() ? "default" : "outline"}
+            className="w-full sm:w-auto"
+            onClick={() => setFilterOpen((prev) => !prev)}
+          >
+            Advance Filter
+          </Button>
+          {hasActiveFilters() && (
+            <Button variant="outline" onClick={clearAllFilters}>
+              Clear Filters
+            </Button>
+          )}
           {table.getFilteredSelectedRowModel().rows.length > 0 && (
             <Button
               variant="default"
@@ -463,6 +606,13 @@ export function WorkOrderTable() {
           </DropdownMenu>
         </div>
       </div>
+       {filterOpen && (
+        <AdvanceWorkOrderFilter
+          onFilterChange={handleFilterChange}
+          onClose={handleFilterClose}
+          currentFilter={filterState}
+        />
+      )}
       <div className="overflow-hidden rounded-md border">
         <div className="hide-x-scrollbar">
           <Table>
@@ -516,28 +666,70 @@ export function WorkOrderTable() {
           </Table>
         </div>
       </div>
-      <div className="flex items-center justify-end space-x-2 py-4">
+       <div className="flex flex-col gap-4 py-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="text-muted-foreground flex-1 text-sm">
           {table.getFilteredSelectedRowModel().rows.length} of{" "}
-          {table.getFilteredRowModel().rows.length} row(s) selected.
+          {table.getRowModel().rows.length} row(s) selected on this page.
+          {pagination && (
+            <span className="ml-2">
+              (Total: {pagination.total} work orders)
+            </span>
+          )}
         </div>
-        <div className="space-x-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-          >
-            Previous
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-          >
-            Next
-          </Button>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:space-x-2">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">
+              Rows per page:
+            </span>
+            <Select
+              value={limit.toString()}
+              onValueChange={(value) => {
+                setLimit(Number(value));
+                setCurrentPage(1);
+              }}
+            >
+              <SelectTrigger className="w-[70px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="10">10</SelectItem>
+                <SelectItem value="25">25</SelectItem>
+                <SelectItem value="50">50</SelectItem>
+                <SelectItem value="100">100</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          {pagination && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <span>
+                Page {pagination.current_page} of {pagination.total_pages}
+              </span>
+            </div>
+          )}
+          <div className="flex space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+              disabled={!pagination || pagination.current_page <= 1}
+            >
+              Previous
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                setCurrentPage((prev) =>
+                  pagination
+                    ? Math.min(pagination.total_pages, prev + 1)
+                    : prev + 1
+                )
+              }
+              disabled={!pagination || pagination.current_page >= pagination.total_pages}
+            >
+              Next
+            </Button>
+          </div>
         </div>
       </div>
     </div>

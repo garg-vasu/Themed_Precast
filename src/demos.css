@@ -1,0 +1,353 @@
+/**
+ * Base Theme Variables - Light Mode with Default Blue Accent
+ * 
+ * These are the default values. When accent color classes are applied,
+ * specific variables (primary, accent, sidebar-primary, etc.) are overridden.
+ */
+ :root {
+  font-size: 90%;
+  --radius: 0.625rem;
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+  --chart-1: oklch(0.646 0.222 264.376);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
+}
+
+/**
+ * Dark Theme - Default Blue Accent
+ * 
+ * In dark mode:
+ * - Backgrounds become dark (low lightness values)
+ * - Text becomes light (high lightness values)
+ * - Accent colors are adjusted for dark backgrounds
+ * - Sidebar-accent-foreground is always white for readability
+ */
+.dark {
+  --background: oklch(0.18 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
+  --chart-1: oklch(0.488 0.243 264.376);
+  --chart-2: oklch(0.696 0.17 162.48);
+  --chart-3: oklch(0.769 0.188 70.08);
+  --chart-4: oklch(0.627 0.265 303.9);
+  --chart-5: oklch(0.645 0.246 16.439);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.556 0 0);
+}
+
+/**
+ * Green Accent Color Override
+ * 
+ * When .accent-green class is applied to root:
+ * - --primary: Changes to green (affects buttons, active states)
+ * - --accent: Changes to light green tint (affects hover states)
+ * - --sidebar-primary: Changes to green (affects active sidebar items)
+ * - --sidebar-accent: Changes to subtle green tint (affects sidebar hover)
+ * - --ring: Changes to green (affects focus rings)
+ * - Chart colors: Adjusted to green palette
+ * 
+ * Works in both light and dark modes with proper contrast.
+ */
+.accent-green {
+  --primary: oklch(0.696 0.17 162.48);
+  --primary-foreground: oklch(0.985 0 0);
+  --accent: oklch(0.95 0.05 162.48);
+  --accent-foreground: oklch(0.696 0.17 162.48);
+  --ring: oklch(0.696 0.17 162.48);
+  --chart-1: oklch(0.696 0.17 162.48);
+  --chart-2: oklch(0.6 0.15 180);
+  --chart-3: oklch(0.5 0.12 150);
+  --chart-4: oklch(0.75 0.18 170);
+  --chart-5: oklch(0.65 0.16 155);
+  --sidebar-primary: oklch(0.696 0.17 162.48);
+  --sidebar-accent: oklch(0.96 0.03 162.48);
+  --sidebar-ring: oklch(0.696 0.17 162.48);
+}
+
+/**
+ * Dark Mode + Green Accent
+ * 
+ * Combines dark theme with green accent:
+ * - Darker backgrounds with green highlights
+ * - sidebar-accent-foreground is white for readability
+ * - sidebar-accent is darker green tint for subtle hover effect
+ */
+.dark.accent-green {
+  --primary: oklch(0.696 0.17 162.48);
+  --primary-foreground: oklch(0.985 0 0);
+  --accent: oklch(0.3 0.08 162.48);
+  --accent-foreground: oklch(0.696 0.17 162.48);
+  --ring: oklch(0.696 0.17 162.48);
+  --chart-1: oklch(0.696 0.17 162.48);
+  --chart-2: oklch(0.6 0.15 180);
+  --chart-3: oklch(0.5 0.12 150);
+  --chart-4: oklch(0.75 0.18 170);
+  --chart-5: oklch(0.65 0.16 155);
+  --sidebar-primary: oklch(0.696 0.17 162.48);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.32 0.05 162.48);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-ring: oklch(0.696 0.17 162.48);
+}
+
+/**
+ * Purple Accent Color Override
+ * Same behavior as green, but with purple color values
+ */
+.accent-purple {
+  --primary: oklch(0.627 0.265 303.9);
+  --primary-foreground: oklch(0.985 0 0);
+  --accent: oklch(0.95 0.1 303.9);
+  --accent-foreground: oklch(0.627 0.265 303.9);
+  --ring: oklch(0.627 0.265 303.9);
+  --chart-1: oklch(0.627 0.265 303.9);
+  --chart-2: oklch(0.55 0.22 290);
+  --chart-3: oklch(0.45 0.18 310);
+  --chart-4: oklch(0.7 0.28 315);
+  --chart-5: oklch(0.6 0.24 300);
+  --sidebar-primary: oklch(0.627 0.265 303.9);
+  --sidebar-accent: oklch(0.96 0.05 303.9);
+  --sidebar-ring: oklch(0.627 0.265 303.9);
+}
+
+.dark.accent-purple {
+  --primary: oklch(0.627 0.265 303.9);
+  --primary-foreground: oklch(0.985 0 0);
+  --accent: oklch(0.3 0.12 303.9);
+  --accent-foreground: oklch(0.627 0.265 303.9);
+  --ring: oklch(0.627 0.265 303.9);
+  --chart-1: oklch(0.627 0.265 303.9);
+  --chart-2: oklch(0.55 0.22 290);
+  --chart-3: oklch(0.45 0.18 310);
+  --chart-4: oklch(0.7 0.28 315);
+  --chart-5: oklch(0.6 0.24 300);
+  --sidebar-primary: oklch(0.627 0.265 303.9);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.32 0.08 303.9);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-ring: oklch(0.627 0.265 303.9);
+}
+
+/**
+ * Red Accent Color Override
+ * Same behavior as green, but with red color values
+ */
+.accent-red {
+  --primary: oklch(0.645 0.246 16.439);
+  --primary-foreground: oklch(0.985 0 0);
+  --accent: oklch(0.95 0.1 16.439);
+  --accent-foreground: oklch(0.645 0.246 16.439);
+  --ring: oklch(0.645 0.246 16.439);
+  --chart-1: oklch(0.645 0.246 16.439);
+  --chart-2: oklch(0.6 0.22 20);
+  --chart-3: oklch(0.5 0.18 10);
+  --chart-4: oklch(0.7 0.26 25);
+  --chart-5: oklch(0.55 0.2 15);
+  --sidebar-primary: oklch(0.645 0.246 16.439);
+  --sidebar-accent: oklch(0.96 0.05 16.439);
+  --sidebar-ring: oklch(0.645 0.246 16.439);
+}
+
+.dark.accent-red {
+  --primary: oklch(0.645 0.246 16.439);
+  --primary-foreground: oklch(0.985 0 0);
+  --accent: oklch(0.3 0.12 16.439);
+  --accent-foreground: oklch(0.645 0.246 16.439);
+  --ring: oklch(0.645 0.246 16.439);
+  --chart-1: oklch(0.645 0.246 16.439);
+  --chart-2: oklch(0.6 0.22 20);
+  --chart-3: oklch(0.5 0.18 10);
+  --chart-4: oklch(0.7 0.26 25);
+  --chart-5: oklch(0.55 0.2 15);
+  --sidebar-primary: oklch(0.645 0.246 16.439);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.32 0.08 16.439);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-ring: oklch(0.645 0.246 16.439);
+}
+
+/**
+ * Orange Accent Color Override
+ * Same behavior as green, but with orange color values
+ */
+.accent-orange {
+  --primary: oklch(0.769 0.188 70.08);
+  --primary-foreground: oklch(0.145 0 0);
+  --accent: oklch(0.95 0.08 70.08);
+  --accent-foreground: oklch(0.769 0.188 70.08);
+  --ring: oklch(0.769 0.188 70.08);
+  --chart-1: oklch(0.769 0.188 70.08);
+  --chart-2: oklch(0.7 0.17 65);
+  --chart-3: oklch(0.6 0.15 75);
+  --chart-4: oklch(0.8 0.2 60);
+  --chart-5: oklch(0.65 0.16 80);
+  --sidebar-primary: oklch(0.769 0.188 70.08);
+  --sidebar-accent: oklch(0.96 0.04 70.08);
+  --sidebar-ring: oklch(0.769 0.188 70.08);
+}
+
+.dark.accent-orange {
+  --primary: oklch(0.769 0.188 70.08);
+  --primary-foreground: oklch(0.985 0 0);
+  --accent: oklch(0.35 0.1 70.08);
+  --accent-foreground: oklch(0.769 0.188 70.08);
+  --ring: oklch(0.769 0.188 70.08);
+  --chart-1: oklch(0.769 0.188 70.08);
+  --chart-2: oklch(0.7 0.17 65);
+  --chart-3: oklch(0.6 0.15 75);
+  --chart-4: oklch(0.8 0.2 60);
+  --chart-5: oklch(0.65 0.16 80);
+  --sidebar-primary: oklch(0.769 0.188 70.08);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.35 0.06 70.08);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-ring: oklch(0.769 0.188 70.08);
+}
+
+/**
+ * Blue Accent Color (Default)
+ * 
+ * Explicitly defined for consistency, even though it's the default.
+ * When applied, ensures all accent-dependent variables use blue values.
+ * This is the default accent color set in ThemeProvider.
+ */
+.accent-blue {
+  --primary: oklch(0.646 0.222 264.376);
+  --primary-foreground: oklch(0.985 0 0);
+  --accent: oklch(0.95 0.1 264.376);
+  --accent-foreground: oklch(0.646 0.222 264.376);
+  --ring: oklch(0.646 0.222 264.376);
+  --chart-1: oklch(0.646 0.222 264.376);
+  --chart-2: oklch(0.6 0.2 250);
+  --chart-3: oklch(0.5 0.18 270);
+  --chart-4: oklch(0.7 0.24 280);
+  --chart-5: oklch(0.55 0.2 260);
+  --sidebar-primary: oklch(0.646 0.222 264.376);
+  --sidebar-accent: oklch(0.96 0.05 264.376);
+  --sidebar-ring: oklch(0.646 0.222 264.376);
+}
+
+.dark.accent-blue {
+  --primary: oklch(0.488 0.243 264.376);
+  --primary-foreground: oklch(0.985 0 0);
+  --accent: oklch(0.3 0.12 264.376);
+  --accent-foreground: oklch(0.488 0.243 264.376);
+  --ring: oklch(0.488 0.243 264.376);
+  --chart-1: oklch(0.488 0.243 264.376);
+  --chart-2: oklch(0.6 0.2 250);
+  --chart-3: oklch(0.5 0.18 270);
+  --chart-4: oklch(0.7 0.24 280);
+  --chart-5: oklch(0.55 0.2 260);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.32 0.08 264.376);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-ring: oklch(0.488 0.243 264.376);
+}
+
+/**
+ * Base Styles
+ * 
+ * Applies default styles using theme variables:
+ * - All borders use --border color
+ * - Focus outlines use --ring color with 50% opacity
+ * - Body uses --background and --foreground
+ */
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html,
+  body {
+    @apply bg-background text-foreground font-light;
+    font-family: "Lexend", ui-sans-serif, system-ui, sans-serif;
+    overflow: hidden;
+    height: 100%;
+  }
+  #root {
+    height: 100%;
+    overflow: hidden;
+  }
+}
+
+/**
+ * Utility Classes
+ * Hide scrollbar while maintaining scroll functionality
+ */
+.hide-scrollbar {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none; /* Chrome, Safari and Opera */
+}
+
+/* Hide horizontal scrollbar specifically */
+.hide-x-scrollbar {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
+.hide-x-scrollbar::-webkit-scrollbar {
+  display: none; 
+}
+
+
+.hide-x-scrollbar [data-slot="table-container"] {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.hide-x-scrollbar [data-slot="table-container"]::-webkit-scrollbar {
+  display: none;
+} 
+

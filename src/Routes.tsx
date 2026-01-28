@@ -26,7 +26,6 @@ import AttendanceReport from "./Pages/LabourReports/AttendanceReport";
 import { TemplateTable } from "./Pages/Template/TemplateTable";
 import ProjectMainLayout from "./ProjectLayout/ProjectMainLayout";
 import Member from "./Pages/ProjectMember/Member";
-import ProjectDashboard from "./Pages/ProjectDashboard/ProjectDashboard";
 import MixDrawing from "./Pages/Drawing/MixDrawing";
 import { ProjectProvider } from "./Provider/ProjectProvider";
 import MixElementStockyard from "./Pages/ElementStockyard/MixElementStockyard";
@@ -63,13 +62,15 @@ import UserDetailPage from "./Pages/Users/UserDetailPage";
 import { InvoiceDetailPage } from "./Pages/Invoice/InvoiceDetailPage";
 import { LogTable } from "./Pages/log/LogTable";
 import { TenantviaEndclientDashboard } from "./Pages/Projects/TenantviaEndclientDashboard";
-import { QcChart } from "./Pages/ProjectReport/QcChart";
 import AddWorkOrder from "./Pages/WorkOrder/AddWorkOrder";
 import EditWorkOrder from "./Pages/WorkOrder/EditWorkOrder";
 import EditElementType from "./Pages/Elementtype/EditElementtype";
-import HierarchyTable from "./Pages/Hierarchy/HierarchyTable";
-import MixHierarchy from "./Pages/Hierarchy/MixHierarchy";
 
+import MixHierarchy from "./Pages/Hierarchy/MixHierarchy";
+import AddAttendance from "./Pages/Attendance/AddAttendance";
+import AddMember from "./Pages/ProjectMember/AddMember";
+import VehicleDispatch from "./Pages/Vehicle/VehicleDispatch";
+import EditMember from "./Pages/ProjectMember/EditMemeber";
 
 const routes: RouteObject[] = [
   { path: "/login", element: <Login /> },
@@ -107,6 +108,7 @@ const routes: RouteObject[] = [
       { path: "edit-tenant/:tenant_id", element: <EditTenants /> },
       { path: "tenant/:tenant_id", element: <TenantDetailPage /> },
       { path: "tenant-detail/:tenant_id", element: <TenantDetailPage /> },
+      { path: "add-attendance", element: <AddAttendance /> },
       {
         path: "add-end-client",
         element: (
@@ -129,8 +131,8 @@ const routes: RouteObject[] = [
         path: "tenant-via-end-client/:client_id",
         element: <TenantviaEndclientDashboard />,
       },
-      {path: "add-work-order", element: <AddWorkOrder />},
-      {path:"edit-work-order/:work_order_id", element: <EditWorkOrder />},
+      { path: "add-work-order", element: <AddWorkOrder /> },
+      { path: "edit-work-order/:work_order_id", element: <EditWorkOrder /> },
     ],
   },
   {
@@ -145,9 +147,8 @@ const routes: RouteObject[] = [
       </PrivateRoute>
     ),
     children: [
-      
       { index: true, element: <NewProjectDashboard /> },
-       { path: "dashboard", element: <NewProjectDashboard /> },
+      { path: "dashboard", element: <NewProjectDashboard /> },
       { path: "member", element: <Member /> },
       { path: "drawing", element: <MixDrawing /> },
       { path: "element-stockyard", element: <MixElementStockyard /> },
@@ -181,9 +182,14 @@ const routes: RouteObject[] = [
       },
       { path: "dispatch-request", element: <RequestHandler /> },
       { path: "erection-element", element: <MixErrectedElement /> },
-      {path:"edit-element-type/:elementTypeId/:floorId", element: <EditElementType /> },
-      {path:"hierarchy", element: <MixHierarchy /> },
-    
+      {
+        path: "edit-element-type/:elementTypeId/:floorId",
+        element: <EditElementType />,
+      },
+      { path: "hierarchy", element: <MixHierarchy /> },
+      { path: "add-project-member", element: <AddMember /> },
+      { path: "vehicle-dispatch", element: <VehicleDispatch /> },
+      { path: "edit-member/:user_id", element: <EditMember /> },
     ],
   },
 ];
