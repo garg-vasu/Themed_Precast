@@ -475,7 +475,7 @@ export function InvoiceTable() {
           params.endclient_id = filterState.endclient_id;
         }
 
-        const response = await apiClient.get("/invoices", {
+        const response = await apiClient.get("/invoices/search", {
           cancelToken: source.token,
           params,
         });

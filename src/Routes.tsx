@@ -74,6 +74,7 @@ import EditMember from "./Pages/ProjectMember/EditMemeber";
 import ProjectRoleRoute from "./Pages/Limitation/ProjectRoleRoute";
 import RoleRoute from "./Pages/Limitation/RoleRoute";
 import NotFound from "./Pages/NotFound/NotFound";
+import RolePermission from "./Pages/Roles/rolePermission";
 
 const routes: RouteObject[] = [
   { path: "/login", element: <Login /> },
@@ -262,6 +263,14 @@ const routes: RouteObject[] = [
         element: (
           <RoleRoute allowedRoles={["admin", "superadmin"]} redirectTo="/login">
             <AddWorkOrder />
+          </RoleRoute>
+        ),
+      },
+      {
+        path: "role",
+        element: (
+          <RoleRoute allowedRoles={["superadmin"]} redirectTo="/login">
+            <RolePermission />
           </RoleRoute>
         ),
       },

@@ -21,6 +21,7 @@ import {
   ScrollText,
   BarChart,
   FolderKanban,
+  Shield,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -182,6 +183,11 @@ const navigationItems: NavigationItem[] = [
         name: "Logs",
         href: "/logs",
         icon: ScrollText,
+      },
+      {
+        name: "Roles",
+        href: "/role",
+        icon: Shield,
       },
     ],
   },

@@ -206,9 +206,26 @@ export const columns: ColumnDef<Member>[] = [
     enableHiding: false,
     cell: ({ row }) => {
       const member = row.original;
-
       const { projectId } = useParams<{ projectId: string }>();
       const navigate = useNavigate();
+      const [isLoading, setIsLoading] = useState(false);
+      const handleRemoveMember = async (userId: number) => {
+        try {
+          setIsLoading(true);
+          const response = await apiClient.delete(`users/${userId}/suspend`);
+          if (response.status === 200) {
+            toast.success("Member removed successfully");
+          } else {
+            toast.error(response.data?.message || "Failed to remove member");
+          }
+        } catch (error: unknown) {
+          if (!axios.isCancel(error)) {
+            toast.error(getErrorMessage(error, "member removal"));
+          }
+        } finally {
+          setIsLoading(false);
+        }
+      };
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -230,8 +247,7 @@ export const columns: ColumnDef<Member>[] = [
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => {
-                // TODO: Implement remove member functionality
-                toast.info("Remove member functionality coming soon");
+                handleRemoveMember(member.user_id);
               }}
               className="text-destructive focus:text-destructive"
             >
