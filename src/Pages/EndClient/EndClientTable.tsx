@@ -10,7 +10,12 @@ import {
   type SortingState,
   type VisibilityState,
 } from "@tanstack/react-table";
-import { ArrowUpDown, ChevronDown, Download, MoreHorizontal } from "lucide-react";
+import {
+  ArrowUpDown,
+  ChevronDown,
+  Download,
+  MoreHorizontal,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -25,6 +30,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Table,
   TableBody,
   TableCell,
@@ -33,13 +45,22 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import axios, { AxiosError } from "axios";
 import { apiClient } from "@/utils/apiClient";
 import { toast } from "sonner";
 import { useNavigate } from "react-router";
 import { formatDisplayDate } from "@/utils/formatdate";
 import { generatePDFFromTable } from "@/utils/pdfGenerator";
+import type { FilterStateEndClient } from "./AdvanceEndClientFilter";
+import AdvanceEndClientFilter from "./AdvanceEndClientFilter";
+
+type PaginationInfo = {
+  current_page: number;
+  per_page: number;
+  total: number;
+  total_pages: number;
+};
 
 export type EndClient = {
   id: number;
@@ -132,6 +153,15 @@ export const columns: ColumnDef<EndClient>[] = [
     ),
     accessorFn: (client) => client.email ?? "",
     cell: ({ row }) => <div className="lowercase">{row.original.email}</div>,
+  },
+  {
+    id: "contact_person",
+    header: "Contact Person",
+
+    accessorFn: (client) => client.contact_person ?? "",
+    cell: ({ row }) => (
+      <div className="capitalize">{row.original.contact_person}</div>
+    ),
   },
   {
     id: "phone",
@@ -233,19 +263,113 @@ export function EndClientTable() {
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState({});
   const navigate = useNavigate();
+  const [filterOpen, setFilterOpen] = useState(false);
   const [data, setData] = useState<EndClient[]>([]);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [limit, setLimit] = useState<number>(10);
+  const [pagination, setPagination] = useState<PaginationInfo | null>(null);
+  //   filter state
+  const [filterState, setFilterState] = useState<FilterStateEndClient>({
+    client_id: 0,
+    email: "",
+    organization: "",
+    contact_person: "",
+    address: "",
+    cin: "",
+    gst_number: "",
+    phone_no: "",
+  });
+
+  const handleFilterChange = useCallback(
+    (filters: FilterStateEndClient) => {
+      // Only update if filters actually changed
+      if (JSON.stringify(filters) !== JSON.stringify(filterState)) {
+        setFilterState(filters);
+        setCurrentPage(1); // Reset to first page when filters change
+      }
+    },
+    [filterState],
+  );
+
+  const handleFilterClose = useCallback(() => {
+    setFilterOpen(false);
+  }, []);
+
+  const clearAllFilters = useCallback(() => {
+    setFilterState({
+      client_id: 0,
+      email: "",
+      organization: "",
+      contact_person: "",
+      address: "",
+      cin: "",
+      gst_number: "",
+      phone_no: "",
+    });
+    setCurrentPage(1);
+  }, []);
+
+  // Check if any filters are active
+  const hasActiveFilters = () => {
+    return (
+      filterState.client_id > 0 ||
+      filterState.email !== "" ||
+      filterState.contact_person !== "" ||
+      filterState.address !== "" ||
+      filterState.cin !== "" ||
+      filterState.gst_number !== "" ||
+      filterState.phone_no !== "" ||
+      filterState.organization !== ""
+    );
+  };
 
   useEffect(() => {
     const source = axios.CancelToken.source();
 
     const fetchEndClients = async () => {
       try {
+        const params: Record<string, number | string> = {
+          page: currentPage,
+          page_size: limit,
+        };
+        if (filterState.client_id > 0) {
+          params.client_id = filterState.client_id;
+        }
+        if (filterState.email !== "") {
+          params.email = filterState.email;
+        }
+        if (filterState.contact_person !== "") {
+          params.contact_person = filterState.contact_person;
+        }
+        if (filterState.address !== "") {
+          params.address = filterState.address;
+        }
+        if (filterState.cin !== "") {
+          params.cin = filterState.cin;
+        }
+        if (filterState.gst_number !== "") {
+          params.gst_number = filterState.gst_number;
+        }
+        if (filterState.phone_no !== "") {
+          params.phone_no = filterState.phone_no;
+        }
+        if (filterState.organization !== "") {
+          params.organization = filterState.organization;
+        }
+        if (filterState.phone_no !== "") {
+          params.phone_no = filterState.phone_no;
+        }
+
         const response = await apiClient.get("/end_clients", {
+          params,
           cancelToken: source.token,
         });
 
         if (response.status === 200) {
-          setData(response.data);
+          setData(response.data.data);
+          if (response.data.pagination) {
+            setPagination(response.data.pagination);
+          }
         } else {
           toast.error(response.data?.message || "Failed to fetch end clients");
         }
@@ -261,7 +385,7 @@ export function EndClientTable() {
     return () => {
       source.cancel();
     };
-  }, []);
+  }, [currentPage, limit, filterState]);
 
   const table = useReactTable({
     data,
@@ -286,9 +410,19 @@ export function EndClientTable() {
     const selectedRows = table.getFilteredSelectedRowModel().rows;
 
     generatePDFFromTable({
-      selectedRows, 
+      selectedRows,
       title: "End Client Report",
-      headers: ["Contact Person", "Organization", "Email", "Phone", "Address", "CIN", "GST Number", "Created At", "Updated At"],
+      headers: [
+        "Contact Person",
+        "Organization",
+        "Email",
+        "Phone",
+        "Address",
+        "CIN",
+        "GST Number",
+        "Created At",
+        "Updated At",
+      ],
       dataMapper: (row): string[] => {
         const endClient = row.original as EndClient;
         return [
@@ -329,6 +463,18 @@ export function EndClientTable() {
           className="w-full max-w-sm sm:max-w-xs"
         />
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-center">
+          <Button
+            variant={hasActiveFilters() ? "default" : "outline"}
+            className="w-full sm:w-auto"
+            onClick={() => setFilterOpen((prev) => !prev)}
+          >
+            Advance Filter
+          </Button>
+          {hasActiveFilters() && (
+            <Button variant="outline" onClick={clearAllFilters}>
+              Clear Filters
+            </Button>
+          )}
           {table.getFilteredSelectedRowModel().rows.length > 0 && (
             <Button
               variant="default"
@@ -344,7 +490,7 @@ export function EndClientTable() {
             className="w-full sm:w-auto"
             onClick={() => navigate("/add-end-client")}
           >
-            Add End Client 
+            Add End Client
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -374,6 +520,13 @@ export function EndClientTable() {
           </DropdownMenu>
         </div>
       </div>
+      {filterOpen && (
+        <AdvanceEndClientFilter
+          onFilterChange={handleFilterChange}
+          onClose={handleFilterClose}
+          currentFilter={filterState}
+        />
+      )}
       <div className="overflow-hidden rounded-md border">
         <Table>
           <TableHeader>
@@ -386,7 +539,7 @@ export function EndClientTable() {
                         ? null
                         : flexRender(
                             header.column.columnDef.header,
-                            header.getContext()
+                            header.getContext(),
                           )}
                     </TableHead>
                   );
@@ -406,7 +559,7 @@ export function EndClientTable() {
                     <TableCell key={cell.id} className="py-2">
                       {flexRender(
                         cell.column.columnDef.cell,
-                        cell.getContext()
+                        cell.getContext(),
                       )}
                     </TableCell>
                   ))}
@@ -425,28 +578,72 @@ export function EndClientTable() {
           </TableBody>
         </Table>
       </div>
-      <div className="flex items-center justify-end space-x-2 py-4">
+      <div className="flex flex-col gap-4 py-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="text-muted-foreground flex-1 text-sm">
           {table.getFilteredSelectedRowModel().rows.length} of{" "}
-          {table.getFilteredRowModel().rows.length} row(s) selected.
+          {table.getRowModel().rows.length} row(s) selected on this page.
+          {pagination && (
+            <span className="ml-2">
+              (Total: {pagination.total} work orders)
+            </span>
+          )}
         </div>
-        <div className="space-x-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-          >
-            Previous
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-          >
-            Next
-          </Button>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:space-x-2">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">
+              Rows per page:
+            </span>
+            <Select
+              value={limit.toString()}
+              onValueChange={(value) => {
+                setLimit(Number(value));
+                setCurrentPage(1);
+              }}
+            >
+              <SelectTrigger className="w-[70px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="10">10</SelectItem>
+                <SelectItem value="25">25</SelectItem>
+                <SelectItem value="50">50</SelectItem>
+                <SelectItem value="100">100</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          {pagination && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <span>
+                Page {pagination.current_page} of {pagination.total_pages}
+              </span>
+            </div>
+          )}
+          <div className="flex space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+              disabled={!pagination || pagination.current_page <= 1}
+            >
+              Previous
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                setCurrentPage((prev) =>
+                  pagination
+                    ? Math.min(pagination.total_pages, prev + 1)
+                    : prev + 1,
+                )
+              }
+              disabled={
+                !pagination || pagination.current_page >= pagination.total_pages
+              }
+            >
+              Next
+            </Button>
+          </div>
         </div>
       </div>
     </div>

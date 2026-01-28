@@ -160,7 +160,7 @@ export function AddEndClient({
         });
 
         if (response.status === 200) {
-          setClients(response.data);
+          setClients(response.data.data);
         } else {
           toast.error(response.data?.message || "Failed to fetch clients");
         }
@@ -387,7 +387,7 @@ export function AddEndClient({
         }
         const response = await apiClient.put(
           `/end_clients/${endClientId}`,
-          payload
+          payload,
         );
         if (response.status === 200 || response.status === 201) {
           toast.success("End Client updated successfully!");
@@ -410,7 +410,7 @@ export function AddEndClient({
     } catch (error: unknown) {
       const errorMessage = getErrorMessage(
         error,
-        isEditMode ? "update end client" : "create end client"
+        isEditMode ? "update end client" : "create end client",
       );
       toast.error(errorMessage);
       // Refresh even on error to ensure data is up to date
@@ -465,7 +465,7 @@ export function AddEndClient({
               htmlFor="profile-upload"
               className={cn(
                 "flex items-center gap-2 px-4 py-2 rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground cursor-pointer transition-colors",
-                isUploadingImage && "opacity-50 cursor-not-allowed"
+                isUploadingImage && "opacity-50 cursor-not-allowed",
               )}
             >
               {isUploadingImage ? (
@@ -610,7 +610,7 @@ export function AddEndClient({
                   onValueChange={(val) => {
                     field.onChange(Number(val));
                     const selectedPhoneCode = phonecodes.find(
-                      (code) => code.id === Number(val)
+                      (code) => code.id === Number(val),
                     );
                     if (selectedPhoneCode) {
                       setValue("phone_code", selectedPhoneCode.id);
@@ -669,7 +669,7 @@ export function AddEndClient({
                   onValueChange={(val) => {
                     field.onChange(Number(val));
                     const selectedClient = clients.find(
-                      (client) => client.client_id === Number(val)
+                      (client) => client.client_id === Number(val),
                     );
                     if (selectedClient) {
                       setValue("client_id", selectedClient.client_id);
@@ -729,7 +729,7 @@ export function AddEndClient({
                 htmlFor="attachment-upload"
                 className={cn(
                   "flex items-center gap-2 px-4 py-2 rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground cursor-pointer transition-colors inline-block",
-                  isUploadingAttachment && "opacity-50 cursor-not-allowed"
+                  isUploadingAttachment && "opacity-50 cursor-not-allowed",
                 )}
               >
                 {isUploadingAttachment ? (

@@ -38,13 +38,22 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import axios, { AxiosError } from "axios";
 import { apiClient } from "@/utils/apiClient";
 import { toast } from "sonner";
 import { useNavigate } from "react-router";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import type { FilterStateInvoiceFilter } from "./InvoiceFilter";
+import InvoiceFilter from "./InvoiceFilter";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export interface Item {
   id: number;
@@ -127,6 +136,13 @@ const getPaymentStatusStyles = (status: string | undefined) => {
   }
 };
 
+type PaginationInfo = {
+  current_page: number;
+  per_page: number;
+  total: number;
+  total_pages: number;
+};
+
 export const columns: ColumnDef<Invoice>[] = [
   {
     id: "select",
@@ -161,7 +177,7 @@ export const columns: ColumnDef<Invoice>[] = [
           className="capitalize cursor-pointer"
           onClick={() =>
             navigate(
-              `/invoice-detail/${row.original.id}/${row.original.work_order_id}`
+              `/invoice-detail/${row.original.id}/${row.original.work_order_id}`,
             )
           }
         >
@@ -318,19 +334,157 @@ export function InvoiceTable() {
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState({});
   const navigate = useNavigate();
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [limit, setLimit] = useState<number>(10);
+  const [pagination, setPagination] = useState<PaginationInfo | null>(null);
+
   const [data, setData] = useState<Invoice[]>([]);
+
+  const [filterState, setFilterState] = useState<FilterStateInvoiceFilter>({
+    selectedProject: 0,
+    workorderid: "",
+    contact_person: "",
+    contact_email: "",
+    contact_number: "",
+    payment_status: "",
+    total_paid: 0,
+    total_value: 0,
+    totalvalueFilterType: "exact",
+    totalpaidFilterType: "exact",
+    billing_address: "",
+    shipping_address: "",
+    wo_date: "",
+    wo_validate: "",
+    endclient_id: 0,
+  });
+
+  const handleFilterChange = useCallback(
+    (filters: FilterStateInvoiceFilter) => {
+      // Only update if filters actually changed
+      if (JSON.stringify(filters) !== JSON.stringify(filterState)) {
+        setFilterState(filters);
+        setCurrentPage(1); // Reset to first page when filters change
+      }
+    },
+    [filterState],
+  );
+
+  const handleFilterClose = useCallback(() => {
+    setFilterOpen(false);
+  }, []);
+
+  const clearAllFilters = useCallback(() => {
+    setFilterState({
+      selectedProject: 0,
+      workorderid: "",
+      contact_person: "",
+      contact_email: "",
+      contact_number: "",
+      payment_status: "",
+      total_paid: 0,
+      total_value: 0,
+      totalvalueFilterType: "exact",
+      totalpaidFilterType: "exact",
+      billing_address: "",
+      shipping_address: "",
+      wo_date: "",
+      wo_validate: "",
+      endclient_id: 0,
+    });
+    setCurrentPage(1);
+  }, []);
+
+  // Check if any filters are active
+  const hasActiveFilters = () => {
+    return (
+      filterState.selectedProject > 0 ||
+      filterState.workorderid !== "" ||
+      filterState.contact_person !== "" ||
+      filterState.contact_email !== "" ||
+      filterState.contact_number !== "" ||
+      filterState.payment_status !== "" ||
+      filterState.total_paid > 0 ||
+      filterState.total_value > 0 ||
+      filterState.totalvalueFilterType !== "exact" ||
+      filterState.totalpaidFilterType !== "exact" ||
+      filterState.billing_address !== "" ||
+      filterState.shipping_address !== "" ||
+      filterState.wo_date !== "" ||
+      filterState.wo_validate !== "" ||
+      filterState.endclient_id > 0
+    );
+  };
 
   useEffect(() => {
     const source = axios.CancelToken.source();
 
     const fetchInvoices = async () => {
       try {
+        const params: Record<string, number | string> = {
+          page: currentPage,
+          page_size: limit,
+        };
+        if (filterState.selectedProject > 0) {
+          params.project_id = filterState.selectedProject;
+        }
+        if (filterState.workorderid !== "") {
+          params.work_order_id = filterState.workorderid;
+        }
+        if (filterState.contact_person !== "") {
+          params.contact_person = filterState.contact_person;
+        }
+        if (filterState.contact_email !== "") {
+          params.contact_email = filterState.contact_email;
+        }
+        if (filterState.contact_number !== "") {
+          params.contact_number = filterState.contact_number;
+        }
+        if (filterState.payment_status !== "") {
+          params.payment_status = filterState.payment_status;
+        }
+        if (filterState.total_paid > 0) {
+          params.total_paid = filterState.total_paid;
+          if (filterState.totalpaidFilterType === "upto") {
+            params.total_paid_filter_type = "lt";
+          } else {
+            params.total_paid_filter_type = "eq";
+          }
+        }
+        if (filterState.total_value > 0) {
+          params.total_value = filterState.total_value;
+          if (filterState.totalvalueFilterType === "upto") {
+            params.total_value_filter_Type = "lt";
+          } else {
+            params.total_value_filter_Type = "eq";
+          }
+        }
+        if (filterState.billing_address !== "") {
+          params.billing_address = filterState.billing_address;
+        }
+        if (filterState.shipping_address !== "") {
+          params.shipping_address = filterState.shipping_address;
+        }
+        if (filterState.wo_date !== "") {
+          params.wo_date = filterState.wo_date;
+        }
+        if (filterState.wo_validate !== "") {
+          params.wo_validate = filterState.wo_validate;
+        }
+        if (filterState.endclient_id > 0) {
+          params.endclient_id = filterState.endclient_id;
+        }
+
         const response = await apiClient.get("/invoices", {
           cancelToken: source.token,
+          params,
         });
 
         if (response.status === 200) {
-          setData(response.data);
+          setData(response.data.data);
+          if (response.data.pagination) {
+            setPagination(response.data.pagination);
+          }
         } else {
           toast.error(response.data?.message || "Failed to fetch invoices");
         }
@@ -346,7 +500,7 @@ export function InvoiceTable() {
     return () => {
       source.cancel();
     };
-  }, []);
+  }, [currentPage, limit, filterState]);
 
   const table = useReactTable({
     data,
@@ -450,7 +604,7 @@ export function InvoiceTable() {
       doc.save(fileName);
 
       toast.success(
-        `PDF downloaded successfully with ${selectedRows.length} invoice(s)`
+        `PDF downloaded successfully with ${selectedRows.length} invoice(s)`,
       );
     } catch (error) {
       console.error("Error generating PDF:", error);
@@ -483,7 +637,19 @@ export function InvoiceTable() {
               Download PDF ({table.getFilteredSelectedRowModel().rows.length})
             </Button>
           )}
-         
+          <Button
+            variant={hasActiveFilters() ? "default" : "outline"}
+            className="w-full sm:w-auto"
+            onClick={() => setFilterOpen((prev) => !prev)}
+          >
+            Advance Filter
+          </Button>
+          {hasActiveFilters() && (
+            <Button variant="outline" onClick={clearAllFilters}>
+              Clear Filters
+            </Button>
+          )}
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" className="w-full sm:w-auto">
@@ -512,6 +678,13 @@ export function InvoiceTable() {
           </DropdownMenu>
         </div>
       </div>
+      {filterOpen && (
+        <InvoiceFilter
+          onFilterChange={handleFilterChange}
+          onClose={handleFilterClose}
+          currentFilter={filterState}
+        />
+      )}
       <div className="overflow-hidden rounded-md border">
         <div className="hide-x-scrollbar">
           <Table>
@@ -525,7 +698,7 @@ export function InvoiceTable() {
                           ? null
                           : flexRender(
                               header.column.columnDef.header,
-                              header.getContext()
+                              header.getContext(),
                             )}
                       </TableHead>
                     );
@@ -545,7 +718,7 @@ export function InvoiceTable() {
                       <TableCell key={cell.id} className="py-2">
                         {flexRender(
                           cell.column.columnDef.cell,
-                          cell.getContext()
+                          cell.getContext(),
                         )}
                       </TableCell>
                     ))}
@@ -565,28 +738,72 @@ export function InvoiceTable() {
           </Table>
         </div>
       </div>
-      <div className="flex items-center justify-end space-x-2 py-4">
+      <div className="flex flex-col gap-4 py-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="text-muted-foreground flex-1 text-sm">
           {table.getFilteredSelectedRowModel().rows.length} of{" "}
-          {table.getFilteredRowModel().rows.length} row(s) selected.
+          {table.getRowModel().rows.length} row(s) selected on this page.
+          {pagination && (
+            <span className="ml-2">
+              (Total: {pagination.total} work orders)
+            </span>
+          )}
         </div>
-        <div className="space-x-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-          >
-            Previous
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-          >
-            Next
-          </Button>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:space-x-2">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">
+              Rows per page:
+            </span>
+            <Select
+              value={limit.toString()}
+              onValueChange={(value) => {
+                setLimit(Number(value));
+                setCurrentPage(1);
+              }}
+            >
+              <SelectTrigger className="w-[70px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="10">10</SelectItem>
+                <SelectItem value="25">25</SelectItem>
+                <SelectItem value="50">50</SelectItem>
+                <SelectItem value="100">100</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          {pagination && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <span>
+                Page {pagination.current_page} of {pagination.total_pages}
+              </span>
+            </div>
+          )}
+          <div className="flex space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+              disabled={!pagination || pagination.current_page <= 1}
+            >
+              Previous
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                setCurrentPage((prev) =>
+                  pagination
+                    ? Math.min(pagination.total_pages, prev + 1)
+                    : prev + 1,
+                )
+              }
+              disabled={
+                !pagination || pagination.current_page >= pagination.total_pages
+              }
+            >
+              Next
+            </Button>
+          </div>
         </div>
       </div>
     </div>

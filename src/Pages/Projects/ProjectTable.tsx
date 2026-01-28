@@ -11,7 +11,13 @@ import {
   type VisibilityState,
 } from "@tanstack/react-table";
 import { ArrowUpDown, ChevronDown, MoreHorizontal } from "lucide-react";
-
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -32,7 +38,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useContext, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 import axios, { AxiosError } from "axios";
 import { apiClient } from "@/utils/apiClient";
 import { toast } from "sonner";
@@ -40,6 +46,9 @@ import { useNavigate } from "react-router";
 import { UserContext } from "@/Provider/UserProvider";
 import { formatDisplayDate } from "@/utils/formatdate";
 import { getStatusStyles } from "@/Pages/Projects/ProjectCardView";
+import type { FilterStateProject } from "./AdvanceProjectfilter";
+import type { FilterStateInvoiceFilter } from "../Invoice/InvoiceFilter";
+import AdvanceProjectFilter from "./AdvanceProjectfilter";
 
 export type Project = {
   name: string;
@@ -68,6 +77,13 @@ export type Project = {
   element_type_count: number;
   project_members_count: number;
   stockyards: null;
+};
+
+type PaginationInfo = {
+  current_page: number;
+  per_page: number;
+  total: number;
+  total_pages: number;
 };
 
 export const columns: ColumnDef<Project>[] = [
@@ -275,18 +291,108 @@ export function ProjectTable() {
   const [rowSelection, setRowSelection] = useState({});
   const navigate = useNavigate();
   const [data, setData] = useState<Project[]>([]);
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [limit, setLimit] = useState<number>(10);
+  const [pagination, setPagination] = useState<PaginationInfo | null>(null);
+
+  const [filterState, setFilterState] = useState<FilterStateProject>({
+    name: "",
+    client_id: 0,
+    stockyard_id: 0,
+    start_date: "",
+    end_date: "",
+    subscription_start_date: "",
+    subscription_end_date: "",
+    type: "all",
+  });
+
+  const handleFilterChange = useCallback(
+    (filters: FilterStateProject) => {
+      // Only update if filters actually changed
+      if (JSON.stringify(filters) !== JSON.stringify(filterState)) {
+        setFilterState(filters);
+        setCurrentPage(1); // Reset to first page when filters change
+      }
+    },
+    [filterState],
+  );
+
+  const handleFilterClose = useCallback(() => {
+    setFilterOpen(false);
+  }, []);
+
+  const clearAllFilters = useCallback(() => {
+    setFilterState({
+      name: "",
+      client_id: 0,
+      stockyard_id: 0,
+      start_date: "",
+      end_date: "",
+      subscription_start_date: "",
+      subscription_end_date: "",
+      type: "all",
+    });
+    setCurrentPage(1);
+  }, []);
+
+  // Check if any filters are active
+  const hasActiveFilters = () => {
+    return (
+      filterState.name !== "" ||
+      filterState.client_id > 0 ||
+      filterState.stockyard_id > 0 ||
+      filterState.start_date !== "" ||
+      filterState.end_date !== "" ||
+      filterState.subscription_start_date !== "" ||
+      filterState.subscription_end_date !== "" ||
+      filterState.type !== "all"
+    );
+  };
 
   useEffect(() => {
     const source = axios.CancelToken.source();
 
     const fetchProjects = async () => {
       try {
+        const params: Record<string, number | string> = {
+          page: currentPage,
+          page_size: limit,
+        };
+        if (filterState.name !== "") {
+          params.name = filterState.name;
+        }
+        if (filterState.client_id > 0) {
+          params.client_id = filterState.client_id;
+        }
+        if (filterState.stockyard_id > 0) {
+          params.stockyard_id = filterState.stockyard_id;
+        }
+        if (filterState.start_date !== "") {
+          params.start_date = filterState.start_date;
+        }
+        if (filterState.end_date !== "") {
+          params.end_date = filterState.end_date;
+        }
+        if (filterState.subscription_start_date !== "") {
+          params.subscription_start_date = filterState.subscription_start_date;
+        }
+        if (filterState.subscription_end_date !== "") {
+          params.subscription_end_date = filterState.subscription_end_date;
+        }
+        if (filterState.type !== "all") {
+          params.type = filterState.type;
+        }
         const response = await apiClient.get("/projects_overview", {
           cancelToken: source.token,
+          params,
         });
 
         if (response.status === 200) {
           setData(response.data.projects);
+          if (response.data.pagination) {
+            setPagination(response.data.pagination);
+          }
         } else {
           toast.error(response.data?.message || "Failed to fetch projects");
         }
@@ -302,7 +408,7 @@ export function ProjectTable() {
     return () => {
       source.cancel();
     };
-  }, []);
+  }, [filterState, currentPage, limit]);
 
   const table = useReactTable({
     data,
@@ -336,6 +442,18 @@ export function ProjectTable() {
           className="w-full max-w-sm sm:max-w-xs"
         />
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-center">
+          <Button
+            variant={hasActiveFilters() ? "default" : "outline"}
+            className="w-full sm:w-auto"
+            onClick={() => setFilterOpen((prev) => !prev)}
+          >
+            Advance Filter
+          </Button>
+          {hasActiveFilters() && (
+            <Button variant="outline" onClick={clearAllFilters}>
+              Clear Filters
+            </Button>
+          )}
           <Button
             variant="outline"
             className="w-full sm:w-auto"
@@ -371,6 +489,13 @@ export function ProjectTable() {
           </DropdownMenu>
         </div>
       </div>
+      {filterOpen && (
+        <AdvanceProjectFilter
+          onFilterChange={handleFilterChange}
+          onClose={handleFilterClose}
+          currentFilter={filterState}
+        />
+      )}
       <div className="overflow-hidden rounded-md border">
         <Table>
           <TableHeader>
@@ -383,7 +508,7 @@ export function ProjectTable() {
                         ? null
                         : flexRender(
                             header.column.columnDef.header,
-                            header.getContext()
+                            header.getContext(),
                           )}
                     </TableHead>
                   );
@@ -407,7 +532,7 @@ export function ProjectTable() {
                     <TableCell key={cell.id}>
                       {flexRender(
                         cell.column.columnDef.cell,
-                        cell.getContext()
+                        cell.getContext(),
                       )}
                     </TableCell>
                   ))}
@@ -426,28 +551,72 @@ export function ProjectTable() {
           </TableBody>
         </Table>
       </div>
-      <div className="flex items-center justify-end space-x-2 py-4">
+      <div className="flex flex-col gap-4 py-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="text-muted-foreground flex-1 text-sm">
           {table.getFilteredSelectedRowModel().rows.length} of{" "}
-          {table.getFilteredRowModel().rows.length} row(s) selected.
+          {table.getRowModel().rows.length} row(s) selected on this page.
+          {pagination && (
+            <span className="ml-2">
+              (Total: {pagination.total} work orders)
+            </span>
+          )}
         </div>
-        <div className="space-x-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-          >
-            Previous
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-          >
-            Next
-          </Button>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:space-x-2">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">
+              Rows per page:
+            </span>
+            <Select
+              value={limit.toString()}
+              onValueChange={(value) => {
+                setLimit(Number(value));
+                setCurrentPage(1);
+              }}
+            >
+              <SelectTrigger className="w-[70px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="10">10</SelectItem>
+                <SelectItem value="25">25</SelectItem>
+                <SelectItem value="50">50</SelectItem>
+                <SelectItem value="100">100</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          {pagination && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <span>
+                Page {pagination.current_page} of {pagination.total_pages}
+              </span>
+            </div>
+          )}
+          <div className="flex space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+              disabled={!pagination || pagination.current_page <= 1}
+            >
+              Previous
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                setCurrentPage((prev) =>
+                  pagination
+                    ? Math.min(pagination.total_pages, prev + 1)
+                    : prev + 1,
+                )
+              }
+              disabled={
+                !pagination || pagination.current_page >= pagination.total_pages
+              }
+            >
+              Next
+            </Button>
+          </div>
         </div>
       </div>
     </div>
