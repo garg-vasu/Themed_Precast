@@ -71,6 +71,9 @@ import AddAttendance from "./Pages/Attendance/AddAttendance";
 import AddMember from "./Pages/ProjectMember/AddMember";
 import VehicleDispatch from "./Pages/Vehicle/VehicleDispatch";
 import EditMember from "./Pages/ProjectMember/EditMemeber";
+import ProjectRoleRoute from "./Pages/Limitation/ProjectRoleRoute";
+import RoleRoute from "./Pages/Limitation/RoleRoute";
+import NotFound from "./Pages/NotFound/NotFound";
 
 const routes: RouteObject[] = [
   { path: "/login", element: <Login /> },
@@ -88,26 +91,138 @@ const routes: RouteObject[] = [
       { path: "projectOverview", element: <ProjectCardView /> },
       { path: "store-warehouse", element: <StoreWarehouse /> },
       { path: "projects", element: <Project /> },
-      { path: "add-projects", element: <AddProjects /> },
-      { path: "edit-projects/:project_id", element: <EditProject /> },
+      {
+        path: "add-projects",
+        element: (
+          <RoleRoute allowedRoles={["superadmin"]} redirectTo="/login">
+            <AddProjects />
+          </RoleRoute>
+        ),
+      },
+      {
+        path: "edit-projects/:project_id",
+        element: (
+          <RoleRoute allowedRoles={["superadmin"]} redirectTo="/login">
+            <EditProject />
+          </RoleRoute>
+        ),
+      },
       { path: "stockyard", element: <Warehouse /> },
       { path: "tenants", element: <Tenants /> },
       { path: "end-clients", element: <EndClient /> },
-      { path: "users", element: <User /> },
-      { path: "invoices", element: <MixInvoice /> },
+      {
+        path: "users",
+        element: (
+          <RoleRoute allowedRoles={["superadmin"]} redirectTo="/login">
+            <User />
+          </RoleRoute>
+        ),
+      },
+      {
+        path: "invoices",
+        element: (
+          <RoleRoute allowedRoles={["admin", "superadmin"]} redirectTo="/login">
+            <MixInvoice />
+          </RoleRoute>
+        ),
+      },
       { path: "labour-summary", element: <LabourSummary /> },
-      { path: "work-order", element: <WorkOrder /> },
-      { path: "attendance", element: <MixAttendance /> },
-      { path: "skills", element: <MixSkills /> },
-      { path: "departments", element: <MixDepartemnt /> },
-      { path: "people", element: <PeopleTable refresh={() => {}} /> },
-      { path: "attendance-report", element: <AttendanceReport /> },
-      { path: "templates", element: <TemplateTable refresh={() => {}} /> },
-      { path: "work-order-detail/:workOrderId", element: <MixWorkorder /> },
-      { path: "add-tenant", element: <AddTenants /> },
-      { path: "edit-tenant/:tenant_id", element: <EditTenants /> },
-      { path: "tenant/:tenant_id", element: <TenantDetailPage /> },
-      { path: "tenant-detail/:tenant_id", element: <TenantDetailPage /> },
+      {
+        path: "work-order",
+        element: (
+          <RoleRoute allowedRoles={["superadmin", "admin"]} redirectTo="/login">
+            <WorkOrder />
+          </RoleRoute>
+        ),
+      },
+      {
+        path: "attendance",
+        element: (
+          <RoleRoute allowedRoles={["superadmin", "admin"]} redirectTo="/login">
+            <MixAttendance />
+          </RoleRoute>
+        ),
+      },
+      {
+        path: "skills",
+        element: (
+          <RoleRoute allowedRoles={["superadmin", "admin"]} redirectTo="/login">
+            <MixSkills />
+          </RoleRoute>
+        ),
+      },
+      {
+        path: "departments",
+        element: (
+          <RoleRoute allowedRoles={["superadmin", "admin"]} redirectTo="/login">
+            <MixDepartemnt />
+          </RoleRoute>
+        ),
+      },
+      {
+        path: "people",
+        element: (
+          <RoleRoute allowedRoles={["superadmin", "admin"]} redirectTo="/login">
+            <PeopleTable refresh={() => {}} />
+          </RoleRoute>
+        ),
+      },
+      {
+        path: "attendance-report",
+        element: (
+          <RoleRoute allowedRoles={["superadmin", "admin"]} redirectTo="/login">
+            <AttendanceReport />
+          </RoleRoute>
+        ),
+      },
+      {
+        path: "templates",
+        element: (
+          <RoleRoute allowedRoles={["superadmin", "admin"]} redirectTo="/login">
+            <TemplateTable refresh={() => {}} />
+          </RoleRoute>
+        ),
+      },
+      {
+        path: "work-order-detail/:workOrderId",
+        element: (
+          <RoleRoute allowedRoles={["admin", "superadmin"]} redirectTo="/login">
+            <MixWorkorder />
+          </RoleRoute>
+        ),
+      },
+      {
+        path: "add-tenant",
+        element: (
+          <RoleRoute allowedRoles={["superadmin"]} redirectTo="/login">
+            <AddTenants />
+          </RoleRoute>
+        ),
+      },
+      {
+        path: "edit-tenant/:tenant_id",
+        element: (
+          <RoleRoute allowedRoles={["superadmin"]} redirectTo="/login">
+            <EditTenants />
+          </RoleRoute>
+        ),
+      },
+      {
+        path: "tenant/:tenant_id",
+        element: (
+          <RoleRoute allowedRoles={["superadmin"]} redirectTo="/login">
+            <TenantDetailPage />
+          </RoleRoute>
+        ),
+      },
+      {
+        path: "tenant-detail/:tenant_id",
+        element: (
+          <RoleRoute allowedRoles={["superadmin"]} redirectTo="/login">
+            <TenantDetailPage />
+          </RoleRoute>
+        ),
+      },
       { path: "add-attendance", element: <AddAttendance /> },
       {
         path: "add-end-client",
@@ -124,15 +239,40 @@ const routes: RouteObject[] = [
       { path: "user-detail/:user_id", element: <UserDetailPage /> },
       {
         path: "invoice-detail/:invoice_id/:wo_number",
-        element: <InvoiceDetailPage />,
+        element: (
+          <RoleRoute allowedRoles={["admin", "superadmin"]} redirectTo="/login">
+            <InvoiceDetailPage />
+          </RoleRoute>
+        ),
       },
-      { path: "logs", element: <LogTable /> },
+      {
+        path: "logs",
+        element: (
+          <RoleRoute allowedRoles={["superadmin"]} redirectTo="/login">
+            <LogTable />
+          </RoleRoute>
+        ),
+      },
       {
         path: "tenant-via-end-client/:client_id",
         element: <TenantviaEndclientDashboard />,
       },
-      { path: "add-work-order", element: <AddWorkOrder /> },
-      { path: "edit-work-order/:work_order_id", element: <EditWorkOrder /> },
+      {
+        path: "add-work-order",
+        element: (
+          <RoleRoute allowedRoles={["admin", "superadmin"]} redirectTo="/login">
+            <AddWorkOrder />
+          </RoleRoute>
+        ),
+      },
+      {
+        path: "edit-work-order/:work_order_id",
+        element: (
+          <RoleRoute allowedRoles={["superadmin", "admin"]} redirectTo="/login">
+            <EditWorkOrder />
+          </RoleRoute>
+        ),
+      },
     ],
   },
   {
@@ -147,50 +287,194 @@ const routes: RouteObject[] = [
       </PrivateRoute>
     ),
     children: [
-      { index: true, element: <NewProjectDashboard /> },
-      { path: "dashboard", element: <NewProjectDashboard /> },
-      { path: "member", element: <Member /> },
-      { path: "drawing", element: <MixDrawing /> },
+      {
+        path: "dashboard",
+        element: (
+          <ProjectRoleRoute
+            allowedPermissions={["ViewDashboard"]}
+            redirectTo="/"
+          >
+            <NewProjectDashboard />
+          </ProjectRoleRoute>
+        ),
+      },
+      {
+        path: "member",
+        element: (
+          <ProjectRoleRoute allowedPermissions={["ViewMember"]} redirectTo="/">
+            <Member />
+          </ProjectRoleRoute>
+        ),
+      },
+      {
+        path: "drawing",
+        element: (
+          <ProjectRoleRoute
+            allowedPermissions={["ViewDrawing", "ViewDrawingType"]}
+            redirectTo="/"
+          >
+            <MixDrawing />
+          </ProjectRoleRoute>
+        ),
+      },
       { path: "element-stockyard", element: <MixElementStockyard /> },
       {
         path: "stockyard-assign",
         element: <StockyardAssigntable refresh={() => {}} />,
       },
       { path: "errection-receving", element: <MixErrection /> },
-      { path: "element-type", element: <MixElement /> },
-      { path: "bom", element: <BomTable refresh={() => {}} /> },
+      {
+        path: "element-type",
+        element: (
+          <ProjectRoleRoute
+            allowedPermissions={["ViewElementType", "ViewElement"]}
+            redirectTo="/"
+          >
+            <MixElement />
+          </ProjectRoleRoute>
+        ),
+      },
+      {
+        path: "bom",
+        element: (
+          <ProjectRoleRoute allowedPermissions={["ViewBom"]} redirectTo="/">
+            <BomTable refresh={() => {}} />
+          </ProjectRoleRoute>
+        ),
+      },
       { path: "large-import", element: <LargeImport /> },
       { path: "planning-approval", element: <MixPlanningApproval /> },
       { path: "retification", element: <RetificationTable /> },
       { path: "errection-request", element: <ErrectionRequestTable /> },
-      { path: "papers", element: <PaperTable refresh={() => {}} /> },
-      { path: "stages", element: <StagesTable refresh={() => {}} /> },
-      { path: "tags", element: <TagsTable refresh={() => {}} /> },
-      { path: "plan", element: <MixPlan /> },
-      { path: "add-task", element: <AddTask /> },
+      {
+        path: "papers",
+        element: (
+          <ProjectRoleRoute
+            allowedPermissions={["ViewPaper", "EditPaper", "AddPaper"]}
+            redirectTo="/"
+          >
+            <PaperTable refresh={() => {}} />
+          </ProjectRoleRoute>
+        ),
+      },
+      {
+        path: "stages",
+        element: (
+          <ProjectRoleRoute
+            allowedPermissions={["ViewStage", "EditStage", "AddStage"]}
+            redirectTo="/"
+          >
+            <StagesTable refresh={() => {}} />
+          </ProjectRoleRoute>
+        ),
+      },
+      {
+        path: "tags",
+        element: (
+          <ProjectRoleRoute
+            allowedPermissions={["ViewTag", "EditTag", "AddTag"]}
+            redirectTo="/"
+          >
+            <TagsTable refresh={() => {}} />
+          </ProjectRoleRoute>
+        ),
+      },
+      {
+        path: "plan",
+        element: (
+          <ProjectRoleRoute allowedPermissions={["ViewPlan"]} redirectTo="/">
+            <MixPlan />
+          </ProjectRoleRoute>
+        ),
+      },
+      {
+        path: "add-task",
+        element: (
+          <ProjectRoleRoute allowedPermissions={["AddTask"]} redirectTo="/">
+            <AddTask />
+          </ProjectRoleRoute>
+        ),
+      },
       { path: "project-summary", element: <ProjectSummary /> },
       { path: "stockyard-summary", element: <StockyardSummary /> },
-      { path: "add-element-type", element: <AddElementType /> },
+      {
+        path: "add-element-type",
+        element: (
+          <ProjectRoleRoute
+            allowedPermissions={["AddElementType"]}
+            redirectTo="/"
+          >
+            <AddElementType />
+          </ProjectRoleRoute>
+        ),
+      },
       {
         path: "element-type-detail/:elementtypeId/:floorId",
-        element: <Elementtypedetail />,
+        element: (
+          <ProjectRoleRoute
+            allowedPermissions={["ViewElementTypeDetail"]}
+            redirectTo="/"
+          >
+            <Elementtypedetail />
+          </ProjectRoleRoute>
+        ),
       },
       { path: "dispatch-log", element: <MixDispatch /> },
       {
         path: "element-detail/:elementTypeId",
-        element: <ElementDetailPage />,
+        element: (
+          <ProjectRoleRoute
+            allowedPermissions={["ViewElementDetail"]}
+            redirectTo="/"
+          >
+            <ElementDetailPage />
+          </ProjectRoleRoute>
+        ),
       },
       { path: "dispatch-request", element: <RequestHandler /> },
       { path: "erection-element", element: <MixErrectedElement /> },
       {
         path: "edit-element-type/:elementTypeId/:floorId",
-        element: <EditElementType />,
+        element: (
+          <ProjectRoleRoute allowedPermissions={["EditElementType"]}>
+            <EditElementType />
+          </ProjectRoleRoute>
+        ),
       },
-      { path: "hierarchy", element: <MixHierarchy /> },
-      { path: "add-project-member", element: <AddMember /> },
+      {
+        path: "hierarchy",
+        element: (
+          <ProjectRoleRoute
+            allowedPermissions={["ViewStructure"]}
+            redirectTo="/"
+          >
+            <MixHierarchy />
+          </ProjectRoleRoute>
+        ),
+      },
+      {
+        path: "add-project-member",
+        element: (
+          <ProjectRoleRoute allowedPermissions={["AddMember"]}>
+            <AddMember />
+          </ProjectRoleRoute>
+        ),
+      },
       { path: "vehicle-dispatch", element: <VehicleDispatch /> },
-      { path: "edit-member/:user_id", element: <EditMember /> },
+      {
+        path: "edit-member/:user_id",
+        element: (
+          <ProjectRoleRoute allowedPermissions={["EditMember"]}>
+            <EditMember />
+          </ProjectRoleRoute>
+        ),
+      },
     ],
+  },
+  // Catch-all 404 route - must be last
+  {
+    path: "*",
+    element: <NotFound />,
   },
 ];
 

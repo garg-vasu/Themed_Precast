@@ -28,7 +28,8 @@ type User = {
   id: number;
   employee_id: string;
   email: string;
-  password: string;
+  suspended: boolean;
+  project_suspend: boolean;
   first_name: string;
   last_name: string;
   created_at: string;
@@ -46,6 +47,7 @@ type User = {
   phone_code: number;
   role_id: number;
   role_name: string;
+  password: string;
 };
 
 export default function EditMember() {
@@ -118,7 +120,7 @@ export default function EditMember() {
   const editMemberData: EditMember = {
     id: Number(userId),
     email: data.email || "",
-    password: data.password,
+    password: data.password || "",
     first_name: data.first_name || "",
     last_name: data.last_name || "",
     address: data.address || "",

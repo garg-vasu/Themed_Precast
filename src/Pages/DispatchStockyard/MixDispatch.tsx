@@ -14,6 +14,7 @@ import { AcceptedDispatchTable } from "./AcceptedDispatchTable";
 
 import { DispatchedElementTable } from "./DispatchedElement";
 import { DispatchedReadyTable } from "./DispatchedReadyTable";
+import { useNavigate, useParams } from "react-router";
 
 interface TabLink {
   id: string;
@@ -25,6 +26,8 @@ interface TabLink {
 
 export default function MixDispatch() {
   const { permissions } = useProject();
+  const { projectId } = useParams<{ projectId: string }>();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<string>("");
 
   const tabLinks = useMemo<TabLink[]>(() => {
@@ -91,6 +94,12 @@ export default function MixDispatch() {
     <div className="flex flex-col gap-2 py-4 px-4">
       <div className="flex items-center justify-between">
         <PageHeader title=" Dispatch Log" />
+        <Button
+          variant="outline"
+          onClick={() => navigate(`/project/${projectId}/vehicle-dispatch`)}
+        >
+          Add Dispatch
+        </Button>
       </div>
       {/* pills section  */}
       <div className="flex flex-col gap-2">

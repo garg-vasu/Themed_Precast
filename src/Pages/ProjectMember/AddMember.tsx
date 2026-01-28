@@ -207,7 +207,7 @@ export default function AddMember({ user }: MemberFormProps) {
 
     return {
       email: user.email || "",
-      password: "",
+      password: user.password || "",
       first_name: user.first_name || "",
       last_name: user.last_name || "",
       address: user.address || "",
@@ -292,7 +292,9 @@ export default function AddMember({ user }: MemberFormProps) {
         if (response.status === 200) {
           setRoles(response.data);
         } else {
-          toast.error(response.data?.message || "Failed to fetch project roles");
+          toast.error(
+            response.data?.message || "Failed to fetch project roles",
+          );
         }
       } catch (err: unknown) {
         if (!axios.isCancel(err)) {
@@ -349,14 +351,20 @@ export default function AddMember({ user }: MemberFormProps) {
         console.log("Edit mode payload:", payload);
 
         // Update existing tenant
-        const response = await apiClient.put(`/update_user/${user.id}`, payload);
+        const response = await apiClient.put(
+          `/update_user/${user.id}`,
+          payload,
+        );
         if (response.status === 200 || response.status === 201) {
           toast.success("Project member updated successfully!");
           navigate(`/project/${projectId}/member`);
         }
       } else {
         // Create new tenant
-        const response = await apiClient.post("/create_project_members", payload);
+        const response = await apiClient.post(
+          "/create_project_members",
+          payload,
+        );
         if (response.status === 200 || response.status === 201) {
           toast.success("Project member created successfully!");
           navigate(`/project/${projectId}/member`);
@@ -365,7 +373,7 @@ export default function AddMember({ user }: MemberFormProps) {
     } catch (error: unknown) {
       const errorMessage = getErrorMessage(
         error,
-        isEditMode ? "update Member" : "create Member"
+        isEditMode ? "update Member" : "create Member",
       );
       toast.error(errorMessage);
     } finally {
@@ -422,7 +430,7 @@ export default function AddMember({ user }: MemberFormProps) {
               htmlFor="profile-upload"
               className={cn(
                 "flex items-center gap-2 px-4 py-2 rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground cursor-pointer transition-colors",
-                isUploadingImage && "opacity-50 cursor-not-allowed"
+                isUploadingImage && "opacity-50 cursor-not-allowed",
               )}
             >
               {isUploadingImage ? (
@@ -529,7 +537,6 @@ export default function AddMember({ user }: MemberFormProps) {
             </p>
           </div>
 
-          
           {/* Employee ID    */}
           <div className="grid w-full items-center gap-1.5">
             <Label htmlFor="employee_id">
@@ -560,7 +567,7 @@ export default function AddMember({ user }: MemberFormProps) {
                   onValueChange={(val) => {
                     field.onChange(Number(val));
                     const selectedPhoneCode = phonecodes.find(
-                      (code) => code.id === Number(val)
+                      (code) => code.id === Number(val),
                     );
                     if (selectedPhoneCode) {
                       setValue("phone_code", selectedPhoneCode.id);
@@ -619,7 +626,7 @@ export default function AddMember({ user }: MemberFormProps) {
                   onValueChange={(val) => {
                     field.onChange(Number(val));
                     const selectedRole = roles.find(
-                      (role) => role.role_id === Number(val)
+                      (role) => role.role_id === Number(val),
                     );
                     if (selectedRole) {
                       setValue("role_id", selectedRole.role_id);
@@ -633,14 +640,19 @@ export default function AddMember({ user }: MemberFormProps) {
                     <SelectGroup>
                       <SelectLabel>Roles</SelectLabel>
                       {roles.map((role) => (
-                        // disable the role if the quantity is 0 and  user could not able to click on it 
+                        // disable the role if the quantity is 0 and  user could not able to click on it
                         <SelectItem
-                        className={role.quantity === 0 ? "opacity-50 cursor-not-allowed" : ""}
+                          className={
+                            role.quantity === 0
+                              ? "opacity-50 cursor-not-allowed"
+                              : ""
+                          }
                           disabled={role.quantity === 0}
                           key={role.role_id}
                           value={role.role_id.toString()}
                         >
-                          {role.role_name} - {role.quantity} {role.quantity === 0 ? "(Disabled)" : ""}
+                          {role.role_name} - {role.quantity}{" "}
+                          {role.quantity === 0 ? "(Disabled)" : ""}
                         </SelectItem>
                       ))}
                     </SelectGroup>
