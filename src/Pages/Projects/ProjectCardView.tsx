@@ -6,7 +6,7 @@ import { apiClient } from "@/utils/apiClient";
 import { toast } from "sonner";
 import PageHeader from "@/components/ui/PageHeader";
 import { Button } from "@/components/ui/button";
-import { PlusIcon } from "lucide-react";
+import { PlusIcon, Ban } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -477,12 +477,12 @@ function ProjectCard({
 }) {
   const { user } = useContext(UserContext);
   const navigate = useNavigate();
-  const cardDisabled = project.suspend;
+  const isSuspended = project.suspend;
+  const isSuperAdmin = user?.role_name === "superadmin";
   const statusStyles = getStatusStyles(project.project_status);
   // overlay + block interaction ONLY when project is suspended AND user is not superadmin
-  const isSuspendedForUser =
-    cardDisabled && user && user.role_name !== "superadmin";
-  const canOpenProject = !isSuspendedForUser;
+  const isDisabledForUser = isSuspended && !isSuperAdmin;
+  const canOpenProject = !isDisabledForUser;
   const cardClass =
     "relative flex h-full flex-col rounded-xl border bg-gradient-to-br from-background via-background to-muted/60 text-card-foreground shadow-sm transition hover:shadow-md " +
     statusStyles.cardAccent;
@@ -508,11 +508,15 @@ function ProjectCard({
     try {
       const response = await apiClient.put(
         `/project/${project.project_id}/suspend`,
-        { suspend: !cardDisabled }
+        { suspend: !isSuspended }
       );
 
       if (response.status === 200) {
-        toast.success("Project suspended successfully");
+        toast.success(
+          isSuspended
+            ? "Project activated successfully"
+            : "Project suspended successfully"
+        );
         await fetchProjectData();
       } else {
         toast.error(getErrorMessageForSuspend(response.data));
@@ -526,24 +530,36 @@ function ProjectCard({
 
   const handleOpenProject = () => {
     if (!canOpenProject) return;
-    navigate(`/project/${project.project_id}`);
+    navigate(`/project/${project.project_id}/dashboard`);
   };
 
   return (
     <Card
-      className={`${cardClass} cursor-pointer`}
+      className={`${cardClass} ${
+        canOpenProject ? "cursor-pointer" : "cursor-not-allowed"
+      }`}
       onClick={canOpenProject ? handleOpenProject : undefined}
       role={canOpenProject ? "button" : undefined}
       tabIndex={canOpenProject ? 0 : -1}
     >
-      {isSuspendedForUser && (
+      {isDisabledForUser && (
         // Only when project is suspended AND user is not superadmin:
         // show a blocking overlay and disallow interaction
-        <div className="absolute inset-0 z-10 rounded-xl bg-background/40 backdrop-blur-[1px] cursor-not-allowed" />
+        <div className="absolute inset-0 z-10 rounded-xl bg-background/50 backdrop-blur-[1px] cursor-not-allowed" />
+      )}
+
+      {/* Suspend Icon - Top Right */}
+      {isSuspended && (
+        <div
+          className="absolute top-3 right-3 z-20 flex items-center justify-center w-8 h-8 rounded-full bg-destructive/10 border border-destructive/30"
+          title="Project Suspended"
+        >
+          <Ban className="w-4 h-4 text-destructive" />
+        </div>
       )}
 
       <CardHeader className="flex-row items-start justify-between gap-3">
-        <div className="min-w-0 flex-1 space-y-1">
+        <div className="min-w-0 flex-1 space-y-1 pr-8">
           <CardTitle className="truncate text-base font-semibold">
             {project.name}
           </CardTitle>
@@ -610,31 +626,50 @@ function ProjectCard({
           </span>
           {project.last_updated_by && <span>By {project.last_updated_by}</span>}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 relative z-20">
           <Button
             type="button"
             size="sm"
             variant="outline"
             className="h-7 px-2 text-xs"
+            disabled={isDisabledForUser}
             onClick={(e) => {
               e.stopPropagation();
-              handleOpenProject();
+              if (canOpenProject) {
+                handleOpenProject();
+              }
             }}
           >
             Open
           </Button>
-          {user?.role_name === "superadmin" && (
+          {/* Show Suspend button only for superadmin when project is NOT suspended */}
+          {isSuperAdmin && !isSuspended && (
             <Button
               type="button"
               size="sm"
-              variant={cardDisabled ? "outline" : "destructive"}
+              variant="destructive"
               className="h-7 px-2 text-xs"
               onClick={(e) => {
                 e.stopPropagation();
                 handleSuspend(e);
               }}
             >
-              {cardDisabled ? "Activate" : "Suspend"}
+              Suspend
+            </Button>
+          )}
+          {/* Show Activate button only for superadmin when project IS suspended */}
+          {isSuperAdmin && isSuspended && (
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="h-7 px-2 text-xs border-green-500 text-green-600 hover:bg-green-50 hover:text-green-700"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleSuspend(e);
+              }}
+            >
+              Activate
             </Button>
           )}
         </div>

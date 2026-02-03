@@ -38,12 +38,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useCallback, useContext, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import axios, { AxiosError } from "axios";
 import { apiClient } from "@/utils/apiClient";
 import { toast } from "sonner";
 import { useNavigate } from "react-router";
-import { UserContext } from "@/Provider/UserProvider";
+import { UserContext, type User } from "@/Provider/UserProvider";
 import { formatDisplayDate } from "@/utils/formatdate";
 import { getStatusStyles } from "@/Pages/Projects/ProjectCardView";
 import type { FilterStateProject } from "./AdvanceProjectfilter";
@@ -86,186 +86,202 @@ type PaginationInfo = {
   total_pages: number;
 };
 
-export const columns: ColumnDef<Project>[] = [
-  {
-    id: "select",
-    header: ({ table }) => (
-      <Checkbox
-        checked={
-          table.getIsAllPageRowsSelected() ||
-          (table.getIsSomePageRowsSelected() && "indeterminate")
-        }
-        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-        aria-label="Select all"
-      />
-    ),
-    cell: ({ row }) => (
-      <Checkbox
-        checked={row.getIsSelected()}
-        onCheckedChange={(value) => row.toggleSelected(!!value)}
-        aria-label="Select row"
-      />
-    ),
-    enableSorting: false,
-    enableHiding: false,
-  },
-  //   name column
-  {
-    accessorKey: "name",
-    header: "Name",
-    cell: ({ row }) => {
-      const navigate = useNavigate();
-      return (
-        <div
-          className="capitalize cursor-pointer"
-          onClick={() => navigate(`/project/${row.original.project_id}`)}
+// Function to generate columns based on user role
+const createColumns = (
+  user: User | null,
+  navigate: ReturnType<typeof useNavigate>
+): ColumnDef<Project>[] => {
+  const isSuperAdmin = user?.role_name === "superadmin";
+
+  // Helper to check if row should be disabled
+  const isRowDisabled = (row: { original: Project }) =>
+    row.original.suspend && !isSuperAdmin;
+
+  return [
+    {
+      id: "select",
+      header: ({ table }) => (
+        <Checkbox
+          checked={
+            table.getIsAllPageRowsSelected() ||
+            (table.getIsSomePageRowsSelected() && "indeterminate")
+          }
+          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+          aria-label="Select all"
+        />
+      ),
+      cell: ({ row }) => (
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
+          aria-label="Select row"
+          disabled={isRowDisabled(row)}
+        />
+      ),
+      enableSorting: false,
+      enableHiding: false,
+    },
+    //   name column
+    {
+      accessorKey: "name",
+      header: "Name",
+      cell: ({ row }) => {
+        const disabled = isRowDisabled(row);
+        return (
+          <div
+            className={`capitalize ${
+              disabled
+                ? "cursor-not-allowed text-muted-foreground"
+                : "cursor-pointer hover:underline"
+            }`}
+            onClick={() => {
+              if (!disabled) {
+                navigate(`/project/${row.original.project_id}/dashboard`);
+              }
+            }}
+          >
+            {row.getValue("name")}
+          </div>
+        );
+      },
+    },
+
+    //   description column
+    {
+      accessorKey: "description",
+      header: "Description",
+      cell: ({ row }) => (
+        <div className="capitalize">{row.getValue("description")}</div>
+      ),
+    },
+    //   budget
+    {
+      accessorKey: "budget",
+      header: () => <div className="text-right">Budget</div>,
+      cell: ({ row }) => {
+        const budget = parseFloat(row.getValue("budget"));
+        // Format the amount as a dollar amount
+        const formatted = new Intl.NumberFormat("en-US", {
+          style: "currency",
+          currency: "INR",
+        }).format(budget);
+        return <div className="text-right font-medium">{formatted}</div>;
+      },
+    },
+
+    //   start date column
+    {
+      accessorKey: "start_date",
+      header: ({ column }) => (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
-          {row.getValue("name")}
-        </div>
-      );
+          Start Date
+          <ArrowUpDown className="ml-1 h-4 w-4" />
+        </Button>
+      ),
+      cell: ({ row }) => {
+        const raw = row.getValue("start_date") as string | undefined;
+        return <div>{formatDisplayDate(raw)}</div>;
+      },
     },
-  },
-
-  //   description column
-  {
-    accessorKey: "description",
-    header: "Description",
-    cell: ({ row }) => (
-      <div className="capitalize">{row.getValue("description")}</div>
-    ),
-  },
-  //   budget
-  {
-    accessorKey: "budget",
-    header: () => <div className="text-right">Budget</div>,
-    cell: ({ row }) => {
-      const budget = parseFloat(row.getValue("budget"));
-      // Format the amount as a dollar amount
-      const formatted = new Intl.NumberFormat("en-US", {
-        style: "currency",
-        currency: "INR",
-      }).format(budget);
-      return <div className="text-right font-medium">{formatted}</div>;
-    },
-  },
-
-  //   start date column
-  {
-    accessorKey: "start_date",
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        Start Date
-        <ArrowUpDown className="ml-1 h-4 w-4" />
-      </Button>
-    ),
-    cell: ({ row }) => {
-      const raw = row.getValue("start_date") as string | undefined;
-      return <div>{formatDisplayDate(raw)}</div>;
-    },
-  },
-  //   end date column
-  {
-    accessorKey: "end_date",
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        End Date
-        <ArrowUpDown className="ml-1 h-4 w-4" />
-      </Button>
-    ),
-    cell: ({ row }) => {
-      const raw = row.getValue("end_date") as string | undefined;
-      return <div>{formatDisplayDate(raw)}</div>;
-    },
-  },
-  //   priority column
-  {
-    accessorKey: "priority",
-    header: "Priority",
-    cell: ({ row }) => (
-      <div className="capitalize">{row.getValue("priority")}</div>
-    ),
-  },
-  //   project status column
-  {
-    accessorKey: "project_status",
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        Status
-        <ArrowUpDown className="ml-1 h-4 w-4" />
-      </Button>
-    ),
-    cell: ({ row }) => {
-      const status = row.getValue("project_status") as string | undefined;
-      const { badge, dot } = getStatusStyles(status);
-
-      return (
-        <span
-          className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide ${badge}`}
+    //   end date column
+    {
+      accessorKey: "end_date",
+      header: ({ column }) => (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
-          <span className={`h-1.5 w-1.5 rounded-full ${dot}`} />
-          {status || "Unknown"}
-        </span>
-      );
+          End Date
+          <ArrowUpDown className="ml-1 h-4 w-4" />
+        </Button>
+      ),
+      cell: ({ row }) => {
+        const raw = row.getValue("end_date") as string | undefined;
+        return <div>{formatDisplayDate(raw)}</div>;
+      },
     },
-  },
-
-  //   {
-  //     accessorKey: "amount",
-  //     header: () => <div className="text-right">Amount</div>,
-  //     cell: ({ row }) => {
-  //       const amount = parseFloat(row.getValue("amount"));
-
-  //       // Format the amount as a dollar amount
-  //       const formatted = new Intl.NumberFormat("en-US", {
-  //         style: "currency",
-  //         currency: "USD",
-  //       }).format(amount);
-
-  //       return <div className="text-right font-medium">{formatted}</div>;
-  //     },
-  //   },
-  {
-    id: "actions",
-    enableHiding: false,
-    cell: ({ row }) => {
-      const payment = row.original;
-      const navigate = useNavigate();
-
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <MoreHorizontal />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem
-              onClick={() => navigate(`/project/${payment.project_id}`)}
-            >
-              View Project
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => navigate(`/edit-projects/${payment.project_id}`)}
-            >
-              Edit Project
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      );
+    //   priority column
+    {
+      accessorKey: "priority",
+      header: "Priority",
+      cell: ({ row }) => (
+        <div className="capitalize">{row.getValue("priority")}</div>
+      ),
     },
-  },
-];
+    //   project status column
+    {
+      accessorKey: "project_status",
+      header: ({ column }) => (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Status
+          <ArrowUpDown className="ml-1 h-4 w-4" />
+        </Button>
+      ),
+      cell: ({ row }) => {
+        const status = row.getValue("project_status") as string | undefined;
+        const { badge, dot } = getStatusStyles(status);
+
+        return (
+          <span
+            className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide ${badge}`}
+          >
+            <span className={`h-1.5 w-1.5 rounded-full ${dot}`} />
+            {status || "Unknown"}
+          </span>
+        );
+      },
+    },
+    //   actions column
+    {
+      id: "actions",
+      enableHiding: false,
+      cell: ({ row }) => {
+        const project = row.original;
+        const disabled = isRowDisabled(row);
+
+        return (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                className="h-8 w-8 p-0"
+                disabled={disabled}
+              >
+                <span className="sr-only">Open menu</span>
+                <MoreHorizontal />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+              <DropdownMenuItem
+                onClick={() =>
+                  navigate(`/project/${project.project_id}/dashboard`)
+                }
+              >
+                View Project
+              </DropdownMenuItem>
+              {isSuperAdmin && (
+                <DropdownMenuItem
+                  onClick={() =>
+                    navigate(`/edit-projects/${project.project_id}`)
+                  }
+                >
+                  Edit Project
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        );
+      },
+    },
+  ];
+};
 
 const getErrorMessage = (error: AxiosError | unknown, data: string): string => {
   if (axios.isAxiosError(error)) {
@@ -296,6 +312,12 @@ export function ProjectTable() {
   const [limit, setLimit] = useState<number>(10);
   const [pagination, setPagination] = useState<PaginationInfo | null>(null);
 
+  // Create columns with user role awareness
+  const columns = useMemo(
+    () => createColumns(user, navigate),
+    [user, navigate]
+  );
+
   const [filterState, setFilterState] = useState<FilterStateProject>({
     name: "",
     client_id: 0,
@@ -315,7 +337,7 @@ export function ProjectTable() {
         setCurrentPage(1); // Reset to first page when filters change
       }
     },
-    [filterState],
+    [filterState]
   );
 
   const handleFilterClose = useCallback(() => {
@@ -454,13 +476,15 @@ export function ProjectTable() {
               Clear Filters
             </Button>
           )}
-          <Button
-            variant="outline"
-            className="w-full sm:w-auto"
-            onClick={() => navigate("/add-projects")}
-          >
-            Add Project
-          </Button>
+          {user?.role_name === "superadmin" && (
+            <Button
+              variant="outline"
+              className="w-full sm:w-auto"
+              onClick={() => navigate("/add-projects")}
+            >
+              Add Project
+            </Button>
+          )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" className="w-full sm:w-auto">
@@ -508,7 +532,7 @@ export function ProjectTable() {
                         ? null
                         : flexRender(
                             header.column.columnDef.header,
-                            header.getContext(),
+                            header.getContext()
                           )}
                     </TableHead>
                   );
@@ -518,26 +542,31 @@ export function ProjectTable() {
           </TableHeader>
           <TableBody>
             {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
-                  className={
-                    row.original.suspend && user?.role_name !== "superadmin"
-                      ? "opacity-50 cursor-not-allowed"
-                      : ""
-                  }
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext(),
-                      )}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
+              table.getRowModel().rows.map((row) => {
+                const isSuperAdmin = user?.role_name === "superadmin";
+                const isDisabled = row.original.suspend && !isSuperAdmin;
+
+                return (
+                  <TableRow
+                    key={row.id}
+                    data-state={row.getIsSelected() && "selected"}
+                    className={
+                      isDisabled
+                        ? "opacity-50 cursor-not-allowed bg-muted/30"
+                        : ""
+                    }
+                  >
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id}>
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                );
+              })
             ) : (
               <TableRow>
                 <TableCell
@@ -607,7 +636,7 @@ export function ProjectTable() {
                 setCurrentPage((prev) =>
                   pagination
                     ? Math.min(pagination.total_pages, prev + 1)
-                    : prev + 1,
+                    : prev + 1
                 )
               }
               disabled={

@@ -8,8 +8,11 @@ import {
 } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
+import { Ban, Home } from "lucide-react";
 
 import { apiClient } from "@/utils/apiClient";
+import { UserContext } from "./UserProvider";
+import { Button } from "@/components/ui/button";
 
 export interface ProjectDetails {
   project_id: number;
@@ -20,6 +23,7 @@ export interface ProjectDetails {
   end_date: string;
   logo: string;
   description: string;
+  suspend: boolean;
   budget: string;
   client_name: string;
   client_id: number;
@@ -87,8 +91,53 @@ function AccessDeniedFallback() {
   );
 }
 
+// Fallback component for suspended project
+function ProjectSuspendedFallback({ projectName }: { projectName?: string }) {
+  const navigate = useNavigate();
+  return (
+    <div className="flex flex-col items-center justify-center h-full min-h-[60vh] p-8">
+      <div className="flex flex-col items-center max-w-md text-center">
+        {/* Suspended Icon */}
+        <div className="flex items-center justify-center w-20 h-20 rounded-full bg-destructive/10 border-2 border-destructive/30 mb-6">
+          <Ban className="w-10 h-10 text-destructive" />
+        </div>
+
+        {/* Title */}
+        <h2 className="text-2xl font-bold text-destructive mb-2">
+          Project Suspended
+        </h2>
+
+        {/* Project Name */}
+        {projectName && (
+          <p className="text-lg font-medium text-foreground mb-4">
+            "{projectName}"
+          </p>
+        )}
+
+        {/* Description */}
+        <p className="text-muted-foreground mb-6">
+          This project has been suspended and is currently not accessible.
+          Please contact your administrator or project manager for more
+          information.
+        </p>
+
+        {/* Action Button */}
+        <Button
+          variant="outline"
+          className="gap-2"
+          onClick={() => navigate("/")}
+        >
+          <Home className="w-4 h-4" />
+          Go to Home
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 export const ProjectProvider = ({ children }: ProjectProviderProps) => {
   const { projectId } = useParams<{ projectId: string }>();
+  const { user } = useContext(UserContext);
   const [projectDetails, setProjectDetails] = useState<ProjectDetails | null>(
     null
   );
@@ -96,6 +145,12 @@ export const ProjectProvider = ({ children }: ProjectProviderProps) => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
+
+  // Check if user is superadmin
+  const isSuperAdmin = user?.role_name === "superadmin";
+  // Check if project is suspended and user is not superadmin
+  const isProjectSuspendedForUser =
+    projectDetails?.suspend === true && !isSuperAdmin;
 
   const handleUnauthorized = () => {
     localStorage.removeItem("accessToken");
@@ -202,7 +257,10 @@ export const ProjectProvider = ({ children }: ProjectProviderProps) => {
           if (!axios.isCancel(err)) {
             if (axios.isAxiosError(err) && err.response?.status === 403) {
               setError("access_denied");
-            } else if (axios.isAxiosError(err) && err.response?.status === 404) {
+            } else if (
+              axios.isAxiosError(err) &&
+              err.response?.status === 404
+            ) {
               // Project does not exist - show toast and redirect to home
               const errorMessage =
                 err.response?.data?.error || "Project not found.";
@@ -232,6 +290,11 @@ export const ProjectProvider = ({ children }: ProjectProviderProps) => {
   // Render Access Denied fallback if error is access_denied
   if (error === "access_denied") {
     return <AccessDeniedFallback />;
+  }
+
+  // Render Project Suspended fallback if project is suspended and user is not superadmin
+  if (!loading && isProjectSuspendedForUser) {
+    return <ProjectSuspendedFallback projectName={projectDetails?.name} />;
   }
 
   return (
