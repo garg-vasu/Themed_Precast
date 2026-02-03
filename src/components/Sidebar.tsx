@@ -22,6 +22,8 @@ import {
   BarChart,
   FolderKanban,
   Shield,
+  Bell,
+  Calculator,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -32,10 +34,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import { apiClient } from "@/utils/apiClient";
 import axios, { AxiosError } from "axios";
 import { toast } from "sonner";
+import { UserContext } from "@/Provider/UserProvider";
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -71,127 +74,137 @@ export interface NavigationItem {
   children?: NavigationItem[];
 }
 
-const navigationItems: NavigationItem[] = [
-  {
-    name: "Dashboard",
-    icon: Home,
-    children: [
-      {
-        name: "Monthly",
-        href: "/",
-        icon: Calendar,
-      },
-      {
-        name: "Overview",
-        href: "/projectOverview",
-        icon: BarChart,
-      },
-    ],
-  },
-  {
-    name: "All Projects",
-    href: "/projects",
-    icon: FolderKanban,
-  },
-  {
-    name: "Store / Warehouse",
-    href: "/store-warehouse",
-    icon: Warehouse,
-  },
-  {
-    name: "Stockyard",
-    href: "/stockyard",
-    icon: Warehouse,
-  },
-  {
-    name: "Clients",
-    href: "/tenants",
-    icon: Building2,
-  },
-  {
-    name: "End Clients",
-    href: "/end-clients",
-    icon: UserCircle,
-  },
-  {
-    name: "All Users",
-    href: "/users",
-    icon: Users,
-  },
-  {
-    name: "All Invoices",
-    href: "/invoices",
-    icon: Receipt,
-  },
-  {
-    name: "Work Order",
-    href: "/work-order",
-    icon: ClipboardList,
-  },
-  {
-    name: "Reports",
-    icon: PieChart,
-    children: [
-      {
-        name: "Labour Summary",
-        href: "/labour-summary",
-        icon: FileText,
-      },
-      {
-        name: "Attendance Report",
-        href: "/attendance-report",
-        icon: CalendarCheck,
-      },
-    ],
-  },
-  {
-    name: "Human Resource",
-    icon: Users,
-    children: [
-      {
-        name: "Attendance",
-        href: "/attendance",
-        icon: CalendarCheck,
-      },
-      {
-        name: "Skills",
-        href: "/skills",
-        icon: Award,
-      },
-      {
-        name: "People",
-        href: "/people",
-        icon: Users,
-      },
-      {
-        name: "Departments",
-        href: "/departments",
-        icon: Building,
-      },
-    ],
-  },
-  {
-    name: "Setting",
-    icon: Settings,
-    children: [
-      {
-        name: "Templates",
-        href: "/templates",
-        icon: LayoutTemplate,
-      },
-      {
-        name: "Logs",
-        href: "/logs",
-        icon: ScrollText,
-      },
-      {
-        name: "Roles",
-        href: "/role",
-        icon: Shield,
-      },
-    ],
-  },
-];
+// Navigation items organized by user role
+const menuItemsByRole: Record<string, NavigationItem[]> = {
+  superadmin: [
+    {
+      name: "Dashboard",
+      icon: Home,
+      children: [
+        { name: "Monthly", href: "/", icon: Calendar },
+        { name: "Overview", href: "/projectOverview", icon: BarChart },
+      ],
+    },
+    { name: "All Projects", href: "/projects", icon: FolderKanban },
+    { name: "Store / Warehouse", href: "/store-warehouse", icon: Warehouse },
+    { name: "Stockyard", href: "/stockyard", icon: Warehouse },
+    { name: "Clients", href: "/tenants", icon: Building2 },
+    { name: "End Clients", href: "/end-clients", icon: UserCircle },
+    { name: "Calculator", href: "/calculator", icon: Calculator },
+    { name: "All Users", href: "/users", icon: Users },
+    { name: "All Invoices", href: "/invoices", icon: Receipt },
+    { name: "Work Order", href: "/work-order", icon: ClipboardList },
+    {
+      name: "Reports",
+      icon: PieChart,
+      children: [
+        { name: "Labour Summary", href: "/labour-summary", icon: FileText },
+        {
+          name: "Attendance Report",
+          href: "/attendance-report",
+          icon: CalendarCheck,
+        },
+      ],
+    },
+    { name: "Notification", href: "/notification", icon: Bell },
+    {
+      name: "Human Resource",
+      icon: Users,
+      children: [
+        { name: "Attendance", href: "/attendance", icon: CalendarCheck },
+        { name: "Skills", href: "/skills", icon: Award },
+        { name: "Departments", href: "/departments", icon: Building },
+        { name: "People", href: "/people", icon: Users },
+      ],
+    },
+    {
+      name: "Setting",
+      icon: Settings,
+      children: [
+        { name: "Roles", href: "/role", icon: Shield },
+        { name: "Templates", href: "/templates", icon: LayoutTemplate },
+        { name: "Logs", href: "/logs", icon: ScrollText },
+      ],
+    },
+  ],
+  admin: [
+    {
+      name: "Dashboard",
+      icon: Home,
+      children: [
+        { name: "Monthly", href: "/", icon: Calendar },
+        { name: "Overview", href: "/projectOverview", icon: BarChart },
+      ],
+    },
+    { name: "End Clients", href: "/end-clients", icon: UserCircle },
+    { name: "Calculator", href: "/calculator", icon: Calculator },
+    { name: "Work Order", href: "/work-order", icon: ClipboardList },
+    { name: "All Invoices", href: "/invoices", icon: Receipt },
+    {
+      name: "Reports",
+      icon: PieChart,
+      children: [
+        { name: "Labour Summary", href: "/labour-summary", icon: FileText },
+        {
+          name: "Attendance Report",
+          href: "/attendance-report",
+          icon: CalendarCheck,
+        },
+      ],
+    },
+    {
+      name: "Human Resource",
+      icon: Users,
+      children: [
+        { name: "Attendance", href: "/attendance", icon: CalendarCheck },
+        { name: "Skills", href: "/skills", icon: Award },
+        { name: "Departments", href: "/departments", icon: Building },
+        { name: "People", href: "/people", icon: Users },
+      ],
+    },
+    { name: "Notification", href: "/notification", icon: Bell },
+  ],
+  other: [
+    {
+      name: "Dashboard",
+      icon: Home,
+      children: [
+        { name: "Monthly", href: "/", icon: Calendar },
+        { name: "Overview", href: "/projectOverview", icon: BarChart },
+      ],
+    },
+    { name: "Calculator", href: "/calculator", icon: Calculator },
+    {
+      name: "Reports",
+      icon: PieChart,
+      children: [
+        { name: "Labour Summary", href: "/labour-summary", icon: FileText },
+        // {
+        //   name: "Attendance Report",
+        //   href: "/attendance-report",
+        //   icon: CalendarCheck,
+        // },
+      ],
+    },
+    { name: "Notification", href: "/notification", icon: Bell },
+  ],
+};
+
+// Helper function to get navigation items based on role
+const getNavigationItems = (role: string | undefined): NavigationItem[] => {
+  if (!role) return menuItemsByRole.other;
+
+  const normalizedRole = role.toLowerCase();
+
+  if (normalizedRole === "superadmin" || normalizedRole === "super_admin") {
+    return menuItemsByRole.superadmin;
+  }
+  if (normalizedRole === "admin") {
+    return menuItemsByRole.admin;
+  }
+
+  return menuItemsByRole.other;
+};
 
 function NavigationItemComponent({
   item,
@@ -313,7 +326,11 @@ function NavigationItemComponent({
 
 export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
   const navigate = useNavigate();
+  const { user } = useContext(UserContext);
   const [projectData, setProjectData] = useState<ProjectView[]>([]);
+
+  // Get navigation items based on user role
+  const navigationItems = getNavigationItems(user?.role_name);
 
   useEffect(() => {
     const source = axios.CancelToken.source();
@@ -345,7 +362,7 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
 
   // Handle project selection
   const handleProjectSelect = (project: ProjectView) => {
-    navigate(`/project/${project.project_id}`);
+    navigate(`/project/${project.project_id}/dashboard`);
   };
 
   return (

@@ -10,7 +10,12 @@ import {
   type SortingState,
   type VisibilityState,
 } from "@tanstack/react-table";
-import { ArrowUpDown, ChevronDown, Download, MoreHorizontal } from "lucide-react";
+import {
+  ArrowUpDown,
+  ChevronDown,
+  Download,
+  MoreHorizontal,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -59,7 +64,7 @@ export type StoreWarehouse = {
   project_id: number;
 };
 export const getColumns = (
-  onEdit?: (storeWarehouse: StoreWarehouse) => void
+  onEdit?: (storeWarehouse: StoreWarehouse) => void,
 ): ColumnDef<StoreWarehouse>[] => [
   {
     id: "select",
@@ -153,6 +158,7 @@ export const getColumns = (
   {
     id: "actions",
     enableHiding: false,
+    header: "Actions",
     cell: ({ row }) => {
       const storeWarehouse = row.original;
       const handleEdit = () => {
@@ -172,11 +178,6 @@ export const getColumns = (
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem
-              onClick={() => navigate(`/warehouse/${storeWarehouse.id}`)}
-            >
-              View Store / Warehouse
-            </DropdownMenuItem>
 
             <DropdownMenuItem onClick={handleEdit}>
               Edit Store / Warehouse
@@ -241,7 +242,7 @@ export function StoreWareHouseTable() {
           setData(response.data);
         } else {
           toast.error(
-            response.data?.message || "Failed to fetch store / warehouses"
+            response.data?.message || "Failed to fetch store / warehouses",
           );
         }
       } catch (err: unknown) {
@@ -282,20 +283,37 @@ export function StoreWareHouseTable() {
     generatePDFFromTable({
       selectedRows,
       title: "Store / Warehouse Report",
-      headers: ["Name", "Email", "Description", "Location", "Contact Number", "Used Capacity"],
+      headers: [
+        "Name",
+        "Email",
+        "Description",
+        "Location",
+        "Contact Number",
+        "Used Capacity",
+      ],
       dataMapper: (row) => {
         const storeWarehouse = row.original;
-        return [storeWarehouse.name, storeWarehouse.email, storeWarehouse.description, storeWarehouse.location, storeWarehouse.contact_number, storeWarehouse.used_capacity];
+        return [
+          storeWarehouse.name,
+          storeWarehouse.email,
+          storeWarehouse.description,
+          storeWarehouse.location,
+          storeWarehouse.contact_number,
+          storeWarehouse.used_capacity,
+        ];
       },
-      fileName: `store-warehouse-report-${new Date().toISOString().split("T")[0]}.pdf`,
-      successMessage: "PDF downloaded successfully with {count} store / warehouse(s)",
+      fileName: `store-warehouse-report-${
+        new Date().toISOString().split("T")[0]
+      }.pdf`,
+      successMessage:
+        "PDF downloaded successfully with {count} store / warehouse(s)",
       emptySelectionMessage: "Please select at least one row to download",
       titleFontSize: 24,
       headerColor: "#283C6E",
       headerHeight: 10,
       bodyFontSize: 9,
     });
-  }
+  };
 
   return (
     <div className="w-full">
@@ -310,7 +328,7 @@ export function StoreWareHouseTable() {
           className="w-full max-w-sm sm:max-w-xs"
         />
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-center">
-           {table.getFilteredSelectedRowModel().rows.length > 0 && (
+          {table.getFilteredSelectedRowModel().rows.length > 0 && (
             <Button
               variant="default"
               className="w-full sm:w-auto"
@@ -367,7 +385,7 @@ export function StoreWareHouseTable() {
                         ? null
                         : flexRender(
                             header.column.columnDef.header,
-                            header.getContext()
+                            header.getContext(),
                           )}
                     </TableHead>
                   );
@@ -386,7 +404,7 @@ export function StoreWareHouseTable() {
                     <TableCell key={cell.id}>
                       {flexRender(
                         cell.column.columnDef.cell,
-                        cell.getContext()
+                        cell.getContext(),
                       )}
                     </TableCell>
                   ))}

@@ -296,6 +296,8 @@ const routes: RouteObject[] = [
       </PrivateRoute>
     ),
     children: [
+      // naviage "/" to dashboard
+    
       {
         path: "dashboard",
         element: (
@@ -326,12 +328,45 @@ const routes: RouteObject[] = [
           </ProjectRoleRoute>
         ),
       },
-      { path: "element-stockyard", element: <MixElementStockyard /> },
+      {
+        path: "element-stockyard",
+        element: (
+          <ProjectRoleRoute
+            allowedPermissions={[
+              "ViewStockyardElement",
+              "ViewReceivableStockyard",
+            ]}
+            redirectTo="/"
+          >
+            <MixElementStockyard />
+          </ProjectRoleRoute>
+        ),
+      },
       {
         path: "stockyard-assign",
-        element: <StockyardAssigntable refresh={() => {}} />,
+        element: (
+          <ProjectRoleRoute
+            allowedPermissions={["StockyardAssign"]}
+            redirectTo="/"
+          >
+            <StockyardAssigntable refresh={() => {}} />
+          </ProjectRoleRoute>
+        ),
       },
-      { path: "errection-receving", element: <MixErrection /> },
+      {
+        path: "errection-receving",
+        element: (
+          <ProjectRoleRoute
+            allowedPermissions={[
+              "ViewInTransitElement",
+              "ViewDeliveredElement",
+            ]}
+            redirectTo="/"
+          >
+            <MixErrection />
+          </ProjectRoleRoute>
+        ),
+      },
       {
         path: "element-type",
         element: (
@@ -351,10 +386,47 @@ const routes: RouteObject[] = [
           </ProjectRoleRoute>
         ),
       },
-      { path: "large-import", element: <LargeImport /> },
-      { path: "planning-approval", element: <MixPlanningApproval /> },
-      { path: "retification", element: <RetificationTable /> },
-      { path: "errection-request", element: <ErrectionRequestTable /> },
+      {
+        path: "large-import",
+        element: (
+          <ProjectRoleRoute allowedPermissions={["AddBom"]} redirectTo="/">
+            <LargeImport />
+          </ProjectRoleRoute>
+        ),
+      },
+      {
+        path: "planning-approval",
+        element: (
+          <ProjectRoleRoute
+            allowedPermissions={["ViewDispatchApproval"]}
+            redirectTo="/"
+          >
+            <MixPlanningApproval />
+          </ProjectRoleRoute>
+        ),
+      },
+      {
+        path: "retification",
+        element: (
+          <ProjectRoleRoute
+            allowedPermissions={["RetificationRequest"]}
+            redirectTo="/"
+          >
+            <RetificationTable />
+          </ProjectRoleRoute>
+        ),
+      },
+      {
+        path: "errection-request",
+        element: (
+          <ProjectRoleRoute
+            allowedPermissions={["ViewErrectionRequest"]}
+            redirectTo="/"
+          >
+            <ErrectionRequestTable />
+          </ProjectRoleRoute>
+        ),
+      },
       {
         path: "papers",
         element: (
@@ -404,8 +476,28 @@ const routes: RouteObject[] = [
           </ProjectRoleRoute>
         ),
       },
-      { path: "project-summary", element: <ProjectSummary /> },
-      { path: "stockyard-summary", element: <StockyardSummary /> },
+      {
+        path: "project-summary",
+        element: (
+          <ProjectRoleRoute
+            allowedPermissions={["SummaryReport"]}
+            redirectTo="/"
+          >
+            <ProjectSummary />
+          </ProjectRoleRoute>
+        ),
+      },
+      {
+        path: "stockyard-summary",
+        element: (
+          <ProjectRoleRoute
+            allowedPermissions={["ViewStockyardSummary"]}
+            redirectTo="/"
+          >
+            <StockyardSummary />
+          </ProjectRoleRoute>
+        ),
+      },
       {
         path: "add-element-type",
         element: (
@@ -428,7 +520,17 @@ const routes: RouteObject[] = [
           </ProjectRoleRoute>
         ),
       },
-      { path: "dispatch-log", element: <MixDispatch /> },
+      {
+        path: "dispatch-log",
+        element: (
+          <ProjectRoleRoute
+            allowedPermissions={["ViewDispatchLog", "ViewRequestedDispatchLog"]}
+            redirectTo="/"
+          >
+            <MixDispatch />
+          </ProjectRoleRoute>
+        ),
+      },
       {
         path: "element-detail/:elementTypeId",
         element: (
@@ -440,8 +542,31 @@ const routes: RouteObject[] = [
           </ProjectRoleRoute>
         ),
       },
-      { path: "dispatch-request", element: <RequestHandler /> },
-      { path: "erection-element", element: <MixErrectedElement /> },
+      {
+        path: "dispatch-request",
+        element: (
+          <ProjectRoleRoute
+            allowedPermissions={["AddErrectionRequest"]}
+            redirectTo="/"
+          >
+            <RequestHandler />
+          </ProjectRoleRoute>
+        ),
+      },
+      {
+        path: "erection-element",
+        element: (
+          <ProjectRoleRoute
+            allowedPermissions={[
+              "ViewElementInErrectionSite",
+              "ViewNotErectedElement",
+            ]}
+            redirectTo="/"
+          >
+            <MixErrectedElement />
+          </ProjectRoleRoute>
+        ),
+      },
       {
         path: "edit-element-type/:elementTypeId/:floorId",
         element: (
@@ -469,7 +594,17 @@ const routes: RouteObject[] = [
           </ProjectRoleRoute>
         ),
       },
-      { path: "vehicle-dispatch", element: <VehicleDispatch /> },
+      {
+        path: "vehicle-dispatch",
+        element: (
+          <ProjectRoleRoute
+            allowedPermissions={["AddDispatchLog"]}
+            redirectTo="/"
+          >
+            <VehicleDispatch />
+          </ProjectRoleRoute>
+        ),
+      },
       {
         path: "edit-member/:user_id",
         element: (

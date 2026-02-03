@@ -38,7 +38,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 import axios, { AxiosError } from "axios";
 import { apiClient } from "@/utils/apiClient";
 import { toast } from "sonner";
@@ -49,6 +49,7 @@ import { Dialog, DialogTrigger, DialogContent } from "@/components/ui/dialog";
 import ElementDrawing from "./ElementDrawing";
 import { formatDisplayDate } from "@/utils/formatdate";
 import { generatePDFFromTable } from "@/utils/pdfGenerator";
+import { ProjectContext } from "@/Provider/ProjectProvider";
 
 export type File = {
   drawing_id: number;
@@ -111,7 +112,7 @@ type PaginationInfo = {
   total_pages: number;
 };
 
-export const columns: ColumnDef<Elementtype>[] = [
+export const getColumns = (permissions: string[]): ColumnDef<Elementtype>[] => [
   {
     id: "select",
     header: ({ table }) => (
@@ -144,11 +145,13 @@ export const columns: ColumnDef<Elementtype>[] = [
       return (
         <div
           className="capitalize cursor-pointer"
-          onClick={() =>
-            navigate(
-              `/project/${projectId}/element-type-detail/${row.original.element_type_id}/${row.original.hierarchy_id}`
-            )
-          }
+          onClick={() => {
+            if (permissions?.includes("ViewElementTypeDetail")) {
+              navigate(
+                `/project/${projectId}/element-type-detail/${row.original.element_type_id}/${row.original.hierarchy_id}`
+              );
+            }
+          }}
         >
           {row.getValue("element_type")}
         </div>
@@ -261,10 +264,14 @@ export const columns: ColumnDef<Elementtype>[] = [
       </div>
     ),
   },
+  // action columns get visible only if user has permission to edit or view element type detail
   {
     id: "actions",
+    header: "Actions",
     enableHiding: false,
     cell: ({ row }) => {
+      const canEdit = permissions?.includes("EditElementType");
+      const canView = permissions?.includes("ViewElementTypeDetail");
       const navigate = useNavigate();
       const { projectId } = useParams();
       return (
@@ -278,7 +285,28 @@ export const columns: ColumnDef<Elementtype>[] = [
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => navigate(`/project/${projectId}/edit-element-type/${row.original.element_type_id}/${row.original.hierarchy_id}`)}>Edit Element Type</DropdownMenuItem>
+            {canEdit && (
+              <DropdownMenuItem
+                onClick={() =>
+                  navigate(
+                    `/project/${projectId}/edit-element-type/${row.original.element_type_id}/${row.original.hierarchy_id}`
+                  )
+                }
+              >
+                Edit Element Type
+              </DropdownMenuItem>
+            )}
+            {canView && (
+              <DropdownMenuItem
+                onClick={() =>
+                  navigate(
+                    `/project/${projectId}/element-type-detail/${row.original.element_type_id}/${row.original.hierarchy_id}`
+                  )
+                }
+              >
+                View Element Type Detail
+              </DropdownMenuItem>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       );
@@ -310,6 +338,8 @@ export function ElementtypeTable() {
   const [rowSelection, setRowSelection] = useState({});
   const [filterOpen, setFilterOpen] = useState(false);
   const [data, setData] = useState<Elementtype[]>([]);
+  const projectCtx = useContext(ProjectContext);
+  const permissions = projectCtx?.permissions || [];
   //   server side pagination
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [limit, setLimit] = useState<number>(10);
@@ -421,7 +451,7 @@ export function ElementtypeTable() {
 
   const table = useReactTable({
     data,
-    columns,
+    columns: getColumns(permissions),
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
@@ -439,7 +469,7 @@ export function ElementtypeTable() {
     },
   });
 
-   const handleDownloadPDF = () => {
+  const handleDownloadPDF = () => {
     const selectedRows = table.getFilteredSelectedRowModel().rows;
 
     generatePDFFromTable({
@@ -455,7 +485,6 @@ export function ElementtypeTable() {
         "Dispatch",
         "Erection",
         "Tower",
-       
       ],
       dataMapper: (row): string[] => {
         const elementType = row.original as Elementtype;
@@ -469,11 +498,13 @@ export function ElementtypeTable() {
           elementType.dispatch_count?.toString() || "0",
           elementType.erection_count?.toString() || "0",
           elementType.tower_name || "—",
-        
         ];
       },
-      fileName: `element-type-report-${new Date().toISOString().split("T")[0]}.pdf`,
-      successMessage: "PDF downloaded successfully with {count} element type(s)",
+      fileName: `element-type-report-${
+        new Date().toISOString().split("T")[0]
+      }.pdf`,
+      successMessage:
+        "PDF downloaded successfully with {count} element type(s)",
       emptySelectionMessage: "Please select at least one row to download",
       titleFontSize: 24,
       headerColor: "#283C6E",
@@ -598,7 +629,7 @@ export function ElementtypeTable() {
             ) : (
               <TableRow>
                 <TableCell
-                  colSpan={columns.length}
+                  colSpan={getColumns(permissions).length}
                   className="h-24 text-center"
                 >
                   No results.

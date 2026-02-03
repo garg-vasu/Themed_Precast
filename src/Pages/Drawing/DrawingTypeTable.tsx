@@ -37,7 +37,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import axios, { AxiosError } from "axios";
 import { apiClient } from "@/utils/apiClient";
 import { toast } from "sonner";
@@ -47,6 +47,7 @@ import AddDrawingtype from "./AddDrawingtype";
 import { useParams } from "react-router";
 import { formatDisplayDate } from "@/utils/formatdate";
 import { generatePDFFromTable } from "@/utils/pdfGenerator";
+import { ProjectContext } from "@/Provider/ProjectProvider";
 
 export type DrawingType = {
   drawings_type_id: number;
@@ -55,6 +56,7 @@ export type DrawingType = {
 };
 export const getColumns = (
   refreshData: () => void,
+  permissions: string[],
   onEdit?: (drawingType: DrawingType) => void
 ): ColumnDef<DrawingType>[] => [
   {
@@ -105,11 +107,13 @@ export const getColumns = (
 
   {
     id: "actions",
+    header: "Actions",
     cell: ({ row }) => {
       const department = row.original;
+      const canEdit = permissions?.includes("CreateDrawingType");
 
       const handleEdit = () => {
-        if (onEdit) {
+        if (canEdit && onEdit) {
           onEdit(department);
         }
       };
@@ -124,9 +128,11 @@ export const getColumns = (
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem onClick={handleEdit}>
-              Edit Drawing Type
-            </DropdownMenuItem>
+            {canEdit && (
+              <DropdownMenuItem onClick={handleEdit}>
+                Edit Drawing Type
+              </DropdownMenuItem>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       );
@@ -158,6 +164,8 @@ const getErrorMessage = (error: AxiosError | unknown, data: string): string => {
 export function DrawingTypeTable({ refresh }: { refresh: () => void }) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const { projectId } = useParams();
+  const projectCtx = useContext(ProjectContext);
+  const permissions = projectCtx?.permissions || [];
   const [refreshKey, setRefreshKey] = useState<number>(0);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
@@ -216,7 +224,7 @@ export function DrawingTypeTable({ refresh }: { refresh: () => void }) {
 
   const table = useReactTable({
     data,
-    columns: getColumns(refreshData, openEditDialog),
+    columns: getColumns(refreshData, permissions, openEditDialog),
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
@@ -243,20 +251,23 @@ export function DrawingTypeTable({ refresh }: { refresh: () => void }) {
       dataMapper: (row): string[] => {
         const drawingType = row.original as DrawingType;
         return [
-              drawingType.drawing_type_name || "—",
+          drawingType.drawing_type_name || "—",
           drawingType.drawings_type_id?.toString() || "—",
           drawingType.project_id?.toString() || "—",
         ];
       },
-      fileName: `drawing-type-report-${new Date().toISOString().split("T")[0]}.pdf`,
-      successMessage: "PDF downloaded successfully with {count} drawing type(s)",
+      fileName: `drawing-type-report-${
+        new Date().toISOString().split("T")[0]
+      }.pdf`,
+      successMessage:
+        "PDF downloaded successfully with {count} drawing type(s)",
       emptySelectionMessage: "Please select at least one row to download",
       titleFontSize: 24,
       headerColor: "#283C6E",
       headerHeight: 8,
       bodyFontSize: 9,
     });
-  };  
+  };
 
   return (
     <div className="w-full">
@@ -287,13 +298,15 @@ export function DrawingTypeTable({ refresh }: { refresh: () => void }) {
               Download PDF ({table.getFilteredSelectedRowModel().rows.length})
             </Button>
           )}
-          <Button
-            variant="outline"
-            className="w-full sm:w-auto"
-            onClick={openCreateDialog}
-          >
-            Add Drawing Type
-          </Button>
+          {permissions?.includes("CreateDrawingType") && (
+            <Button
+              variant="outline"
+              className="w-full sm:w-auto"
+              onClick={openCreateDialog}
+            >
+              Add Drawing Type
+            </Button>
+          )}
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -400,31 +413,33 @@ export function DrawingTypeTable({ refresh }: { refresh: () => void }) {
           </Button>
         </div>
       </div>
-      <Dialog
-        open={isDialogOpen}
-        onOpenChange={(open) => {
-          setIsDialogOpen(open);
-          if (!open) {
-            setEditingDrawingType(null);
-          }
-        }}
-      >
-        <DialogContent className="max-w-3xl">
-          <DialogHeader>
-            <DialogTitle>
-              {editingDrawingType ? "Edit Drawing Type" : "Add Drawing Type"}
-            </DialogTitle>
-          </DialogHeader>
-          <AddDrawingtype
-            refresh={refreshData}
-            initialData={editingDrawingType || undefined}
-            onClose={() => {
-              setIsDialogOpen(false);
+      {permissions?.includes("CreateDrawingType") && (
+        <Dialog
+          open={isDialogOpen}
+          onOpenChange={(open) => {
+            setIsDialogOpen(open);
+            if (!open) {
               setEditingDrawingType(null);
-            }}
-          />
-        </DialogContent>
-      </Dialog>
+            }
+          }}
+        >
+          <DialogContent className="max-w-3xl">
+            <DialogHeader>
+              <DialogTitle>
+                {editingDrawingType ? "Edit Drawing Type" : "Add Drawing Type"}
+              </DialogTitle>
+            </DialogHeader>
+            <AddDrawingtype
+              refresh={refreshData}
+              initialData={editingDrawingType || undefined}
+              onClose={() => {
+                setIsDialogOpen(false);
+                setEditingDrawingType(null);
+              }}
+            />
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }

@@ -119,6 +119,7 @@ export default function EditMember() {
 
   const editMemberData: EditMember = {
     id: Number(userId),
+    role_id: data.role_id || 0,
     email: data.email || "",
     password: data.password || "",
     first_name: data.first_name || "",
@@ -132,7 +133,6 @@ export default function EditMember() {
     phone_no: data.phone_no || "",
     phone_code: data.phone_code || 0,
     profile_picture: data.profile_picture || "",
-    role_id: data.role_id || 0,
     emailsend: false,
   };
 

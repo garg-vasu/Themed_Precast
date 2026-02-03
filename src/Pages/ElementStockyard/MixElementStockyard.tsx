@@ -79,10 +79,10 @@ export default function MixElementStockyard() {
     return (
       <div className="flex flex-col gap-2 py-4 px-4">
         <div className="flex items-center justify-between">
-          <PageHeader title="Mix Drawing" />
+          <PageHeader title="Stockyard" />
         </div>
         <div className="text-center py-8 text-muted-foreground">
-          You do not have permission to view any drawing sections.
+          You do not have permission to view any element stockyard sections.
         </div>
       </div>
     );

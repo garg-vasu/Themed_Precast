@@ -1,6 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 
-import { useForm } from "react-hook-form";
+import { useForm, type Resolver } from "react-hook-form";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { z } from "zod";
 import { Input } from "@/components/ui/input";
@@ -17,7 +17,7 @@ const schema = z.object({
   location: z.string().min(1, "Location is required"),
   contact_number: z.string().min(1, "Contact number is required"),
   capacity: z.number().min(1, "Capacity is required"),
-  used_capacity: z.number().min(1, "Used capacity is required"),
+  used_capacity: z.number().default(0),
   description: z.string().min(1, "Description is required"),
 });
 type FormData = z.infer<typeof schema>;
@@ -91,7 +91,7 @@ export default function AddStoreWarehouse({
     reset,
     formState: { errors, isSubmitting },
   } = useForm<FormData>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(schema) as Resolver<FormData>,
     defaultValues: getDefaultValues(),
   });
 
@@ -123,7 +123,7 @@ export default function AddStoreWarehouse({
         }
         const response = await apiClient.put(
           `/update_warehouses/${storeWarehouseId}`,
-          payload
+          payload,
         );
         if (response.status === 200 || response.status === 201) {
           toast.success("Store / Warehouse Updated Successfully!");
@@ -146,7 +146,7 @@ export default function AddStoreWarehouse({
     } catch (error: unknown) {
       const errorMessage = getErrorMessage(
         error,
-        isEditMode ? "update store / warehouse" : "create store / warehouse"
+        isEditMode ? "update store / warehouse" : "create store / warehouse",
       );
       toast.error(errorMessage);
       // Refresh even on error to ensure data is up to date

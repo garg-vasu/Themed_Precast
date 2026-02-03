@@ -34,11 +34,9 @@ export default function MixHierarchy() {
         label: "Hierarchy",
         number: 1,
         icon: List,
-        content: <HierarchyTable />,
+        content: <HierarchyTable refresh={()=>{}}     />,
       });
     }
-
-    
 
     return tabs;
   }, [permissions]);

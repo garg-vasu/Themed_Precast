@@ -129,7 +129,7 @@ const schema = z
         volume: z.number().min(1, "Volume is required"),
         tower_id: z.number().min(1, "Tower is required"),
         floor_id: z.array(z.number()).min(1, "At least one floor is required"),
-      })
+      }),
     ),
     endclient_id: z.number().min(1, "Customer is required"),
     project_id: z.number().min(1, "Project is required"),
@@ -141,7 +141,7 @@ const schema = z
             .number({ message: "Percentage is required" })
             .min(0, "Min 0%")
             .max(100, "Max 100%"),
-        })
+        }),
       )
       .min(1, "At least one payment term is required"),
     contact_person: z.string().min(1, "Contact Person is required"),
@@ -168,7 +168,7 @@ const schema = z
             ])
             .nullable()
             .optional(),
-        })
+        }),
       )
       .optional(),
   })
@@ -217,7 +217,9 @@ export interface EditWorkOrder {
   }>;
   endclient_id: number;
   project_id: number;
-  payment_term: Record<string, number> | Array<{ stage_name: string; percentage: number }>;
+  payment_term:
+    | Record<string, number>
+    | Array<{ stage_name: string; percentage: number }>;
   contact_person: string;
   wo_description: string;
   wo_attachment?: string[];
@@ -225,7 +227,15 @@ export interface EditWorkOrder {
     pattern_type: "date" | "week";
     date_value?: string | number | null;
     week_number?: "first" | "second" | "third" | "fourth" | "last" | null;
-    day_of_week?: "monday" | "tuesday" | "wednesday" | "thursday" | "friday" | "saturday" | "sunday" | null;
+    day_of_week?:
+      | "monday"
+      | "tuesday"
+      | "wednesday"
+      | "thursday"
+      | "friday"
+      | "saturday"
+      | "sunday"
+      | null;
   }>;
 }
 
@@ -241,11 +251,15 @@ export default function AddWorkOrder({ workOrder }: WorkOrderFormProps) {
   const [projects, setProjects] = useState<Project[]>([]);
   const [endClients, setEndClients] = useState<EndClient[]>([]);
   const [towers, setTowers] = useState<TowerData[]>([]);
-  const [towerFloorsCache, setTowerFloorsCache] = useState<Record<number, FloorData[]>>({});
+  const [towerFloorsCache, setTowerFloorsCache] = useState<
+    Record<number, FloorData[]>
+  >({});
   const [isLoading, setIsLoading] = useState(false);
   const [towerLoading, setTowerLoading] = useState(false);
   const [floorLoading, setFloorLoading] = useState(false);
-  const [uploadedFiles, setUploadedFiles] = useState<Array<{ url: string; name: string; type: string }>>([]);
+  const [uploadedFiles, setUploadedFiles] = useState<
+    Array<{ url: string; name: string; type: string }>
+  >([]);
   const [isDragOver, setIsDragOver] = useState(false);
   const [isUploadingFile, setIsUploadingFile] = useState(false);
 
@@ -272,8 +286,15 @@ export default function AddWorkOrder({ workOrder }: WorkOrderFormProps) {
 
   // Map backend stage keys/names to UI option names
   const mapBackendStageToOptionName = (name: string): string => {
-    const k = String(name || "").trim().toLowerCase();
-    if (k.startsWith("erec") || k === "errected" || k === "erection" || k === "erected") {
+    const k = String(name || "")
+      .trim()
+      .toLowerCase();
+    if (
+      k.startsWith("erec") ||
+      k === "errected" ||
+      k === "erection" ||
+      k === "erected"
+    ) {
       return "Errected";
     }
     if (k === "cast" || k === "casting" || k === "casted") return "Casted";
@@ -325,11 +346,11 @@ export default function AddWorkOrder({ workOrder }: WorkOrderFormProps) {
           percentage: Number(p.percentage) || 0,
         }))
       : workOrder.payment_term && typeof workOrder.payment_term === "object"
-      ? Object.entries(workOrder.payment_term).map(([k, v]) => ({
-          stage_name: mapBackendStageToOptionName(String(k || "")),
-          percentage: Number(v as any) || 0,
-        }))
-      : [];
+        ? Object.entries(workOrder.payment_term).map(([k, v]) => ({
+            stage_name: mapBackendStageToOptionName(String(k || "")),
+            percentage: Number(v as any) || 0,
+          }))
+        : [];
 
     return {
       wo_number: workOrder.wo_number || "",
@@ -369,7 +390,9 @@ export default function AddWorkOrder({ workOrder }: WorkOrderFormProps) {
       payment_term: normalizedPaymentTerm,
       contact_person: workOrder.contact_person || "",
       wo_description: workOrder.wo_description || "",
-      wo_attachment: Array.isArray(workOrder.wo_attachment) ? workOrder.wo_attachment : [],
+      wo_attachment: Array.isArray(workOrder.wo_attachment)
+        ? workOrder.wo_attachment
+        : [],
       recurrence_patterns: Array.isArray(workOrder.recurrence_patterns)
         ? workOrder.recurrence_patterns
         : [],
@@ -446,7 +469,7 @@ export default function AddWorkOrder({ workOrder }: WorkOrderFormProps) {
   // Fetch floor data
   const fetchFloorData = async (
     projectId?: number,
-    selectedTower?: number
+    selectedTower?: number,
   ): Promise<FloorData[]> => {
     if (!projectId || !selectedTower) {
       return [];
@@ -455,7 +478,7 @@ export default function AddWorkOrder({ workOrder }: WorkOrderFormProps) {
     setFloorLoading(true);
     try {
       const response = await apiClient.get(
-        `/precast/floors/${projectId}/${selectedTower}`
+        `/precast/floors/${projectId}/${selectedTower}`,
       );
       if (response.status === 200) {
         return response.data as FloorData[];
@@ -476,7 +499,7 @@ export default function AddWorkOrder({ workOrder }: WorkOrderFormProps) {
   // Load floors for a specific tower (with caching)
   const loadFloorsForTower = async (
     projectId?: number,
-    towerId?: number
+    towerId?: number,
   ): Promise<FloorData[]> => {
     if (!projectId || !towerId) return [];
     if (towerFloorsCache[towerId]) {
@@ -527,7 +550,7 @@ export default function AddWorkOrder({ workOrder }: WorkOrderFormProps) {
         });
 
         if (response.status === 200) {
-          setEndClients(response.data);
+          setEndClients(response.data.data);
         } else {
           toast.error(response.data?.message || "Failed to fetch end clients");
         }
@@ -626,7 +649,7 @@ export default function AddWorkOrder({ workOrder }: WorkOrderFormProps) {
         const uniqueTowerIds = new Set(
           workOrder.material
             .map((m: any) => m.tower_id)
-            .filter((id: any) => id && id > 0)
+            .filter((id: any) => id && id > 0),
         );
 
         const floorPromises = Array.from(uniqueTowerIds).map((towerId) => {
@@ -677,11 +700,13 @@ export default function AddWorkOrder({ workOrder }: WorkOrderFormProps) {
         !item.unit_rate ||
         item.unit_rate <= 0 ||
         !item.volume ||
-        item.volume <= 0
+        item.volume <= 0,
     );
 
     if (incompleteItems.length > 0) {
-      toast.error("Please fill all fields for all material items before calculating.");
+      toast.error(
+        "Please fill all fields for all material items before calculating.",
+      );
       return;
     }
 
@@ -824,24 +849,28 @@ export default function AddWorkOrder({ workOrder }: WorkOrderFormProps) {
     setIsLoading(true);
     try {
       // Clean up recurrence patterns
-      const cleanedRecurrencePatterns = data.recurrence_patterns?.map((pattern) => {
-        const cleaned: any = {
-          pattern_type: pattern.pattern_type,
-        };
+      const cleanedRecurrencePatterns = data.recurrence_patterns?.map(
+        (pattern) => {
+          const cleaned: any = {
+            pattern_type: pattern.pattern_type,
+          };
 
-        if (pattern.pattern_type === "date" && pattern.date_value) {
-          cleaned.date_value = pattern.date_value;
-        } else if (pattern.pattern_type === "week") {
-          if (pattern.week_number) cleaned.week_number = pattern.week_number;
-          if (pattern.day_of_week) cleaned.day_of_week = pattern.day_of_week;
-        }
+          if (pattern.pattern_type === "date" && pattern.date_value) {
+            cleaned.date_value = pattern.date_value;
+          } else if (pattern.pattern_type === "week") {
+            if (pattern.week_number) cleaned.week_number = pattern.week_number;
+            if (pattern.day_of_week) cleaned.day_of_week = pattern.day_of_week;
+          }
 
-        return cleaned;
-      });
+          return cleaned;
+        },
+      );
 
       // Transform payment_term array to object
       const normalizeStageKey = (name: string) => {
-        const k = String(name || "").trim().toLowerCase();
+        const k = String(name || "")
+          .trim()
+          .toLowerCase();
         if (k.startsWith("erec") || k.startsWith("erect") || k === "errected") {
           return "erection";
         }
@@ -857,7 +886,7 @@ export default function AddWorkOrder({ workOrder }: WorkOrderFormProps) {
           acc[key] = Number(item.percentage) || 0;
           return acc;
         },
-        {}
+        {},
       );
 
       const payload: any = {
@@ -867,14 +896,21 @@ export default function AddWorkOrder({ workOrder }: WorkOrderFormProps) {
       };
 
       if (isEditMode && workOrder?.id) {
-        const response = await apiClient.put(`/workorders/${workOrder.id}`, payload);
+        const response = await apiClient.put(
+          `/workorders/${workOrder.id}`,
+          payload,
+        );
         if (response.status === 200 || response.status === 201) {
           toast.success("Amendment updated successfully!");
           navigate("/work-order");
         }
       } else {
         const response = await apiClient.post("/workorders", payload);
-        if (response.status === 200 || response.status === 201 || response.data?.work_order_id) {
+        if (
+          response.status === 200 ||
+          response.status === 201 ||
+          response.data?.work_order_id
+        ) {
           toast.success("Work Order created successfully!");
           navigate("/work-order");
         }
@@ -882,7 +918,7 @@ export default function AddWorkOrder({ workOrder }: WorkOrderFormProps) {
     } catch (error: unknown) {
       const errorMessage = getErrorMessage(
         error,
-        isEditMode ? "update Amendment" : "create work order"
+        isEditMode ? "update Amendment" : "create work order",
       );
       toast.error(errorMessage);
       setError("root", {
@@ -971,7 +1007,10 @@ export default function AddWorkOrder({ workOrder }: WorkOrderFormProps) {
                     <SelectGroup>
                       <SelectLabel>Customers</SelectLabel>
                       {endClients.map((client) => (
-                        <SelectItem key={client.id} value={client.id.toString()}>
+                        <SelectItem
+                          key={client.id}
+                          value={client.id.toString()}
+                        >
                           {client.contact_person}
                         </SelectItem>
                       ))}
@@ -1044,7 +1083,10 @@ export default function AddWorkOrder({ workOrder }: WorkOrderFormProps) {
                         <SelectGroup>
                           <SelectLabel>Phone Codes</SelectLabel>
                           {phonecodes.map((code) => (
-                            <SelectItem key={code.id} value={code.id.toString()}>
+                            <SelectItem
+                              key={code.id}
+                              value={code.id.toString()}
+                            >
                               {code.phone_code} - {code.country_name}
                             </SelectItem>
                           ))}
@@ -1065,7 +1107,9 @@ export default function AddWorkOrder({ workOrder }: WorkOrderFormProps) {
               </div>
             </div>
             <p className="text-sm text-red-600 min-h-[20px]">
-              {errors.phone_code?.message || errors.contact_number?.message || "\u00A0"}
+              {errors.phone_code?.message ||
+                errors.contact_number?.message ||
+                "\u00A0"}
             </p>
           </div>
 
@@ -1165,11 +1209,13 @@ export default function AddWorkOrder({ workOrder }: WorkOrderFormProps) {
               <div className="space-y-2">
                 {paymentFields.map((field, index) => {
                   const selectedNames = (watchedPayments || []).map(
-                    (p: any) => p?.stage_name
+                    (p: any) => p?.stage_name,
                   );
-                  const currentName = (watchedPayments?.[index]?.stage_name || "") as string;
+                  const currentName = (watchedPayments?.[index]?.stage_name ||
+                    "") as string;
                   const availableStages = stages.filter(
-                    (s) => s.name === currentName || !selectedNames.includes(s.name)
+                    (s) =>
+                      s.name === currentName || !selectedNames.includes(s.name),
                   );
 
                   return (
@@ -1240,14 +1286,14 @@ export default function AddWorkOrder({ workOrder }: WorkOrderFormProps) {
                 {Math.round(
                   (watchedPayments || []).reduce(
                     (s: number, p: any) => s + (Number(p?.percentage) || 0),
-                    0
-                  ) * 100
+                    0,
+                  ) * 100,
                 ) / 100}
                 %
               </p>
               {(watchedPayments || []).reduce(
                 (s: number, p: any) => s + (Number(p?.percentage) || 0),
-                0
+                0,
               ) > 100 && (
                 <span className="text-xs text-amber-600">
                   Warning: Exceeds 100%
@@ -1435,17 +1481,25 @@ export default function AddWorkOrder({ workOrder }: WorkOrderFormProps) {
                           await loadFloorsForTower(watchedProjectId, towerId);
                         }}
                       >
-                        <SelectTrigger className="w-full" disabled={!watchedProjectId}>
+                        <SelectTrigger
+                          className="w-full"
+                          disabled={!watchedProjectId}
+                        >
                           <SelectValue
                             placeholder={
-                              towerLoading ? "Loading towers..." : "Select Tower"
+                              towerLoading
+                                ? "Loading towers..."
+                                : "Select Tower"
                             }
                           />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectGroup>
                             {towers.map((tower) => (
-                              <SelectItem key={tower.id} value={String(tower.id)}>
+                              <SelectItem
+                                key={tower.id}
+                                value={String(tower.id)}
+                              >
                                 {tower.name}
                               </SelectItem>
                             ))}
@@ -1467,12 +1521,14 @@ export default function AddWorkOrder({ workOrder }: WorkOrderFormProps) {
                   <div
                     className={cn(
                       "border rounded-md p-2 max-h-40 overflow-auto",
-                      !watchedMaterial?.[index]?.tower_id && "opacity-60"
+                      !watchedMaterial?.[index]?.tower_id && "opacity-60",
                     )}
                   >
                     {(() => {
                       const towerId = watchedMaterial?.[index]?.tower_id;
-                      const floors = towerId ? towerFloorsCache[towerId] || [] : [];
+                      const floors = towerId
+                        ? towerFloorsCache[towerId] || []
+                        : [];
 
                       if (!towerId) {
                         return (
@@ -1482,7 +1538,11 @@ export default function AddWorkOrder({ workOrder }: WorkOrderFormProps) {
                         );
                       }
 
-                      if (towerId && !towerFloorsCache[towerId] && floorLoading) {
+                      if (
+                        towerId &&
+                        !towerFloorsCache[towerId] &&
+                        floorLoading
+                      ) {
                         return (
                           <p className="text-xs text-muted-foreground">
                             Loading floors...
@@ -1516,12 +1576,20 @@ export default function AddWorkOrder({ workOrder }: WorkOrderFormProps) {
                                   onCheckedChange={(v) => {
                                     const isChecked = Boolean(v);
                                     const next = isChecked
-                                      ? Array.from(new Set([...(selected || []), id]))
-                                      : (selected || []).filter((x: number) => x !== id);
-                                    setValue(`material.${index}.floor_id`, next, {
-                                      shouldDirty: true,
-                                      shouldValidate: true,
-                                    });
+                                      ? Array.from(
+                                          new Set([...(selected || []), id]),
+                                        )
+                                      : (selected || []).filter(
+                                          (x: number) => x !== id,
+                                        );
+                                    setValue(
+                                      `material.${index}.floor_id`,
+                                      next,
+                                      {
+                                        shouldDirty: true,
+                                        shouldValidate: true,
+                                      },
+                                    );
                                   }}
                                 />
                                 <span>{f.name}</span>
@@ -1588,10 +1656,18 @@ export default function AddWorkOrder({ workOrder }: WorkOrderFormProps) {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {recurrenceFields.map((field, index) => {
-                const watchedPatternType = watch(`recurrence_patterns.${index}.pattern_type`);
-                const watchedDateValue = watch(`recurrence_patterns.${index}.date_value`);
-                const watchedWeekNumber = watch(`recurrence_patterns.${index}.week_number`);
-                const watchedDayOfWeek = watch(`recurrence_patterns.${index}.day_of_week`);
+                const watchedPatternType = watch(
+                  `recurrence_patterns.${index}.pattern_type`,
+                );
+                const watchedDateValue = watch(
+                  `recurrence_patterns.${index}.date_value`,
+                );
+                const watchedWeekNumber = watch(
+                  `recurrence_patterns.${index}.week_number`,
+                );
+                const watchedDayOfWeek = watch(
+                  `recurrence_patterns.${index}.day_of_week`,
+                );
 
                 return (
                   <div
@@ -1599,7 +1675,9 @@ export default function AddWorkOrder({ workOrder }: WorkOrderFormProps) {
                     className="border rounded-lg p-3 bg-muted/30"
                   >
                     <div className="flex justify-between items-center mb-3">
-                      <Label className="font-medium text-sm">Pattern {index + 1}</Label>
+                      <Label className="font-medium text-sm">
+                        Pattern {index + 1}
+                      </Label>
                       <Button
                         type="button"
                         variant="outline"
@@ -1617,14 +1695,25 @@ export default function AddWorkOrder({ workOrder }: WorkOrderFormProps) {
                         <label className="flex items-center gap-2 cursor-pointer">
                           <input
                             type="radio"
-                            {...register(`recurrence_patterns.${index}.pattern_type`)}
+                            {...register(
+                              `recurrence_patterns.${index}.pattern_type`,
+                            )}
                             value="date"
                             className="h-4 w-4"
                             onChange={(e) => {
                               if (e.target.checked) {
-                                setValue(`recurrence_patterns.${index}.week_number`, null);
-                                setValue(`recurrence_patterns.${index}.day_of_week`, null);
-                                setValue(`recurrence_patterns.${index}.pattern_type`, "date");
+                                setValue(
+                                  `recurrence_patterns.${index}.week_number`,
+                                  null,
+                                );
+                                setValue(
+                                  `recurrence_patterns.${index}.day_of_week`,
+                                  null,
+                                );
+                                setValue(
+                                  `recurrence_patterns.${index}.pattern_type`,
+                                  "date",
+                                );
                               }
                             }}
                           />
@@ -1633,13 +1722,21 @@ export default function AddWorkOrder({ workOrder }: WorkOrderFormProps) {
                         <label className="flex items-center gap-2 cursor-pointer">
                           <input
                             type="radio"
-                            {...register(`recurrence_patterns.${index}.pattern_type`)}
+                            {...register(
+                              `recurrence_patterns.${index}.pattern_type`,
+                            )}
                             value="week"
                             className="h-4 w-4"
                             onChange={(e) => {
                               if (e.target.checked) {
-                                setValue(`recurrence_patterns.${index}.date_value`, null);
-                                setValue(`recurrence_patterns.${index}.pattern_type`, "week");
+                                setValue(
+                                  `recurrence_patterns.${index}.date_value`,
+                                  null,
+                                );
+                                setValue(
+                                  `recurrence_patterns.${index}.pattern_type`,
+                                  "week",
+                                );
                               }
                             }}
                           />
@@ -1662,12 +1759,20 @@ export default function AddWorkOrder({ workOrder }: WorkOrderFormProps) {
                               </SelectTrigger>
                               <SelectContent>
                                 <SelectGroup>
-                                  {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => (
-                                    <SelectItem key={day} value={day.toString()}>
+                                  {Array.from(
+                                    { length: 31 },
+                                    (_, i) => i + 1,
+                                  ).map((day) => (
+                                    <SelectItem
+                                      key={day}
+                                      value={day.toString()}
+                                    >
                                       {day}
                                     </SelectItem>
                                   ))}
-                                  <SelectItem value="penultimate">Penultimate</SelectItem>
+                                  <SelectItem value="penultimate">
+                                    Penultimate
+                                  </SelectItem>
                                 </SelectGroup>
                               </SelectContent>
                             </Select>
@@ -1684,7 +1789,9 @@ export default function AddWorkOrder({ workOrder }: WorkOrderFormProps) {
                             render={({ field: weekField }) => (
                               <Select
                                 value={weekField.value || ""}
-                                onValueChange={(val) => weekField.onChange(val as any)}
+                                onValueChange={(val) =>
+                                  weekField.onChange(val as any)
+                                }
                               >
                                 <SelectTrigger className="flex-1">
                                   <SelectValue placeholder="Week" />
@@ -1692,9 +1799,13 @@ export default function AddWorkOrder({ workOrder }: WorkOrderFormProps) {
                                 <SelectContent>
                                   <SelectGroup>
                                     <SelectItem value="first">First</SelectItem>
-                                    <SelectItem value="second">Second</SelectItem>
+                                    <SelectItem value="second">
+                                      Second
+                                    </SelectItem>
                                     <SelectItem value="third">Third</SelectItem>
-                                    <SelectItem value="fourth">Fourth</SelectItem>
+                                    <SelectItem value="fourth">
+                                      Fourth
+                                    </SelectItem>
                                     <SelectItem value="last">Last</SelectItem>
                                   </SelectGroup>
                                 </SelectContent>
@@ -1707,20 +1818,36 @@ export default function AddWorkOrder({ workOrder }: WorkOrderFormProps) {
                             render={({ field: dayField }) => (
                               <Select
                                 value={dayField.value || ""}
-                                onValueChange={(val) => dayField.onChange(val as any)}
+                                onValueChange={(val) =>
+                                  dayField.onChange(val as any)
+                                }
                               >
                                 <SelectTrigger className="flex-1">
                                   <SelectValue placeholder="Day" />
                                 </SelectTrigger>
                                 <SelectContent>
                                   <SelectGroup>
-                                    <SelectItem value="monday">Monday</SelectItem>
-                                    <SelectItem value="tuesday">Tuesday</SelectItem>
-                                    <SelectItem value="wednesday">Wednesday</SelectItem>
-                                    <SelectItem value="thursday">Thursday</SelectItem>
-                                    <SelectItem value="friday">Friday</SelectItem>
-                                    <SelectItem value="saturday">Saturday</SelectItem>
-                                    <SelectItem value="sunday">Sunday</SelectItem>
+                                    <SelectItem value="monday">
+                                      Monday
+                                    </SelectItem>
+                                    <SelectItem value="tuesday">
+                                      Tuesday
+                                    </SelectItem>
+                                    <SelectItem value="wednesday">
+                                      Wednesday
+                                    </SelectItem>
+                                    <SelectItem value="thursday">
+                                      Thursday
+                                    </SelectItem>
+                                    <SelectItem value="friday">
+                                      Friday
+                                    </SelectItem>
+                                    <SelectItem value="saturday">
+                                      Saturday
+                                    </SelectItem>
+                                    <SelectItem value="sunday">
+                                      Sunday
+                                    </SelectItem>
                                   </SelectGroup>
                                 </SelectContent>
                               </Select>
@@ -1741,10 +1868,10 @@ export default function AddWorkOrder({ workOrder }: WorkOrderFormProps) {
                                   (watchedDateValue === "1"
                                     ? "st"
                                     : watchedDateValue === "2"
-                                    ? "nd"
-                                    : watchedDateValue === "3"
-                                    ? "rd"
-                                    : "th")
+                                      ? "nd"
+                                      : watchedDateValue === "3"
+                                        ? "rd"
+                                        : "th")
                             } of each month`}
                           {watchedPatternType === "week" &&
                             watchedWeekNumber &&
@@ -1769,7 +1896,7 @@ export default function AddWorkOrder({ workOrder }: WorkOrderFormProps) {
               "mt-2 flex justify-center px-6 pt-5 pb-6 border-2 border-dashed rounded-md transition-colors",
               isDragOver
                 ? "border-primary bg-primary/5"
-                : "border-muted-foreground/25 hover:border-muted-foreground/50"
+                : "border-muted-foreground/25 hover:border-muted-foreground/50",
             )}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}

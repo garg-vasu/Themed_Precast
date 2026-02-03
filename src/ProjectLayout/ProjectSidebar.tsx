@@ -34,10 +34,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import { NavLink, useLocation, useParams, useNavigate } from "react-router-dom";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useContext } from "react";
 import { apiClient } from "@/utils/apiClient";
 import axios, { AxiosError } from "axios";
 import { toast } from "sonner";
+import { ProjectContext, useProject } from "@/Provider/ProjectProvider";
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -71,7 +72,57 @@ export interface NavigationItem {
   href?: string;
   icon: any;
   children?: NavigationItem[];
+  permissions?: string[];
 }
+
+/**
+ * Check if user has any of the required permissions.
+ * Returns true if no permissions required or if user has at least one.
+ */
+const hasAnyPermission = (
+  requiredPermissions: string[] | undefined,
+  userPermissions: Set<string> | undefined,
+): boolean => {
+  // No permissions required = visible to all
+  if (!requiredPermissions || requiredPermissions.length === 0) return true;
+  // No user permissions loaded = hide protected items
+  if (!userPermissions || userPermissions.size === 0) return false;
+  // Check if user has ANY of the required permissions
+  return requiredPermissions.some((perm) => userPermissions.has(perm));
+};
+
+/**
+ * Recursively filter navigation items based on permissions.
+ * For parent items, also filters children and hides parent if no children visible.
+ */
+const filterNavigationItems = (
+  items: NavigationItem[],
+  userPermissions: Set<string> | undefined,
+): NavigationItem[] => {
+  return items.reduce<NavigationItem[]>((acc, item) => {
+    // First check if user has permission for this item
+    if (!hasAnyPermission(item.permissions, userPermissions)) {
+      return acc;
+    }
+
+    // If item has children, filter them recursively
+    if (item.children && item.children.length > 0) {
+      const filteredChildren = filterNavigationItems(
+        item.children,
+        userPermissions,
+      );
+      // Only include parent if it has visible children
+      if (filteredChildren.length > 0) {
+        acc.push({ ...item, children: filteredChildren });
+      }
+      return acc;
+    }
+
+    // Leaf item with permission - include it
+    acc.push(item);
+    return acc;
+  }, []);
+};
 
 function NavigationItemComponent({
   item,
@@ -197,6 +248,10 @@ export default function ProjectSidebar({
 }: SidebarProps) {
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
+  const projectCtx = useContext(ProjectContext);
+  const permissions = projectCtx?.permissions;
+  const loading = projectCtx?.loading;
+  const error = projectCtx?.error;
   const [projectData, setProjectData] = useState<ProjectView[]>([]);
 
   const navigationItems: NavigationItem[] = [
@@ -204,101 +259,146 @@ export default function ProjectSidebar({
       name: "Dashboard",
       href: `/project/${projectId}/dashboard`,
       icon: BarChart,
+      permissions: ["ViewDashboard"],
     },
-    { name: "Plan", href: `/project/${projectId}/plan`, icon: Calendar },
+    {
+      name: "Plan",
+      href: `/project/${projectId}/plan`,
+      icon: Calendar,
+      permissions: ["ViewPlan"],
+    },
     {
       name: "Stockyard Assign",
       href: `/project/${projectId}/stockyard-assign`,
       icon: UserCheck,
+      permissions: ["StockyardAssign"],
     },
     {
       name: "Stockyard",
       href: `/project/${projectId}/element-stockyard`,
       icon: Warehouse,
+      permissions: ["ViewStockyardElement", "ViewReceivableStockyard"],
     },
     {
       name: "Approval",
       href: `/project/${projectId}/planning-approval`,
       icon: ClipboardCheck,
+      permissions: ["ViewDispatchApproval"],
     },
     {
       name: "Rectification",
       href: `/project/${projectId}/retification`,
       icon: Wrench,
+      permissions: ["RetificationRequest"],
     },
     {
       name: "Erection Request",
       href: `/project/${projectId}/errection-request`,
       icon: Send,
+      permissions: ["ViewErectionRequest"],
     },
     {
       name: "Dispatch",
       href: `/project/${projectId}/dispatch-log`,
       icon: Truck,
+      permissions: ["ViewRequestedDispatchLog", "ViewDispatchLog"],
     },
     {
       name: "Erect Log",
       href: `/project/${projectId}/errection-receving`,
       icon: History,
+      permissions: ["ViewInTransitElement", "ViewDeliveredElement"],
     },
     {
       name: "Erection Element",
       href: `/project/${projectId}/erection-element`,
       icon: Building2,
+      permissions: ["ViewElementInErrectionSite", "ViewNotErectedElement"],
     },
     {
       name: "Config",
       icon: Settings,
+      permissions: [
+        "ViewDrawing",
+        "ViewDrawingType",
+        "ViewBom",
+        "ViewMember",
+        "ViewStructure",
+        "ViewElement",
+        "ViewStage",
+        "ViewElementType",
+      ],
       children: [
         {
           name: "Hierarchy",
           href: `/project/${projectId}/hierarchy`,
           icon: GitBranch,
+          permissions: ["ViewStructure"],
         },
         {
           name: "Members",
           href: `/project/${projectId}/member`,
           icon: Users,
+          permissions: ["ViewMember"],
         },
         {
           name: "Stages",
           href: `/project/${projectId}/stages`,
           icon: Layers,
+          permissions: ["ViewStage"],
         },
         {
           name: "Drawing",
           href: `/project/${projectId}/drawing`,
           icon: PenTool,
+          permissions: ["ViewDrawing", "ViewDrawingType"],
         },
         {
           name: "Element Type",
           href: `/project/${projectId}/element-type`,
           icon: Boxes,
+          permissions: ["ViewElement", "ViewElementType"],
         },
         {
           name: "Bom",
           href: `/project/${projectId}/bom`,
           icon: ClipboardList,
+          permissions: ["ViewBom"],
         },
       ],
     },
     {
       name: "Reports",
       icon: PieChart,
+      permissions: ["SummaryReport", "StockyardReport"],
       children: [
         {
           name: "Project Summary",
           href: `/project/${projectId}/project-summary`,
           icon: FileText,
+          permissions: ["SummaryReport"],
         },
         {
           name: "Stockyard Summary",
           href: `/project/${projectId}/stockyard-summary`,
           icon: Warehouse,
+          permissions: ["StockyardReport"],
         },
       ],
     },
   ];
+
+  // Convert permissions array to Set for O(1) lookups
+  const permissionSet = useMemo(() => {
+    if (!permissions || permissions.length === 0) return undefined;
+    return new Set(permissions);
+  }, [permissions]);
+
+  // Filter navigation items based on user permissions
+  const filteredNavItems = useMemo(
+    () => filterNavigationItems(navigationItems, permissionSet),
+    [projectId, permissionSet], // projectId affects hrefs in navigationItems
+  );
 
   useEffect(() => {
     const source = axios.CancelToken.source();
@@ -461,7 +561,7 @@ export default function ProjectSidebar({
 
       {/* Navigation */}
       <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-        {navigationItems.map((item) => (
+        {filteredNavItems.map((item) => (
           <NavigationItemComponent
             key={item.href || item.name}
             item={item}

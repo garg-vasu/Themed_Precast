@@ -1,5 +1,5 @@
 import { useParams } from "react-router";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import axios, { AxiosError } from "axios";
 import { apiClient } from "@/utils/apiClient";
 import { toast } from "sonner";
@@ -11,12 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import {
-  ChevronRight,
-  Building2,
-  Layers,
-  FolderTree,
-} from "lucide-react";
+import { ChevronRight, Building2, Layers, FolderTree } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -25,7 +20,7 @@ import {
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import AddHierarchy from "./AddHierarchy";
-
+import { ProjectContext } from "@/Provider/ProjectProvider";
 
 export type Hierarchy = {
   id: number;
@@ -85,8 +80,6 @@ function FloorCard({ floor }: { floor: Hierarchy }) {
             )}
           </div>
         </div>
-
-       
       </div>
     </div>
   );
@@ -193,16 +186,18 @@ function TowerNode({
 
 export default function HierarchyTable({ refresh }: { refresh: () => void }) {
   const { projectId } = useParams<{ projectId: string }>();
-   const [refreshKey, setRefreshKey] = useState<number>(0);
+  const [refreshKey, setRefreshKey] = useState<number>(0);
+  const projectCtx = useContext(ProjectContext);
+  const permissions = projectCtx?.permissions;
   const [data, setData] = useState<Hierarchy[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandAll, setExpandAll] = useState<boolean | undefined>(undefined);
-   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingHierarchy, setEditingHierarchy] =
-    useState<Hierarchy | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingHierarchy, setEditingHierarchy] = useState<Hierarchy | null>(
+    null
+  );
 
-
-      const refreshData = () => {
+  const refreshData = () => {
     setRefreshKey((prev) => prev + 1);
     if (refreshKey > 0) {
       refresh();
@@ -248,7 +243,7 @@ export default function HierarchyTable({ refresh }: { refresh: () => void }) {
     };
   }, [projectId, refreshKey]);
 
-// Count total items recursively
+  // Count total items recursively
   const countItems = (items: Hierarchy[]): number => {
     return items.reduce((acc, item) => {
       return acc + 1 + (item.children ? countItems(item.children) : 0);
@@ -288,7 +283,9 @@ export default function HierarchyTable({ refresh }: { refresh: () => void }) {
       <div className="w-full">
         <Card>
           <CardContent className="flex items-center justify-center py-8">
-            <div className="text-muted-foreground text-sm">Loading hierarchy...</div>
+            <div className="text-muted-foreground text-sm">
+              Loading hierarchy...
+            </div>
           </CardContent>
         </Card>
         {renderDialog()}
@@ -308,7 +305,12 @@ export default function HierarchyTable({ refresh }: { refresh: () => void }) {
                 Start by adding towers and floors to your project.
               </p>
             </div>
-            <Button size="sm" onClick={openCreateDialog}>Add Tower</Button>
+            {permissions?.includes("AddTower") ||
+              (permissions?.includes("AddFloor") && (
+                <Button size="sm" onClick={openCreateDialog}>
+                  Add Tower
+                </Button>
+              ))}
           </CardContent>
         </Card>
         {renderDialog()}
@@ -329,19 +331,24 @@ export default function HierarchyTable({ refresh }: { refresh: () => void }) {
           </Badge>
         </div>
         <div className="flex items-center gap-1.5">
-          <Button
-            variant="outline"
-            className="w-full sm:w-auto"
-            size="sm"
-            onClick={openCreateDialog}
-          >
-            Add Hierarchy
-          </Button>
+          {permissions?.includes("AddTower") ||
+            (permissions?.includes("AddFloor") && (
+              <Button
+                variant="outline"
+                className="w-full sm:w-auto"
+                size="sm"
+                onClick={openCreateDialog}
+              >
+                Add Hierarchy
+              </Button>
+            ))}
 
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setExpandAll((prev) => (prev === true ? false : true))}
+            onClick={() =>
+              setExpandAll((prev) => (prev === true ? false : true))
+            }
           >
             {expandAll === true ? "Collapse All" : "Expand All"}
           </Button>
@@ -351,11 +358,7 @@ export default function HierarchyTable({ refresh }: { refresh: () => void }) {
       {/* Tree View */}
       <div className="space-y-1.5">
         {data.map((tower) => (
-          <TowerNode
-            key={tower.id}
-            tower={tower}
-            forceExpand={expandAll}
-          />
+          <TowerNode key={tower.id} tower={tower} forceExpand={expandAll} />
         ))}
       </div>
 

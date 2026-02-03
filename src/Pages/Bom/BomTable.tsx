@@ -48,7 +48,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import axios, { AxiosError } from "axios";
 import { apiClient } from "@/utils/apiClient";
 import { toast } from "sonner";
@@ -61,6 +61,8 @@ import AddBom from "./AddBom";
 import { Label } from "@/components/ui/label";
 import UploadDialog from "./Upload";
 import { generatePDFFromTable } from "@/utils/pdfGenerator";
+import { UserContext } from "@/Provider/UserProvider";
+import { ProjectContext } from "@/Provider/ProjectProvider";
 
 export type Bom = {
   bom_id: number;
@@ -76,7 +78,8 @@ export type Bom = {
 };
 export const getColumns = (
   refreshData: () => void,
-  onEdit?: (bom: Bom) => void
+  onEdit?: (bom: Bom) => void,
+  permissions: string[] = []
 ): ColumnDef<Bom>[] => [
   {
     id: "select",
@@ -156,14 +159,21 @@ export const getColumns = (
 
   {
     id: "actions",
+    header: "Actions",
     cell: ({ row }) => {
       const bom = row.original;
+      const canEditBom = permissions.includes("EditBom");
 
       const handleEdit = () => {
         if (onEdit) {
           onEdit(bom);
         }
       };
+
+      // Don't render the actions menu if user has no permissions
+      if (!canEditBom) {
+        return null;
+      }
 
       return (
         <DropdownMenu>
@@ -175,9 +185,9 @@ export const getColumns = (
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem onClick={handleEdit}>
-              Assign Member
-            </DropdownMenuItem>
+            {canEditBom && (
+              <DropdownMenuItem onClick={handleEdit}>Edit Bom</DropdownMenuItem>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       );
@@ -209,6 +219,8 @@ const getErrorMessage = (error: AxiosError | unknown, data: string): string => {
 export function BomTable({ refresh }: { refresh: () => void }) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const navigate = useNavigate();
+  const projectCtx = useContext(ProjectContext);
+  const permissions = (projectCtx?.permissions as string[]) || [];
   const { projectId } = useParams();
   const [refreshKey, setRefreshKey] = useState<number>(0);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -269,7 +281,7 @@ export function BomTable({ refresh }: { refresh: () => void }) {
 
   const table = useReactTable({
     data,
-    columns: getColumns(refreshData, openEditDialog),
+    columns: getColumns(refreshData, openEditDialog, permissions),
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
@@ -286,13 +298,19 @@ export function BomTable({ refresh }: { refresh: () => void }) {
     },
   });
 
-    const handleDownloadPDF = () => {
+  const handleDownloadPDF = () => {
     const selectedRows = table.getFilteredSelectedRowModel().rows;
 
     generatePDFFromTable({
       selectedRows,
       title: "BOM Report",
-      headers: ["Material Name", "Material Type", "Unit", "Created At", "Updated At"],
+      headers: [
+        "Material Name",
+        "Material Type",
+        "Unit",
+        "Created At",
+        "Updated At",
+      ],
       dataMapper: (row): string[] => {
         const bom = row.original as Bom;
         return [
@@ -307,54 +325,55 @@ export function BomTable({ refresh }: { refresh: () => void }) {
       successMessage: "PDF downloaded successfully with {count} bom(s)",
       emptySelectionMessage: "Please select at least one row to download",
       titleFontSize: 24,
-      headerColor: "#283C6E", 
+      headerColor: "#283C6E",
       headerHeight: 10,
       bodyFontSize: 9,
     });
   };
-
- 
 
   return (
     <div className="flex flex-col gap-2 py-4 px-4">
       <div className="flex item-center justify-between">
         <PageHeader title="BOM" />
         <div className="flex gap-2 items-center justify-center">
-         
-          <Button
-            variant="outline"
-            className="w-full sm:w-auto"
-            onClick={() => navigate(`/project/${projectId}/large-import`)}
-          >
-            Add Bom
-          </Button>
-          <Dialog
-            open={isImportDialogOpen}
-            onOpenChange={setIsImportDialogOpen}
-          >
-            <DialogTrigger asChild>
-              <Button
-                variant="outline"
-                onClick={() => setIsImportDialogOpen(true)}
-              >
-                Import Bom
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[480px]">
-              <DialogHeader>
-                <DialogTitle>Import BOM</DialogTitle>
-                <DialogDescription>
-                  Upload your BOM file in CSV or .xlsx format.
-                </DialogDescription>
-              </DialogHeader>
-              <UploadDialog
-                api={`/import_bom/${projectId}`}
-                projectId={projectId ? Number(projectId) : undefined}
-                close={() => setIsImportDialogOpen(false)}
-                onSuccess={refreshData}
-              />
-            </DialogContent>
-          </Dialog>
+          {permissions?.includes("AddBom") && (
+            <Button
+              variant="outline"
+              className="w-full sm:w-auto"
+              onClick={() => navigate(`/project/${projectId}/large-import`)}
+            >
+              Add Bom
+            </Button>
+          )}
+          {permissions?.includes("ImportBom") && (
+            <Dialog
+              open={isImportDialogOpen}
+              onOpenChange={setIsImportDialogOpen}
+            >
+              <DialogTrigger asChild>
+                <Button
+                  variant="outline"
+                  onClick={() => setIsImportDialogOpen(true)}
+                >
+                  Import Bom
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[480px]">
+                <DialogHeader>
+                  <DialogTitle>Import BOM</DialogTitle>
+                  <DialogDescription>
+                    Upload your BOM file in CSV or .xlsx format.
+                  </DialogDescription>
+                </DialogHeader>
+                <UploadDialog
+                  api={`/import_bom/${projectId}`}
+                  projectId={projectId ? Number(projectId) : undefined}
+                  close={() => setIsImportDialogOpen(false)}
+                  onSuccess={refreshData}
+                />
+              </DialogContent>
+            </Dialog>
+          )}
         </div>
       </div>
       {/* top toolbar */}
@@ -486,29 +505,32 @@ export function BomTable({ refresh }: { refresh: () => void }) {
           </Button>
         </div>
       </div>
-      <Dialog
-        open={isDialogOpen}
-        onOpenChange={(open) => {
-          setIsDialogOpen(open);
-          if (!open) {
-            setEditingBom(null);
-          }
-        }}
-      >
-        <DialogContent className="max-w-3xl">
-          <DialogHeader>
-            <DialogTitle>{editingBom ? "Edit Bom" : "Add Bom"}</DialogTitle>
-          </DialogHeader>
-          <AddBom
-            refresh={refreshData}
-            initialData={editingBom || undefined}
-            onClose={() => {
-              setIsDialogOpen(false);
+      {(permissions?.includes("EditBom") ||
+        permissions?.includes("AddBom")) && (
+        <Dialog
+          open={isDialogOpen}
+          onOpenChange={(open) => {
+            setIsDialogOpen(open);
+            if (!open) {
               setEditingBom(null);
-            }}
-          />
-        </DialogContent>
-      </Dialog>
+            }
+          }}
+        >
+          <DialogContent className="max-w-3xl">
+            <DialogHeader>
+              <DialogTitle>{editingBom ? "Edit Bom" : "Add Bom"}</DialogTitle>
+            </DialogHeader>
+            <AddBom
+              refresh={refreshData}
+              initialData={editingBom || undefined}
+              onClose={() => {
+                setIsDialogOpen(false);
+                setEditingBom(null);
+              }}
+            />
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }

@@ -28,7 +28,7 @@ export default function MixErrectedElement() {
   const tabLinks = useMemo<TabLink[]>(() => {
     const tabs: TabLink[] = [];
 
-    if (permissions?.includes("ViewDrawing")) {
+    if (permissions?.includes("ViewElementInErrectionSite")) {
       tabs.push({
         id: "1",
         label: "Already Erected",
@@ -37,7 +37,7 @@ export default function MixErrectedElement() {
         content: <AlreadyErrectedElementTable />,
       });
     }
-    if (permissions?.includes("ViewDispatchedElement")) {
+    if (permissions?.includes("ViewElementInErrectionSite")) {
       tabs.push({
         id: "2",
         label: "Not Erected",

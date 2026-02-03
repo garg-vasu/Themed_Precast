@@ -40,7 +40,7 @@ import { useProject } from "@/Provider/ProjectProvider";
 import { ElementtypeTable } from "./ElementtypeTable";
 import { ElementTable } from "../Element/ElementTable";
 import { apiClient } from "@/utils/apiClient";
-import { useParams } from "react-router";
+import { useNavigate, useParams } from "react-router";
 import { toast } from "sonner";
 import axios, { AxiosError } from "axios";
 
@@ -63,25 +63,24 @@ interface Bom {
   rate: number;
   name_id: string;
   vendor: null;
-
 }
 
 type Tower = {
-    id: number;
-    project_id?: number;
-    name: string;
-    description?: string;
-    child_count?: number;
-  };
-  type Floor = {
-    hierarchy_id: number;
-    name: string;
-    description?: string;
-    parent_id?: number;
-    tower_name: string;
-  };
+  id: number;
+  project_id?: number;
+  name: string;
+  description?: string;
+  child_count?: number;
+};
+type Floor = {
+  hierarchy_id: number;
+  name: string;
+  description?: string;
+  parent_id?: number;
+  tower_name: string;
+};
 
-  const getErrorMessage = (error: AxiosError | unknown, data: string): string => {
+const getErrorMessage = (error: AxiosError | unknown, data: string): string => {
   if (axios.isAxiosError(error)) {
     if (error.response?.status === 401) {
       return "Unauthorized. Please log in.";
@@ -126,6 +125,7 @@ export default function MixElement() {
   const [loadingFloorsByTower, setLoadingFloorsByTower] = useState<
     Record<number, boolean>
   >({});
+  const navigate = useNavigate();
   const [downloading, setDownloading] = useState(false);
   const [selectedFloorIdsByTower, setSelectedFloorIdsByTower] = useState<
     Record<number, number[]>
@@ -157,8 +157,7 @@ export default function MixElement() {
     return tabs;
   }, [permissions]);
 
-
-   useEffect(() => {
+  useEffect(() => {
     if (!projectId) {
       toast.error("Project ID is required");
       setBomLoading(false);
@@ -169,9 +168,12 @@ export default function MixElement() {
 
     const fetchBomData = async () => {
       try {
-        const response = await apiClient.get(`/fetch_bom_products/${projectId}`, {
-          cancelToken: source.token,
-        });
+        const response = await apiClient.get(
+          `/fetch_bom_products/${projectId}`,
+          {
+            cancelToken: source.token,
+          }
+        );
 
         if (response.status === 200) {
           setBomData(response.data);
@@ -194,9 +196,8 @@ export default function MixElement() {
     };
   }, [projectId]);
 
-
-  // fetch tower data 
-   useEffect(() => {
+  // fetch tower data
+  useEffect(() => {
     if (!projectId) {
       toast.error("Project ID is required");
       setTowerLoading(false);
@@ -232,8 +233,7 @@ export default function MixElement() {
     };
   }, [projectId]);
 
-
-   useEffect(() => {
+  useEffect(() => {
     if (!projectId) {
       toast.error("Project ID is required");
       setFloorLoading(false);
@@ -244,9 +244,12 @@ export default function MixElement() {
 
     const fetchFloorData = async (towerId: number) => {
       try {
-        const response = await apiClient.get(`/precast/floors/${projectId}/${towerId}`, {
-          cancelToken: source.token,
-        });
+        const response = await apiClient.get(
+          `/precast/floors/${projectId}/${towerId}`,
+          {
+            cancelToken: source.token,
+          }
+        );
 
         if (response.status === 200) {
           setFloorData(response.data);
@@ -457,9 +460,9 @@ export default function MixElement() {
     );
   };
 
-    // Filter available BOMs based on search term
-  const filteredBomList = (Array.isArray(bomList) ? bomList : []).filter((bom) =>
-    bom.bom_name.toLowerCase().includes(searchTerm.toLowerCase())
+  // Filter available BOMs based on search term
+  const filteredBomList = (Array.isArray(bomList) ? bomList : []).filter(
+    (bom) => bom.bom_name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   // If no tabs are available, show a message
@@ -513,506 +516,521 @@ export default function MixElement() {
             </SelectContent>
           </Select>
         </div>
-        <Dialog
-          open={downloadDialogOpen}
-          onOpenChange={handleDownloadDialogChange}
-        >
-          <DialogTrigger asChild>
+        <div className="flex gap-2 items-center">
+          {permissions?.includes("DownloadElementtypeTemplate") && (
+            <Dialog
+              open={downloadDialogOpen}
+              onOpenChange={handleDownloadDialogChange}
+            >
+              <DialogTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex gap-2 items-center text-xs sm:text-sm"
+                >
+                  <Download className="h-4 w-4" />
+                  Template
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[900px] w-full max-h-[85vh] overflow-y-auto p-0">
+                {/* Header */}
+                <DialogHeader className="px-6 pt-6 pb-4 border-b bg-gradient-to-r from-primary/5 to-transparent">
+                  <DialogTitle className="text-lg sm:text-xl font-semibold flex items-center gap-2">
+                    <Download className="h-5 w-5 text-primary" />
+                    Export Element Type Template
+                  </DialogTitle>
+                  <DialogDescription className="text-sm text-muted-foreground">
+                    Configure your export by selecting BOMs and hierarchy
+                  </DialogDescription>
+                </DialogHeader>
+
+                <div className="px-6 py-4 space-y-6">
+                  {/* Step 1: BOM Selection */}
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center justify-center w-7 h-7 rounded-full bg-primary text-white text-sm font-medium">
+                        1
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Package className="h-4 w-4 text-primary" />
+                        <h3 className="font-medium">Select BOMs</h3>
+                      </div>
+                      {selectedBoms.length > 0 && (
+                        <Badge variant="secondary" className="ml-auto">
+                          {selectedBoms.length} selected
+                        </Badge>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 ml-10">
+                      {/* Available BOMs */}
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-muted-foreground">
+                            Available ({bomList.length})
+                          </span>
+                        </div>
+                        <div className="relative">
+                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            placeholder="Search BOMs..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="pl-9 h-9"
+                          />
+                        </div>
+                        <div className="border rounded-lg max-h-[200px] overflow-y-auto">
+                          {loading ? (
+                            <div className="flex flex-col items-center justify-center py-8 gap-2">
+                              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                              <span className="text-sm text-muted-foreground">
+                                Loading BOMs...
+                              </span>
+                            </div>
+                          ) : filteredBomList.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center py-8 gap-2">
+                              <Package className="h-8 w-8 text-muted-foreground/50" />
+                              <span className="text-sm text-muted-foreground">
+                                {searchTerm
+                                  ? "No BOMs match your search"
+                                  : "No BOMs available"}
+                              </span>
+                            </div>
+                          ) : (
+                            <div className="divide-y">
+                              {filteredBomList.map((bom) => (
+                                <div
+                                  key={bom.bom_id}
+                                  className="flex items-center gap-3 p-3 hover:bg-muted/50 cursor-pointer transition-colors group"
+                                  onClick={() => handleBomSelect(bom)}
+                                >
+                                  <div className="w-4 h-4 rounded border border-muted-foreground/30 group-hover:border-primary transition-colors" />
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-medium truncate">
+                                      {bom.bom_name}
+                                    </p>
+                                    <p className="text-xs text-muted-foreground">
+                                      {bom.bom_type}
+                                    </p>
+                                  </div>
+                                  <ArrowRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Selected BOMs */}
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-muted-foreground">
+                            Selected ({selectedBoms.length})
+                          </span>
+                          {selectedBoms.length > 0 && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 text-xs text-muted-foreground hover:text-destructive"
+                              onClick={() => {
+                                setBomList((prev) =>
+                                  [...prev, ...selectedBoms].sort((a, b) =>
+                                    a.bom_name.localeCompare(b.bom_name)
+                                  )
+                                );
+                                setSelectedBoms([]);
+                              }}
+                            >
+                              Clear all
+                            </Button>
+                          )}
+                        </div>
+                        <div className="border rounded-lg min-h-[200px] max-h-[200px] overflow-y-auto bg-green-50/30">
+                          {selectedBoms.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center h-[200px] gap-2">
+                              <ChevronRight className="h-8 w-8 text-muted-foreground/30" />
+                              <span className="text-sm text-muted-foreground">
+                                Click BOMs to select
+                              </span>
+                            </div>
+                          ) : (
+                            <div className="divide-y">
+                              {selectedBoms.map((bom) => (
+                                <div
+                                  key={bom.bom_id}
+                                  className="flex items-center gap-3 p-3 hover:bg-green-100/50 cursor-pointer transition-colors group"
+                                  onClick={() => handleBomDeselect(bom)}
+                                >
+                                  <Check className="h-4 w-4 text-green-600" />
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-medium truncate">
+                                      {bom.bom_name}
+                                    </p>
+                                    <p className="text-xs text-muted-foreground">
+                                      {bom.bom_type}
+                                    </p>
+                                  </div>
+                                  <X className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Step 2: Hierarchy Selection */}
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={`flex items-center justify-center w-7 h-7 rounded-full text-sm font-medium ${
+                          selectedBoms.length > 0
+                            ? "bg-primary text-white"
+                            : "bg-muted text-muted-foreground"
+                        }`}
+                      >
+                        2
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Building2 className="h-4 w-4 text-primary" />
+                        <h3 className="font-medium">Select Hierarchy</h3>
+                      </div>
+                      {selectedTowerIds.length > 0 && (
+                        <Badge variant="secondary" className="ml-auto">
+                          {selectedTowerIds.length} tower(s),{" "}
+                          {Object.values(selectedFloorIdsByTower).flat().length}{" "}
+                          floor(s)
+                        </Badge>
+                      )}
+                    </div>
+
+                    <div className="ml-10 space-y-3">
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          placeholder="Search towers..."
+                          value={towerSearch}
+                          onChange={(e) => setTowerSearch(e.target.value)}
+                          className="pl-9 h-9"
+                        />
+                      </div>
+
+                      <div className="border rounded-lg max-h-[280px] overflow-y-auto">
+                        {loadingTowers ? (
+                          <div className="flex flex-col items-center justify-center py-8 gap-2">
+                            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                            <span className="text-sm text-muted-foreground">
+                              Loading towers...
+                            </span>
+                          </div>
+                        ) : !Array.isArray(towers) || towers.length === 0 ? (
+                          <div className="flex flex-col items-center justify-center py-8 gap-2">
+                            <Building2 className="h-8 w-8 text-muted-foreground/50" />
+                            <span className="text-sm text-muted-foreground">
+                              No towers available
+                            </span>
+                          </div>
+                        ) : (
+                          <div className="divide-y">
+                            {(Array.isArray(towers) ? towers : [])
+                              .filter((t) =>
+                                t.name
+                                  .toLowerCase()
+                                  .includes(towerSearch.toLowerCase())
+                              )
+                              .map((t) => {
+                                const isTowerSelected =
+                                  selectedTowerIds.includes(t.id);
+                                const rawFloors = floorsByTower[t.id];
+                                const towerFloors = Array.isArray(rawFloors)
+                                  ? rawFloors
+                                  : [];
+                                const isLoadingFloors =
+                                  !!loadingFloorsByTower[t.id];
+                                const selectedFloorsForTower =
+                                  selectedFloorIdsByTower[t.id] || [];
+                                const allFloorsSelected =
+                                  towerFloors.length > 0 &&
+                                  selectedFloorsForTower.length ===
+                                    towerFloors.length;
+
+                                return (
+                                  <div key={t.id} className="p-3">
+                                    <div
+                                      className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors ${
+                                        isTowerSelected
+                                          ? "bg-primary/10"
+                                          : "hover:bg-muted/50"
+                                      }`}
+                                      onClick={() => {
+                                        const already =
+                                          selectedTowerIds.includes(t.id);
+                                        const next = already
+                                          ? selectedTowerIds.filter(
+                                              (x) => x !== t.id
+                                            )
+                                          : [...selectedTowerIds, t.id];
+                                        setSelectedTowerIds(next);
+                                        if (!already && !floorsByTower[t.id]) {
+                                          fetchFloors(t.id);
+                                        }
+                                        if (already) {
+                                          setSelectedFloorIdsByTower((prev) => {
+                                            const { [t.id]: _, ...rest } = prev;
+                                            return rest;
+                                          });
+                                        }
+                                      }}
+                                    >
+                                      <Checkbox checked={isTowerSelected} />
+                                      <Building2 className="h-4 w-4 text-muted-foreground" />
+                                      <span className="font-medium text-sm">
+                                        {t.name}
+                                      </span>
+                                      {t.child_count !== undefined && (
+                                        <Badge
+                                          variant="outline"
+                                          className="ml-auto text-xs"
+                                        >
+                                          {t.child_count} floors
+                                        </Badge>
+                                      )}
+                                    </div>
+
+                                    {isTowerSelected && (
+                                      <div className="mt-3 ml-6 p-3 bg-muted/30 rounded-lg border">
+                                        {isLoadingFloors ? (
+                                          <div className="flex items-center gap-2 py-2">
+                                            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                                            <span className="text-xs text-muted-foreground">
+                                              Loading floors...
+                                            </span>
+                                          </div>
+                                        ) : towerFloors.length === 0 ? (
+                                          <div className="flex items-center gap-2 py-2">
+                                            <Layers className="h-4 w-4 text-muted-foreground/50" />
+                                            <span className="text-xs text-muted-foreground">
+                                              No floors available
+                                            </span>
+                                          </div>
+                                        ) : (
+                                          <>
+                                            <div className="flex items-center justify-between mb-2">
+                                              <span className="text-xs text-muted-foreground flex items-center gap-1">
+                                                <Layers className="h-3 w-3" />
+                                                Select floors
+                                              </span>
+                                              <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                className="h-6 text-xs"
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  if (allFloorsSelected) {
+                                                    setSelectedFloorIdsByTower(
+                                                      (prev) => ({
+                                                        ...prev,
+                                                        [t.id]: [],
+                                                      })
+                                                    );
+                                                  } else {
+                                                    setSelectedFloorIdsByTower(
+                                                      (prev) => ({
+                                                        ...prev,
+                                                        [t.id]: towerFloors.map(
+                                                          (f) => f.hierarchy_id
+                                                        ),
+                                                      })
+                                                    );
+                                                  }
+                                                }}
+                                              >
+                                                {allFloorsSelected
+                                                  ? "Deselect all"
+                                                  : "Select all"}
+                                              </Button>
+                                            </div>
+                                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-1.5">
+                                              {towerFloors.map((f) => {
+                                                const checked =
+                                                  selectedFloorsForTower.includes(
+                                                    f.hierarchy_id
+                                                  );
+                                                return (
+                                                  <div
+                                                    key={f.hierarchy_id}
+                                                    className={`flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer transition-colors text-xs ${
+                                                      checked
+                                                        ? "bg-primary/10 text-primary"
+                                                        : "hover:bg-muted"
+                                                    }`}
+                                                    onClick={(e) => {
+                                                      e.stopPropagation();
+                                                      setSelectedFloorIdsByTower(
+                                                        (prev) => {
+                                                          const current =
+                                                            prev[t.id] || [];
+                                                          const next = checked
+                                                            ? current.filter(
+                                                                (x) =>
+                                                                  x !==
+                                                                  f.hierarchy_id
+                                                              )
+                                                            : [
+                                                                ...current,
+                                                                f.hierarchy_id,
+                                                              ];
+                                                          return {
+                                                            ...prev,
+                                                            [t.id]: next,
+                                                          };
+                                                        }
+                                                      );
+                                                    }}
+                                                  >
+                                                    <Checkbox
+                                                      checked={checked}
+                                                      className="h-3 w-3"
+                                                    />
+                                                    <span className="truncate font-medium">
+                                                      {f.name}
+                                                    </span>
+                                                  </div>
+                                                );
+                                              })}
+                                            </div>
+                                          </>
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Step 3: Download */}
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={`flex items-center justify-center w-7 h-7 rounded-full text-sm font-medium ${
+                          selectedBoms.length > 0 &&
+                          selectedTowerIds.length > 0 &&
+                          Object.values(selectedFloorIdsByTower).flat().length >
+                            0
+                            ? "bg-primary text-white"
+                            : "bg-muted text-muted-foreground"
+                        }`}
+                      >
+                        3
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Download className="h-4 w-4 text-primary" />
+                        <h3 className="font-medium">Download Template</h3>
+                      </div>
+                    </div>
+
+                    <div className="ml-10">
+                      {selectedBoms.length === 0 ||
+                      selectedTowerIds.length === 0 ||
+                      Object.values(selectedFloorIdsByTower).flat().length ===
+                        0 ? (
+                        <div className="p-4 rounded-lg border border-dashed bg-muted/30 text-center">
+                          <p className="text-sm text-muted-foreground">
+                            {selectedBoms.length === 0
+                              ? "Select at least one BOM to continue"
+                              : selectedTowerIds.length === 0
+                              ? "Select at least one tower to continue"
+                              : "Select at least one floor to continue"}
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="space-y-4">
+                          {/* Summary */}
+                          <div className="p-3 rounded-lg bg-muted/50 border">
+                            <p className="text-sm font-medium mb-2">
+                              Export Summary
+                            </p>
+                            <div className="flex flex-wrap gap-2">
+                              <Badge variant="outline" className="gap-1">
+                                <Package className="h-3 w-3" />
+                                {selectedBoms.length} BOM(s)
+                              </Badge>
+                              <Badge variant="outline" className="gap-1">
+                                <Building2 className="h-3 w-3" />
+                                {selectedTowerIds.length} Tower(s)
+                              </Badge>
+                              <Badge variant="outline" className="gap-1">
+                                <Layers className="h-3 w-3" />
+                                {
+                                  Object.values(selectedFloorIdsByTower).flat()
+                                    .length
+                                }{" "}
+                                Floor(s)
+                              </Badge>
+                            </div>
+                          </div>
+
+                          {/* Download Buttons */}
+                          <div className="grid grid-cols-2 gap-3">
+                            <Button
+                              variant="outline"
+                              className="h-auto py-4 flex flex-col items-center gap-2 hover:bg-green-50 hover:border-green-300 transition-all"
+                              onClick={() => handleDownload("excel")}
+                              disabled={downloading}
+                            >
+                              {downloading ? (
+                                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                              ) : (
+                                <FileSpreadsheet className="h-8 w-8 text-green-600" />
+                              )}
+                              <span className="font-medium">Excel (.xlsx)</span>
+                              <span className="text-xs text-muted-foreground">
+                                Best for editing
+                              </span>
+                            </Button>
+                            <Button
+                              variant="outline"
+                              className="h-auto py-4 flex flex-col items-center gap-2 hover:bg-blue-50 hover:border-blue-300 transition-all"
+                              onClick={() => handleDownload("csv")}
+                              disabled={downloading}
+                            >
+                              {downloading ? (
+                                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                              ) : (
+                                <FileText className="h-8 w-8 text-blue-600" />
+                              )}
+                              <span className="font-medium">CSV (.csv)</span>
+                              <span className="text-xs text-muted-foreground">
+                                Universal format
+                              </span>
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+          )}
+          {permissions?.includes("AddElementType") && (
             <Button
               variant="outline"
               size="sm"
+              onClick={() => navigate(`/project/${projectId}/add-element-type`)}
               className="flex gap-2 items-center text-xs sm:text-sm"
             >
-              <Download className="h-4 w-4" />
-              Template
+              Add Element Type
             </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[900px] w-full max-h-[85vh] overflow-y-auto p-0">
-            {/* Header */}
-            <DialogHeader className="px-6 pt-6 pb-4 border-b bg-gradient-to-r from-primary/5 to-transparent">
-              <DialogTitle className="text-lg sm:text-xl font-semibold flex items-center gap-2">
-                <Download className="h-5 w-5 text-primary" />
-                Export Element Type Template
-              </DialogTitle>
-              <DialogDescription className="text-sm text-muted-foreground">
-                Configure your export by selecting BOMs and hierarchy
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="px-6 py-4 space-y-6">
-              {/* Step 1: BOM Selection */}
-              <div className="space-y-4">
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center justify-center w-7 h-7 rounded-full bg-primary text-white text-sm font-medium">
-                    1
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Package className="h-4 w-4 text-primary" />
-                    <h3 className="font-medium">Select BOMs</h3>
-                  </div>
-                  {selectedBoms.length > 0 && (
-                    <Badge variant="secondary" className="ml-auto">
-                      {selectedBoms.length} selected
-                    </Badge>
-                  )}
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 ml-10">
-                  {/* Available BOMs */}
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">
-                        Available ({bomList.length})
-                      </span>
-                    </div>
-                    <div className="relative">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        placeholder="Search BOMs..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-9 h-9"
-                      />
-                    </div>
-                    <div className="border rounded-lg max-h-[200px] overflow-y-auto">
-                      {loading ? (
-                        <div className="flex flex-col items-center justify-center py-8 gap-2">
-                          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                          <span className="text-sm text-muted-foreground">
-                            Loading BOMs...
-                          </span>
-                        </div>
-                      ) : filteredBomList.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center py-8 gap-2">
-                          <Package className="h-8 w-8 text-muted-foreground/50" />
-                          <span className="text-sm text-muted-foreground">
-                            {searchTerm
-                              ? "No BOMs match your search"
-                              : "No BOMs available"}
-                          </span>
-                        </div>
-                      ) : (
-                        <div className="divide-y">
-                          {filteredBomList.map((bom) => (
-                            <div
-                              key={bom.bom_id}
-                              className="flex items-center gap-3 p-3 hover:bg-muted/50 cursor-pointer transition-colors group"
-                              onClick={() => handleBomSelect(bom)}
-                            >
-                              <div className="w-4 h-4 rounded border border-muted-foreground/30 group-hover:border-primary transition-colors" />
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium truncate">
-                                  {bom.bom_name}
-                                </p>
-                                <p className="text-xs text-muted-foreground">
-                                  {bom.bom_type}
-                                </p>
-                              </div>
-                              <ArrowRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Selected BOMs */}
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">
-                        Selected ({selectedBoms.length})
-                      </span>
-                      {selectedBoms.length > 0 && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-7 text-xs text-muted-foreground hover:text-destructive"
-                          onClick={() => {
-                            setBomList((prev) =>
-                              [...prev, ...selectedBoms].sort((a, b) =>
-                                a.bom_name.localeCompare(b.bom_name)
-                              )
-                            );
-                            setSelectedBoms([]);
-                          }}
-                        >
-                          Clear all
-                        </Button>
-                      )}
-                    </div>
-                    <div className="border rounded-lg min-h-[200px] max-h-[200px] overflow-y-auto bg-green-50/30">
-                      {selectedBoms.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center h-[200px] gap-2">
-                          <ChevronRight className="h-8 w-8 text-muted-foreground/30" />
-                          <span className="text-sm text-muted-foreground">
-                            Click BOMs to select
-                          </span>
-                        </div>
-                      ) : (
-                        <div className="divide-y">
-                          {selectedBoms.map((bom) => (
-                            <div
-                              key={bom.bom_id}
-                              className="flex items-center gap-3 p-3 hover:bg-green-100/50 cursor-pointer transition-colors group"
-                              onClick={() => handleBomDeselect(bom)}
-                            >
-                              <Check className="h-4 w-4 text-green-600" />
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium truncate">
-                                  {bom.bom_name}
-                                </p>
-                                <p className="text-xs text-muted-foreground">
-                                  {bom.bom_type}
-                                </p>
-                              </div>
-                              <X className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Step 2: Hierarchy Selection */}
-              <div className="space-y-4">
-                <div className="flex items-center gap-3">
-                  <div
-                    className={`flex items-center justify-center w-7 h-7 rounded-full text-sm font-medium ${
-                      selectedBoms.length > 0
-                        ? "bg-primary text-white"
-                        : "bg-muted text-muted-foreground"
-                    }`}
-                  >
-                    2
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Building2 className="h-4 w-4 text-primary" />
-                    <h3 className="font-medium">Select Hierarchy</h3>
-                  </div>
-                  {selectedTowerIds.length > 0 && (
-                    <Badge variant="secondary" className="ml-auto">
-                      {selectedTowerIds.length} tower(s),{" "}
-                      {Object.values(selectedFloorIdsByTower).flat().length}{" "}
-                      floor(s)
-                    </Badge>
-                  )}
-                </div>
-
-                <div className="ml-10 space-y-3">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      placeholder="Search towers..."
-                      value={towerSearch}
-                      onChange={(e) => setTowerSearch(e.target.value)}
-                      className="pl-9 h-9"
-                    />
-                  </div>
-
-                  <div className="border rounded-lg max-h-[280px] overflow-y-auto">
-                    {loadingTowers ? (
-                      <div className="flex flex-col items-center justify-center py-8 gap-2">
-                        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                        <span className="text-sm text-muted-foreground">
-                          Loading towers...
-                        </span>
-                      </div>
-                    ) : !Array.isArray(towers) || towers.length === 0 ? (
-                      <div className="flex flex-col items-center justify-center py-8 gap-2">
-                        <Building2 className="h-8 w-8 text-muted-foreground/50" />
-                        <span className="text-sm text-muted-foreground">
-                          No towers available
-                        </span>
-                      </div>
-                    ) : (
-                      <div className="divide-y">
-                        {(Array.isArray(towers) ? towers : [])
-                          .filter((t) =>
-                            t.name
-                              .toLowerCase()
-                              .includes(towerSearch.toLowerCase())
-                          )
-                          .map((t) => {
-                            const isTowerSelected = selectedTowerIds.includes(
-                              t.id
-                            );
-                            const rawFloors = floorsByTower[t.id];
-                            const towerFloors = Array.isArray(rawFloors)
-                              ? rawFloors
-                              : [];
-                            const isLoadingFloors =
-                              !!loadingFloorsByTower[t.id];
-                            const selectedFloorsForTower =
-                              selectedFloorIdsByTower[t.id] || [];
-                            const allFloorsSelected =
-                              towerFloors.length > 0 &&
-                              selectedFloorsForTower.length ===
-                                towerFloors.length;
-
-                            return (
-                              <div key={t.id} className="p-3">
-                                <div
-                                  className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors ${
-                                    isTowerSelected
-                                      ? "bg-primary/10"
-                                      : "hover:bg-muted/50"
-                                  }`}
-                                  onClick={() => {
-                                    const already = selectedTowerIds.includes(
-                                      t.id
-                                    );
-                                    const next = already
-                                      ? selectedTowerIds.filter(
-                                          (x) => x !== t.id
-                                        )
-                                      : [...selectedTowerIds, t.id];
-                                    setSelectedTowerIds(next);
-                                    if (!already && !floorsByTower[t.id]) {
-                                      fetchFloors(t.id);
-                                    }
-                                    if (already) {
-                                      setSelectedFloorIdsByTower((prev) => {
-                                        const { [t.id]: _, ...rest } = prev;
-                                        return rest;
-                                      });
-                                    }
-                                  }}
-                                >
-                                  <Checkbox checked={isTowerSelected} />
-                                  <Building2 className="h-4 w-4 text-muted-foreground" />
-                                  <span className="font-medium text-sm">
-                                    {t.name}
-                                  </span>
-                                  {t.child_count !== undefined && (
-                                    <Badge
-                                      variant="outline"
-                                      className="ml-auto text-xs"
-                                    >
-                                      {t.child_count} floors
-                                    </Badge>
-                                  )}
-                                </div>
-
-                                {isTowerSelected && (
-                                  <div className="mt-3 ml-6 p-3 bg-muted/30 rounded-lg border">
-                                    {isLoadingFloors ? (
-                                      <div className="flex items-center gap-2 py-2">
-                                        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                                        <span className="text-xs text-muted-foreground">
-                                          Loading floors...
-                                        </span>
-                                      </div>
-                                    ) : towerFloors.length === 0 ? (
-                                      <div className="flex items-center gap-2 py-2">
-                                        <Layers className="h-4 w-4 text-muted-foreground/50" />
-                                        <span className="text-xs text-muted-foreground">
-                                          No floors available
-                                        </span>
-                                      </div>
-                                    ) : (
-                                      <>
-                                        <div className="flex items-center justify-between mb-2">
-                                          <span className="text-xs text-muted-foreground flex items-center gap-1">
-                                            <Layers className="h-3 w-3" />
-                                            Select floors
-                                          </span>
-                                          <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            className="h-6 text-xs"
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              if (allFloorsSelected) {
-                                                setSelectedFloorIdsByTower(
-                                                  (prev) => ({
-                                                    ...prev,
-                                                    [t.id]: [],
-                                                  })
-                                                );
-                                              } else {
-                                                setSelectedFloorIdsByTower(
-                                                  (prev) => ({
-                                                    ...prev,
-                                                    [t.id]: towerFloors.map(
-                                                      (f) => f.hierarchy_id
-                                                    ),
-                                                  })
-                                                );
-                                              }
-                                            }}
-                                          >
-                                            {allFloorsSelected
-                                              ? "Deselect all"
-                                              : "Select all"}
-                                          </Button>
-                                        </div>
-                                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-1.5">
-                                          {towerFloors.map((f) => {
-                                            const checked =
-                                              selectedFloorsForTower.includes(
-                                                f.hierarchy_id
-                                              );
-                                            return (
-                                              <div
-                                                key={f.hierarchy_id}
-                                                className={`flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer transition-colors text-xs ${
-                                                  checked
-                                                    ? "bg-primary/10 text-primary"
-                                                    : "hover:bg-muted"
-                                                }`}
-                                                onClick={(e) => {
-                                                  e.stopPropagation();
-                                                  setSelectedFloorIdsByTower(
-                                                    (prev) => {
-                                                      const current =
-                                                        prev[t.id] || [];
-                                                      const next = checked
-                                                        ? current.filter(
-                                                            (x) =>
-                                                              x !==
-                                                              f.hierarchy_id
-                                                          )
-                                                        : [
-                                                            ...current,
-                                                            f.hierarchy_id,
-                                                          ];
-                                                      return {
-                                                        ...prev,
-                                                        [t.id]: next,
-                                                      };
-                                                    }
-                                                  );
-                                                }}
-                                              >
-                                                <Checkbox
-                                                  checked={checked}
-                                                  className="h-3 w-3"
-                                                />
-                                                <span className="truncate font-medium">
-                                                  {f.name}
-                                                </span>
-                                              </div>
-                                            );
-                                          })}
-                                        </div>
-                                      </>
-                                    )}
-                                  </div>
-                                )}
-                              </div>
-                            );
-                          })}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Step 3: Download */}
-              <div className="space-y-4">
-                <div className="flex items-center gap-3">
-                  <div
-                    className={`flex items-center justify-center w-7 h-7 rounded-full text-sm font-medium ${
-                      selectedBoms.length > 0 &&
-                      selectedTowerIds.length > 0 &&
-                      Object.values(selectedFloorIdsByTower).flat().length > 0
-                        ? "bg-primary text-white"
-                        : "bg-muted text-muted-foreground"
-                    }`}
-                  >
-                    3
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Download className="h-4 w-4 text-primary" />
-                    <h3 className="font-medium">Download Template</h3>
-                  </div>
-                </div>
-
-                <div className="ml-10">
-                  {selectedBoms.length === 0 ||
-                  selectedTowerIds.length === 0 ||
-                  Object.values(selectedFloorIdsByTower).flat().length === 0 ? (
-                    <div className="p-4 rounded-lg border border-dashed bg-muted/30 text-center">
-                      <p className="text-sm text-muted-foreground">
-                        {selectedBoms.length === 0
-                          ? "Select at least one BOM to continue"
-                          : selectedTowerIds.length === 0
-                          ? "Select at least one tower to continue"
-                          : "Select at least one floor to continue"}
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {/* Summary */}
-                      <div className="p-3 rounded-lg bg-muted/50 border">
-                        <p className="text-sm font-medium mb-2">
-                          Export Summary
-                        </p>
-                        <div className="flex flex-wrap gap-2">
-                          <Badge variant="outline" className="gap-1">
-                            <Package className="h-3 w-3" />
-                            {selectedBoms.length} BOM(s)
-                          </Badge>
-                          <Badge variant="outline" className="gap-1">
-                            <Building2 className="h-3 w-3" />
-                            {selectedTowerIds.length} Tower(s)
-                          </Badge>
-                          <Badge variant="outline" className="gap-1">
-                            <Layers className="h-3 w-3" />
-                            {
-                              Object.values(selectedFloorIdsByTower).flat()
-                                .length
-                            }{" "}
-                            Floor(s)
-                          </Badge>
-                        </div>
-                      </div>
-
-                      {/* Download Buttons */}
-                      <div className="grid grid-cols-2 gap-3">
-                        <Button
-                          variant="outline"
-                          className="h-auto py-4 flex flex-col items-center gap-2 hover:bg-green-50 hover:border-green-300 transition-all"
-                          onClick={() => handleDownload("excel")}
-                          disabled={downloading}
-                        >
-                          {downloading ? (
-                            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                          ) : (
-                            <FileSpreadsheet className="h-8 w-8 text-green-600" />
-                          )}
-                          <span className="font-medium">Excel (.xlsx)</span>
-                          <span className="text-xs text-muted-foreground">
-                            Best for editing
-                          </span>
-                        </Button>
-                        <Button
-                          variant="outline"
-                          className="h-auto py-4 flex flex-col items-center gap-2 hover:bg-blue-50 hover:border-blue-300 transition-all"
-                          onClick={() => handleDownload("csv")}
-                          disabled={downloading}
-                        >
-                          {downloading ? (
-                            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                          ) : (
-                            <FileText className="h-8 w-8 text-blue-600" />
-                          )}
-                          <span className="font-medium">CSV (.csv)</span>
-                          <span className="text-xs text-muted-foreground">
-                            Universal format
-                          </span>
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
+          )}
+        </div>
       </div>
+
       {/*content area   */}
 
       {tabLinks.find((tab) => tab.id === activeTab)?.content}

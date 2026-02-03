@@ -35,7 +35,7 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 import axios, { AxiosError } from "axios";
 import { apiClient } from "@/utils/apiClient";
 import { toast } from "sonner";
@@ -45,6 +45,7 @@ import ElementFilter from "./ElementFilter";
 import { Dialog, DialogTrigger, DialogContent } from "@/components/ui/dialog";
 import ElementDrawing from "../Elementtype/ElementDrawing";
 import { generatePDFFromTable } from "@/utils/pdfGenerator";
+import { ProjectContext } from "@/Provider/ProjectProvider";
 
 export type File = {
   drawing_id: number;
@@ -102,7 +103,7 @@ type PaginationInfo = {
   total_pages: number;
 };
 
-export const columns: ColumnDef<Element>[] = [
+export const getColumns = (permissions: string[]): ColumnDef<Element>[] => [
   {
     id: "select",
     header: ({ table }) => (
@@ -135,9 +136,13 @@ export const columns: ColumnDef<Element>[] = [
       return (
         <div
           className="capitalize cursor-pointer"
-          onClick={() =>
-            navigate(`/project/${projectId}/element-detail/${row.original.id}`)
-          }
+          onClick={() => {
+            if (permissions?.includes("ViewElementDetail")) {
+              navigate(
+                `/project/${projectId}/element-detail/${row.original.id}`
+              );
+            }
+          }}
         >
           {row.getValue("element_id")}
         </div>
@@ -235,6 +240,8 @@ const getErrorMessage = (error: AxiosError | unknown, data: string): string => {
 export function ElementTable() {
   const [sorting, setSorting] = useState<SortingState>([]);
   const { projectId } = useParams();
+  const projectCtx = useContext(ProjectContext);
+  const permissions = projectCtx?.permissions || [];
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState({});
@@ -348,7 +355,7 @@ export function ElementTable() {
 
   const table = useReactTable({
     data,
-    columns,
+    columns: getColumns(permissions),
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
@@ -366,13 +373,20 @@ export function ElementTable() {
     },
   });
 
-   const handleDownloadPDF = () => {
+  const handleDownloadPDF = () => {
     const selectedRows = table.getFilteredSelectedRowModel().rows;
 
     generatePDFFromTable({
       selectedRows,
       title: "Element Report",
-      headers: ["Element Name", "Element Type Name", "Status", "Drawing", "Tower Name", "Floor Name"],
+      headers: [
+        "Element Name",
+        "Element Type Name",
+        "Status",
+        "Drawing",
+        "Tower Name",
+        "Floor Name",
+      ],
       dataMapper: (row): string[] => {
         const element = row.original as Element;
         return [
@@ -510,7 +524,7 @@ export function ElementTable() {
             ) : (
               <TableRow>
                 <TableCell
-                  colSpan={columns.length}
+                  colSpan={getColumns(permissions).length}
                   className="h-24 text-center"
                 >
                   No results.
