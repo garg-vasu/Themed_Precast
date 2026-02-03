@@ -29,7 +29,7 @@ export default function MixPlanningApproval() {
   const tabLinks = useMemo<TabLink[]>(() => {
     const tabs: TabLink[] = [];
 
-    if (permissions?.includes("ViewElement")) {
+    if (permissions?.includes("ViewDispatchApproval")) {
       tabs.push({
         id: "1",
         label: "Pending Approval",
@@ -39,7 +39,7 @@ export default function MixPlanningApproval() {
       });
     }
 
-    if (permissions?.includes("ViewElementType")) {
+    if (permissions?.includes("ViewDispatchApproval")) {
       tabs.push({
         id: "2",
         label: "Approved",

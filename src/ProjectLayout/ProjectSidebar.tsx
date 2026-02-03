@@ -81,7 +81,7 @@ export interface NavigationItem {
  */
 const hasAnyPermission = (
   requiredPermissions: string[] | undefined,
-  userPermissions: Set<string> | undefined,
+  userPermissions: Set<string> | undefined
 ): boolean => {
   // No permissions required = visible to all
   if (!requiredPermissions || requiredPermissions.length === 0) return true;
@@ -97,7 +97,7 @@ const hasAnyPermission = (
  */
 const filterNavigationItems = (
   items: NavigationItem[],
-  userPermissions: Set<string> | undefined,
+  userPermissions: Set<string> | undefined
 ): NavigationItem[] => {
   return items.reduce<NavigationItem[]>((acc, item) => {
     // First check if user has permission for this item
@@ -109,7 +109,7 @@ const filterNavigationItems = (
     if (item.children && item.children.length > 0) {
       const filteredChildren = filterNavigationItems(
         item.children,
-        userPermissions,
+        userPermissions
       );
       // Only include parent if it has visible children
       if (filteredChildren.length > 0) {
@@ -295,7 +295,7 @@ export default function ProjectSidebar({
       name: "Erection Request",
       href: `/project/${projectId}/errection-request`,
       icon: Send,
-      permissions: ["ViewErectionRequest"],
+      permissions: ["ViewErrectionRequest"],
     },
     {
       name: "Dispatch",
@@ -397,7 +397,7 @@ export default function ProjectSidebar({
   // Filter navigation items based on user permissions
   const filteredNavItems = useMemo(
     () => filterNavigationItems(navigationItems, permissionSet),
-    [projectId, permissionSet], // projectId affects hrefs in navigationItems
+    [projectId, permissionSet] // projectId affects hrefs in navigationItems
   );
 
   useEffect(() => {
@@ -438,7 +438,7 @@ export default function ProjectSidebar({
 
   // Handle project selection
   const handleProjectSelect = (project: ProjectView) => {
-    navigate(`/project/${project.project_id}`);
+    navigate(`/project/${project.project_id}/dashboard`);
   };
 
   return (
@@ -571,10 +571,10 @@ export default function ProjectSidebar({
       </nav>
 
       {/* Footer */}
-      <div className="p-4 border-t border-sidebar-border">
+      <div className="p-2 border-t border-sidebar-border">
         <NavLink
           to="/"
-          className="flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-normal transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground text-sidebar-foreground/70"
+          className="flex items-center space-x-3 px-3 py-1.5 rounded-md text-sm font-normal transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground text-sidebar-foreground/70"
           title={isCollapsed ? "Homepage" : undefined}
         >
           <Home className="h-5 w-5 flex-shrink-0" />

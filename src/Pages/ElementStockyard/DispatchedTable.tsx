@@ -80,13 +80,17 @@ export const columns: ColumnDef<Stockyard>[] = [
         aria-label="Select all"
       />
     ),
-    cell: ({ row }) => (
-      <Checkbox
-        checked={row.getIsSelected()}
-        onCheckedChange={(value) => row.toggleSelected(!!value)}
-        aria-label="Select row"
-      />
-    ),
+    cell: ({ row }) => {
+      const isDisabled = row.original.disable;
+      return (
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
+          aria-label="Select row"
+          disabled={isDisabled}
+        />
+      );
+    },
     enableSorting: false,
     enableHiding: false,
   },
@@ -298,7 +302,17 @@ export function DispatchedTable() {
     generatePDFFromTable({
       selectedRows,
       title: "Dispatched Report",
-      headers: ["Element Name", "Element Type", "Thickness", "Length", "Height", "Mass", "Production Date", "Floor Name", "Tower Name"],
+      headers: [
+        "Element Name",
+        "Element Type",
+        "Thickness",
+        "Length",
+        "Height",
+        "Mass",
+        "Production Date",
+        "Floor Name",
+        "Tower Name",
+      ],
       dataMapper: (row): string[] => {
         const dispatched = row.original as Stockyard;
         return [
@@ -312,8 +326,10 @@ export function DispatchedTable() {
           dispatched.floor_name || "—",
           dispatched.tower_name || "—",
         ];
-      },    
-      fileName: `dispatched-report-${new Date().toISOString().split("T")[0]}.pdf`,
+      },
+      fileName: `dispatched-report-${
+        new Date().toISOString().split("T")[0]
+      }.pdf`,
       successMessage: "PDF downloaded successfully with {count} dispatched(s)",
       emptySelectionMessage: "Please select at least one row to download",
       titleFontSize: 24,

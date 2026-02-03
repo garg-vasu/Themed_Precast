@@ -42,7 +42,6 @@ import { TagsTable } from "./Pages/Plan/Tags/TagsTable";
 import MixPlan from "./Pages/Plan/MixPlan";
 import AddTask from "./Pages/Plan/AddTask/AddTask";
 import ProjectSummary from "./Pages/ProjectReport/ProjectSummary";
-import LargeImport from "./Pages/Bom/LargeImport";
 import StockyardSummary from "./Pages/ProjectReport/StockyardSummary";
 import AddElementType from "./Pages/Elementtype/AddElementtype";
 import Elementtypedetail from "./Pages/Elementtype/ElementtypeDetailPage";
@@ -75,6 +74,10 @@ import ProjectRoleRoute from "./Pages/Limitation/ProjectRoleRoute";
 import RoleRoute from "./Pages/Limitation/RoleRoute";
 import NotFound from "./Pages/NotFound/NotFound";
 import RolePermission from "./Pages/Roles/rolePermission";
+import LargeImport from "./Pages/Bom/LargeImport";
+import PrivacyPolicy from "./Pages/Legal/PrivacyPolicy";
+import TermsOfService from "./Pages/Legal/TermsOfService";
+import Support from "./Pages/Legal/Support";
 
 const routes: RouteObject[] = [
   { path: "/login", element: <Login /> },
@@ -282,6 +285,9 @@ const routes: RouteObject[] = [
           </RoleRoute>
         ),
       },
+      { path: "privacy-policy", element: <PrivacyPolicy /> },
+      { path: "terms-of-service", element: <TermsOfService /> },
+      { path: "support", element: <Support /> },
     ],
   },
   {
@@ -297,7 +303,7 @@ const routes: RouteObject[] = [
     ),
     children: [
       // naviage "/" to dashboard
-    
+
       {
         path: "dashboard",
         element: (
@@ -491,7 +497,7 @@ const routes: RouteObject[] = [
         path: "stockyard-summary",
         element: (
           <ProjectRoleRoute
-            allowedPermissions={["ViewStockyardSummary"]}
+            allowedPermissions={["StockyardReport"]}
             redirectTo="/"
           >
             <StockyardSummary />

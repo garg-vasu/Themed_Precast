@@ -47,15 +47,15 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import axios, { AxiosError } from "axios";
 import { apiClient } from "@/utils/apiClient";
 import { toast } from "sonner";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { formatDisplayDate } from "@/utils/formatdate";
-import { useParams } from "react-router";
-import { useProject } from "@/Provider/ProjectProvider";
+import { useNavigate, useParams } from "react-router";
+import { ProjectContext, useProject } from "@/Provider/ProjectProvider";
 import { generatePDFFromTable } from "@/utils/pdfGenerator";
 
 export type Stockyard = {
@@ -119,7 +119,8 @@ const getErrorMessage = (error: AxiosError | unknown, data: string): string => {
 export function ReceiveTable() {
   const [sorting, setSorting] = useState<SortingState>([]);
   const { projectId } = useParams();
-  const { permissions } = useProject();
+  const projectCtx = useContext(ProjectContext);
+  const permissions = projectCtx?.permissions || [];
   const [userStockyards, setUserStockyards] = useState<StockyardOption[]>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
@@ -131,7 +132,7 @@ export function ReceiveTable() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
-  const columns: ColumnDef<Element>[] = [
+  const getColumns = (permissions: string[]): ColumnDef<Element>[] => [
     {
       id: "select",
       header: ({ table }) => (
@@ -144,13 +145,17 @@ export function ReceiveTable() {
           aria-label="Select all"
         />
       ),
-      cell: ({ row }) => (
-        <Checkbox
-          checked={row.getIsSelected()}
-          onCheckedChange={(value) => row.toggleSelected(!!value)}
-          aria-label="Select row"
-        />
-      ),
+      cell: ({ row }) => {
+        const isDisabled = row.original.disable;
+        return (
+          <Checkbox
+            checked={row.getIsSelected()}
+            onCheckedChange={(value) => row.toggleSelected(!!value)}
+            aria-label="Select row"
+            disabled={isDisabled}
+          />
+        );
+      },
       enableSorting: false,
       enableHiding: false,
     },
@@ -158,9 +163,28 @@ export function ReceiveTable() {
     {
       accessorKey: "element_name",
       header: "Element Name",
-      cell: ({ row }) => (
-        <div className="capitalize">{row.getValue("element_name")}</div>
-      ),
+      cell: ({ row }) => {
+        const navigate = useNavigate();
+        const { projectId } = useParams();
+        const isDisabled = row.original.disable;
+        return (
+          <div
+            className={`capitalize ${
+              isDisabled ? "cursor-not-allowed" : "cursor-pointer"
+            }`}
+            onClick={() => {
+              if (isDisabled) return;
+              if (permissions?.includes("ViewElementDetail")) {
+                navigate(
+                  `/project/${projectId}/element-detail/${row.original.element_id}`
+                );
+              }
+            }}
+          >
+            {row.getValue("element_name")}
+          </div>
+        );
+      },
     },
 
     {
@@ -281,12 +305,15 @@ export function ReceiveTable() {
       enableHiding: false,
       cell: ({ row }) => {
         const element = row.original;
+        const isDisabled = element.disable;
         return (
           <div>
             {permissions?.includes("ApproveStockyard") && (
               <Button
                 variant="outline"
+                disabled={isDisabled}
                 onClick={() => {
+                  if (isDisabled) return;
                   setSelectedElement(element);
                   setSelectedStockyardId("");
                   setIsDialogOpen(true);
@@ -394,7 +421,7 @@ export function ReceiveTable() {
 
   const table = useReactTable({
     data,
-    columns,
+    columns: getColumns(permissions),
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
@@ -411,13 +438,23 @@ export function ReceiveTable() {
     },
   });
 
-   const handleDownloadPDF = () => {
+  const handleDownloadPDF = () => {
     const selectedRows = table.getFilteredSelectedRowModel().rows;
 
     generatePDFFromTable({
       selectedRows,
       title: "Receive Report",
-      headers: ["Element Name", "Element Type", "Thickness", "Length", "Height", "Mass", "Production Date", "Floor Name", "Tower Name"],
+      headers: [
+        "Element Name",
+        "Element Type",
+        "Thickness",
+        "Length",
+        "Height",
+        "Mass",
+        "Production Date",
+        "Floor Name",
+        "Tower Name",
+      ],
       dataMapper: (row): string[] => {
         const receive = row.original as Element;
         return [
@@ -475,8 +512,6 @@ export function ReceiveTable() {
       setIsSubmitting(false);
     }
   };
-
- 
 
   return (
     <div className="w-full">
@@ -583,7 +618,7 @@ export function ReceiveTable() {
             ) : (
               <TableRow>
                 <TableCell
-                  colSpan={columns.length}
+                  colSpan={getColumns(permissions).length}
                   className="h-24 text-center"
                 >
                   No results.

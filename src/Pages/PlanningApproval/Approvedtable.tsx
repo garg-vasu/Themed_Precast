@@ -29,13 +29,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import axios, { AxiosError } from "axios";
 import { apiClient } from "@/utils/apiClient";
 import { toast } from "sonner";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import { useParams } from "react-router";
+import { useNavigate, useParams } from "react-router";
+import { ProjectContext } from "@/Provider/ProjectProvider";
 
 export type Approved = {
   precast_stock_id: number;
@@ -52,7 +53,7 @@ export type Approved = {
   weight?: number;
 };
 
-export const columns: ColumnDef<Approved>[] = [
+export const getColumns = (permissions: string[]): ColumnDef<Approved>[] => [
   {
     id: "select",
     header: ({ table }) => (
@@ -65,13 +66,17 @@ export const columns: ColumnDef<Approved>[] = [
         aria-label="Select all"
       />
     ),
-    cell: ({ row }) => (
-      <Checkbox
-        checked={row.getIsSelected()}
-        onCheckedChange={(value) => row.toggleSelected(!!value)}
-        aria-label="Select row"
-      />
-    ),
+    cell: ({ row }) => {
+      const isDisabled = row.original.disable;
+      return (
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
+          aria-label="Select row"
+          disabled={isDisabled}
+        />
+      );
+    },
     enableSorting: false,
     enableHiding: false,
   },
@@ -79,9 +84,28 @@ export const columns: ColumnDef<Approved>[] = [
   {
     accessorKey: "element_name",
     header: "Element Name",
-    cell: ({ row }) => (
-      <div className="capitalize">{row.getValue("element_name")}</div>
-    ),
+    cell: ({ row }) => {
+      const navigate = useNavigate();
+      const { projectId } = useParams();
+      const isDisabled = row.original.disable;
+      return (
+        <div
+          className={`capitalize ${
+            isDisabled ? "cursor-not-allowed" : "cursor-pointer"
+          }`}
+          onClick={() => {
+            if (isDisabled) return;
+            if (permissions?.includes("ViewElementDetail")) {
+              navigate(
+                `/project/${projectId}/element-detail/${row.original.element_id}`
+              );
+            }
+          }}
+        >
+          {row.getValue("element_name")}
+        </div>
+      );
+    },
   },
 
   {
@@ -157,6 +181,8 @@ const getErrorMessage = (error: AxiosError | unknown, data: string): string => {
 
 export function ApprovedTable() {
   const [sorting, setSorting] = useState<SortingState>([]);
+  const projectCtx = useContext(ProjectContext);
+  const permissions = projectCtx?.permissions || [];
   const { projectId } = useParams();
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
@@ -200,7 +226,7 @@ export function ApprovedTable() {
 
   const table = useReactTable({
     data,
-    columns,
+    columns: getColumns(permissions),
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
@@ -391,7 +417,7 @@ export function ApprovedTable() {
             ) : (
               <TableRow>
                 <TableCell
-                  colSpan={columns.length}
+                  colSpan={getColumns(permissions).length}
                   className="h-24 text-center"
                 >
                   No results.

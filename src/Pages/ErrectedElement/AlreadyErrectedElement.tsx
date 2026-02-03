@@ -36,18 +36,20 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import axios, { AxiosError } from "axios";
 import { apiClient } from "@/utils/apiClient";
 import { toast } from "sonner";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { formatDisplayDate } from "@/utils/formatdate";
-import { useParams } from "react-router";
+import { useNavigate, useParams } from "react-router";
 import PageHeader from "@/components/ui/PageHeader";
+import { ProjectContext } from "@/Provider/ProjectProvider";
 
 export type AlreadyErrectedElement = {
   id: number;
+  disable?: boolean;
   precast_stock_id: number;
   element_id: number;
   erected: boolean;
@@ -65,7 +67,8 @@ export type AlreadyErrectedElement = {
 };
 
 const getColumns = (
-  setDownloading: React.Dispatch<React.SetStateAction<Record<number, boolean>>>
+  setDownloading: React.Dispatch<React.SetStateAction<Record<number, boolean>>>,
+  permissions: string[]
 ): ColumnDef<AlreadyErrectedElement>[] => [
   {
     id: "select",
@@ -93,11 +96,25 @@ const getColumns = (
   {
     accessorKey: "element_id",
     header: "Element ID",
-    cell: ({ row }) => (
-      <div className="capitalize">{row.getValue("element_id")}</div>
-    ),
+    cell: ({ row }) => {
+      const navigate = useNavigate();
+      const { projectId } = useParams();
+      return (
+        <div
+          className="capitalize cursor-pointer"
+          onClick={() => {
+            if (permissions?.includes("ViewElementDetail")) {
+              navigate(
+                `/project/${projectId}/element-detail/${row.original.element_id}`
+              );
+            }
+          }}
+        >
+          {row.getValue("element_id")}
+        </div>
+      );
+    },
   },
-
   {
     accessorKey: "element_type_name",
     header: "Element Type Name",
@@ -106,15 +123,15 @@ const getColumns = (
     ),
   },
   {
-    accessorKey: "errected",
+    accessorKey: "erected",
     header: "Status",
     cell: ({ row }) => (
       <div
         className={`capitalize ${
-          row.getValue("errected") ? "text-green-600" : "text-yellow-600"
+          row.getValue("erected") ? "text-green-600" : "text-yellow-600"
         }`}
       >
-        {row.getValue("errected") ? "Yes" : "No"}
+        {row.getValue("erected") ? "Erected" : "Not Erected"}
       </div>
     ),
   },
@@ -180,6 +197,8 @@ const getErrorMessage = (error: AxiosError | unknown, data: string): string => {
 export function AlreadyErrectedElementTable() {
   const [sorting, setSorting] = useState<SortingState>([]);
   const { projectId } = useParams();
+  const projectCtx = useContext(ProjectContext);
+  const permissions = projectCtx?.permissions || [];
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState({});
@@ -228,7 +247,7 @@ export function AlreadyErrectedElementTable() {
 
   const table = useReactTable({
     data,
-    columns: getColumns(setDownloading),
+    columns: getColumns(setDownloading, permissions),
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
@@ -319,14 +338,12 @@ export function AlreadyErrectedElementTable() {
       {/* top toolbar */}
       <div className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
         <Input
-          placeholder="Filter by Element Name..."
+          placeholder="Filter by Element ID..."
           value={
-            (table
-              .getColumn("element_type_name")
-              ?.getFilterValue() as string) ?? ""
+            (table.getColumn("element_id")?.getFilterValue() as string) ?? ""
           }
           onChange={(event) =>
-            table.getColumn("element_name")?.setFilterValue(event.target.value)
+            table.getColumn("element_id")?.setFilterValue(event.target.value)
           }
           className="w-full max-w-sm sm:max-w-xs"
         />
@@ -412,7 +429,7 @@ export function AlreadyErrectedElementTable() {
             ) : (
               <TableRow>
                 <TableCell
-                  colSpan={getColumns(setDownloading).length}
+                  colSpan={getColumns(setDownloading, permissions).length}
                   className="h-24 text-center"
                 >
                   No results.

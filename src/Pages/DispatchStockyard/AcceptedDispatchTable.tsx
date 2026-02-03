@@ -141,8 +141,8 @@ const getColumns = (
       <div className="capitalize">{row.getValue("project_name")}</div>
     ),
   },
-  
-   {
+
+  {
     accessorKey: "item count",
     header: "Item Count",
     cell: ({ row }) => (
@@ -199,6 +199,7 @@ const getColumns = (
   },
   {
     id: "actions",
+    header: "Actions",
     cell: ({ row }) => {
       const dispatch = row.original;
 
@@ -268,20 +269,23 @@ const getColumns = (
       };
 
       return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem onClick={handleDownloadPDF}>
-              Download PDF
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <Button variant="ghost" onClick={handleDownloadPDF}>
+          Download PDF
+        </Button>
+        // <DropdownMenu>
+        //   <DropdownMenuTrigger asChild>
+        //     <Button variant="ghost" className="h-8 w-8 p-0">
+        //       <span className="sr-only">Open menu</span>
+        //       <MoreHorizontal className="h-4 w-4" />
+        //     </Button>
+        //   </DropdownMenuTrigger>
+        //   <DropdownMenuContent align="end">
+        //     <DropdownMenuLabel>Actions</DropdownMenuLabel>
+        //     <DropdownMenuItem onClick={handleDownloadPDF}>
+        //       Download PDF
+        //     </DropdownMenuItem>
+        //   </DropdownMenuContent>
+        // </DropdownMenu>
       );
     },
   },
@@ -375,9 +379,16 @@ export function AcceptedDispatchTable() {
     generatePDFFromTable({
       selectedRows,
       title: "Accepted Dispatch Report",
-      headers: ["Dispatch Order ID", "Project Name", "Dispatch Date", "Action At"],
+      headers: [
+        "Dispatch Order ID",
+        "Project Name",
+        "Dispatch Date",
+        "Action At",
+      ],
       dataMapper: (row): string[] => {
-        const acceptedDispatch = row.original as AcceptedDispatch & { Action_at?: string };
+        const acceptedDispatch = row.original as AcceptedDispatch & {
+          Action_at?: string;
+        };
         return [
           acceptedDispatch.dispatch_order_id || "—",
           acceptedDispatch.project_name || "—",
@@ -385,8 +396,11 @@ export function AcceptedDispatchTable() {
           formatDisplayDate(acceptedDispatch.Action_at),
         ];
       },
-      fileName: `accepted-dispatch-report-${new Date().toISOString().split("T")[0]}.pdf`,
-      successMessage: "PDF downloaded successfully with {count} accepted dispatch(s)",
+      fileName: `accepted-dispatch-report-${
+        new Date().toISOString().split("T")[0]
+      }.pdf`,
+      successMessage:
+        "PDF downloaded successfully with {count} accepted dispatch(s)",
       emptySelectionMessage: "Please select at least one row to download",
       titleFontSize: 24,
       headerColor: "#283C6E",

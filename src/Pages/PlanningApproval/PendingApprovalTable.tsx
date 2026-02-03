@@ -31,13 +31,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import axios, { AxiosError } from "axios";
 import { apiClient } from "@/utils/apiClient";
 import { toast } from "sonner";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import { useParams } from "react-router";
+import { useNavigate, useParams } from "react-router";
+import { ProjectContext } from "@/Provider/ProjectProvider";
 
 export type PendingApproval = {
   precast_stock_id: number;
@@ -56,7 +57,8 @@ export type PendingApproval = {
 
 export const getColumns = (
   handleApprove: (elementId: number) => void,
-  handleReject: (elementId: number) => void
+  handleReject: (elementId: number) => void,
+  permissions: string[]
 ): ColumnDef<PendingApproval>[] => [
   {
     id: "select",
@@ -70,13 +72,17 @@ export const getColumns = (
         aria-label="Select all"
       />
     ),
-    cell: ({ row }) => (
-      <Checkbox
-        checked={row.getIsSelected()}
-        onCheckedChange={(value) => row.toggleSelected(!!value)}
-        aria-label="Select row"
-      />
-    ),
+    cell: ({ row }) => {
+      const isDisabled = row.original.disable;
+      return (
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
+          aria-label="Select row"
+          disabled={isDisabled}
+        />
+      );
+    },
     enableSorting: false,
     enableHiding: false,
   },
@@ -84,9 +90,28 @@ export const getColumns = (
   {
     accessorKey: "element_name",
     header: "Element Name",
-    cell: ({ row }) => (
-      <div className="capitalize">{row.getValue("element_name")}</div>
-    ),
+    cell: ({ row }) => {
+      const navigate = useNavigate();
+      const { projectId } = useParams();
+      const isDisabled = row.original.disable;
+      return (
+        <div
+          className={`capitalize ${
+            isDisabled ? "cursor-not-allowed" : "cursor-pointer"
+          }`}
+          onClick={() => {
+            if (isDisabled) return;
+            if (permissions?.includes("ViewElementDetail")) {
+              navigate(
+                `/project/${projectId}/element-detail/${row.original.element_id}`
+              );
+            }
+          }}
+        >
+          {row.getValue("element_name")}
+        </div>
+      );
+    },
   },
 
   {
@@ -147,13 +172,18 @@ export const getColumns = (
     enableHiding: false,
     cell: ({ row }) => {
       const pendingApproval = row.original;
+      const isDisabled = pendingApproval.disable;
       return (
         <div className="flex gap-2 items-center justify-center">
           <Button
             variant="default"
             size="sm"
             className="bg-green-500 hover:bg-green-600 text-white"
-            onClick={() => handleApprove(pendingApproval.element_id)}
+            disabled={isDisabled}
+            onClick={() => {
+              if (isDisabled) return;
+              handleApprove(pendingApproval.element_id);
+            }}
           >
             Approve
           </Button>
@@ -161,7 +191,11 @@ export const getColumns = (
             variant="default"
             size="sm"
             className="bg-destructive hover:bg-destructive/90 text-white"
-            onClick={() => handleReject(pendingApproval.element_id)}
+            disabled={isDisabled}
+            onClick={() => {
+              if (isDisabled) return;
+              handleReject(pendingApproval.element_id);
+            }}
           >
             Reject
           </Button>
@@ -190,6 +224,8 @@ const getErrorMessage = (error: AxiosError | unknown, data: string): string => {
 export function PendingApprovalTable() {
   const [sorting, setSorting] = useState<SortingState>([]);
   const { projectId } = useParams();
+  const projectCtx = useContext(ProjectContext);
+  const permissions = projectCtx?.permissions || [];
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState({});
@@ -272,7 +308,7 @@ export function PendingApprovalTable() {
 
   const table = useReactTable({
     data,
-    columns: getColumns(handleApprove, handleReject),
+    columns: getColumns(handleApprove, handleReject, permissions),
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
@@ -463,7 +499,9 @@ export function PendingApprovalTable() {
             ) : (
               <TableRow>
                 <TableCell
-                  colSpan={getColumns(handleApprove, handleReject).length}
+                  colSpan={
+                    getColumns(handleApprove, handleReject, permissions).length
+                  }
                   className="h-24 text-center"
                 >
                   No results.

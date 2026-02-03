@@ -1,4 +1,4 @@
-import { Outlet } from "react-router";
+import { NavLink, Outlet } from "react-router";
 
 export default function ProjectMainContent() {
   return (
@@ -16,15 +16,24 @@ export default function ProjectMainContent() {
                 <span>© 2026 PreCast. All rights reserved.</span>
               </div>
               <div className="flex items-center space-x-4">
-                <button className="hover:text-foreground transition-colors">
+                <NavLink
+                  to="/privacy-policy"
+                  className="hover:text-foreground transition-colors"
+                >
                   Privacy Policy
-                </button>
-                <button className="hover:text-foreground transition-colors">
+                </NavLink>
+                <NavLink
+                  to="/terms-of-service"
+                  className="hover:text-foreground transition-colors"
+                >
                   Terms of Service
-                </button>
-                <button className="hover:text-foreground transition-colors">
+                </NavLink>
+                <NavLink
+                  to="/support"
+                  className="hover:text-foreground transition-colors"
+                >
                   Support
-                </button>
+                </NavLink>
               </div>
             </div>
           </div>

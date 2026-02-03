@@ -37,7 +37,7 @@ export default function MixErrectedElement() {
         content: <AlreadyErrectedElementTable />,
       });
     }
-    if (permissions?.includes("ViewElementInErrectionSite")) {
+    if (permissions?.includes("ViewNotErectedElement")) {
       tabs.push({
         id: "2",
         label: "Not Erected",

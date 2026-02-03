@@ -13,7 +13,10 @@ import {
 import { DateFilter } from "@/components/DateFilter";
 
 import {
+  Bar,
   CartesianGrid,
+  ComposedChart,
+  Legend,
   Line,
   LineChart,
   ResponsiveContainer,
@@ -211,7 +214,9 @@ export default function ProjectSummary() {
 
   // QC radial chart state
   const qcChartHostRef = useRef<HTMLDivElement | null>(null);
-  const [qcRadialRows, setQcRadialRows] = useState<QcRadialDatum[] | null>(null);
+  const [qcRadialRows, setQcRadialRows] = useState<QcRadialDatum[] | null>(
+    null
+  );
   const [qcRadialLoading, setQcRadialLoading] = useState(false);
   const [qcRadialError, setQcRadialError] = useState<string | null>(null);
 
@@ -419,7 +424,52 @@ export default function ProjectSummary() {
   const qcRadialNormalized = useMemo(() => {
     if (!qcRadialRows) return [];
     return [...qcRadialRows].sort((a, b) =>
-      a.stage === b.stage ? a.status.localeCompare(b.status) : a.stage.localeCompare(b.stage)
+      a.stage === b.stage
+        ? a.status.localeCompare(b.status)
+        : a.stage.localeCompare(b.stage)
+    );
+  }, [qcRadialRows]);
+
+  // Transform QC data for LineBar chart - group by stage with status as columns
+  const qcLineBarData = useMemo(() => {
+    if (!qcRadialRows || qcRadialRows.length === 0) return [];
+
+    // Group by stage
+    const stageMap = new Map<
+      string,
+      {
+        stage: string;
+        approved: number;
+        hold: number;
+        pending: number;
+        total: number;
+      }
+    >();
+
+    qcRadialRows.forEach((row) => {
+      const stageName = row.stage;
+      if (!stageMap.has(stageName)) {
+        stageMap.set(stageName, {
+          stage: stageName,
+          approved: 0,
+          hold: 0,
+          pending: 0,
+          total: 0,
+        });
+      }
+      const stageData = stageMap.get(stageName)!;
+      const statusKey = row.status.toLowerCase() as
+        | "approved"
+        | "hold"
+        | "pending";
+      if (statusKey in stageData) {
+        stageData[statusKey] = row.count;
+        stageData.total += row.count;
+      }
+    });
+
+    return Array.from(stageMap.values()).sort((a, b) =>
+      a.stage.localeCompare(b.stage)
     );
   }, [qcRadialRows]);
 
@@ -591,7 +641,9 @@ export default function ProjectSummary() {
         }
       } catch (err: unknown) {
         if (!axios.isCancel(err)) {
-          setQcRadialError(getErrorMessage(err as AxiosError, "qc stagewise data"));
+          setQcRadialError(
+            getErrorMessage(err as AxiosError, "qc stagewise data")
+          );
         }
       } finally {
         setQcRadialLoading(false);
@@ -623,7 +675,9 @@ export default function ProjectSummary() {
     const outerRadius = Math.min(width, height) / 2;
 
     const stages = Array.from(new Set(qcRadialNormalized.map((d) => d.stage)));
-    const statuses = Array.from(new Set(qcRadialNormalized.map((d) => d.status)));
+    const statuses = Array.from(
+      new Set(qcRadialNormalized.map((d) => d.status))
+    );
 
     type StageStatusIndex = d3.InternMap<
       string,
@@ -743,13 +797,11 @@ export default function ProjectSummary() {
         g
           .append("text")
           .attr("fill", "currentColor")
-          .attr(
-            "transform",
-            (d) =>
-              (((x(d) ?? 0) + x.bandwidth() / 2 + Math.PI / 2) % (2 * Math.PI)) <
-              Math.PI
-                ? "rotate(90)translate(0,16)"
-                : "rotate(-90)translate(0,-9)"
+          .attr("transform", (d) =>
+            ((x(d) ?? 0) + x.bandwidth() / 2 + Math.PI / 2) % (2 * Math.PI) <
+            Math.PI
+              ? "rotate(90)translate(0,16)"
+              : "rotate(-90)translate(0,-9)"
           )
           .text((d) => d)
       );
@@ -768,7 +820,7 @@ export default function ProjectSummary() {
       )
       .call((g) => {
         const ticks = y.ticks(5);
-        
+
         // Render all tick circles
         g.selectAll("g")
           .data(ticks.slice(1))
@@ -795,7 +847,7 @@ export default function ProjectSummary() {
               .attr("fill", "currentColor")
               .attr("stroke", "none")
           );
-        
+
         // Explicitly render the outermost circle at max value to ensure visibility
         g.append("circle")
           .attr("stroke", "currentColor")
@@ -816,7 +868,11 @@ export default function ProjectSummary() {
           `translate(-40,${((nodes.length ?? 0) / 2 - i - 1) * 20})`
       )
       .call((g) =>
-        g.append("rect").attr("width", 18).attr("height", 18).attr("fill", color)
+        g
+          .append("rect")
+          .attr("width", 18)
+          .attr("height", 18)
+          .attr("fill", color)
       )
       .call((g) =>
         g
@@ -1170,9 +1226,7 @@ export default function ProjectSummary() {
             {projectId && (
               <div className="flex justify-center text-primary">
                 {qcRadialLoading && (
-                  <div className="text-sm text-foreground">
-                    Loading chart…
-                  </div>
+                  <div className="text-sm text-foreground">Loading chart…</div>
                 )}
                 {!qcRadialLoading && qcRadialError && (
                   <div className="text-sm text-destructive">
@@ -1186,9 +1240,154 @@ export default function ProjectSummary() {
                       No qc data available.
                     </div>
                   )}
-                <div ref={qcChartHostRef} className="flex justify-center text-foreground" />
+                <div
+                  ref={qcChartHostRef}
+                  className="flex justify-center text-foreground"
+                />
               </div>
             )}
+          </CardContent>
+        </Card>
+      </div>
+      {/* qc overview linebar chart  */}
+      <div className="grid grid-cols-1 gap-4 mt-4">
+        <Card>
+          <CardHeader className="space-y-1">
+            <CardTitle className="text-lg md:text-xl">
+              QC Overview (Line-Bar)
+            </CardTitle>
+            <CardDescription className="text-sm">
+              Stagewise QC counts with bars for each status and line for total
+              count.
+            </CardDescription>
+          </CardHeader>
+
+          <CardContent>
+            {!projectId && (
+              <p className="text-sm text-foreground">Missing project id.</p>
+            )}
+            {projectId && qcRadialLoading && (
+              <div className="text-sm text-foreground">Loading chart…</div>
+            )}
+            {projectId && !qcRadialLoading && qcRadialError && (
+              <div className="text-sm text-destructive">
+                Failed to load QC chart.
+              </div>
+            )}
+            {projectId &&
+              !qcRadialLoading &&
+              !qcRadialError &&
+              qcLineBarData.length === 0 && (
+                <p className="text-sm text-muted-foreground">
+                  No QC data available for this period.
+                </p>
+              )}
+            {projectId &&
+              !qcRadialLoading &&
+              !qcRadialError &&
+              qcLineBarData.length > 0 && (
+                <>
+                  {/* Legend */}
+                  <div className="mb-4 w-full overflow-x-auto">
+                    <div className="flex flex-wrap gap-3 pb-2">
+                      <div className="flex items-center gap-2 text-xs md:text-sm text-muted-foreground">
+                        <span
+                          className="h-2 w-2 rounded-full flex-shrink-0"
+                          style={{ backgroundColor: "#15803d" }}
+                        />
+                        <span>Approved</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs md:text-sm text-muted-foreground">
+                        <span
+                          className="h-2 w-2 rounded-full flex-shrink-0"
+                          style={{ backgroundColor: "#b45309" }}
+                        />
+                        <span>Hold</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs md:text-sm text-muted-foreground">
+                        <span
+                          className="h-2 w-2 rounded-full flex-shrink-0"
+                          style={{ backgroundColor: "#1d4ed8" }}
+                        />
+                        <span>Pending</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs md:text-sm text-muted-foreground">
+                        <span
+                          className="h-1 w-4 flex-shrink-0"
+                          style={{ backgroundColor: "#EC4899" }}
+                        />
+                        <span>Total (Line)</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="w-full overflow-x-auto overflow-y-hidden pb-2">
+                    <div className="h-[480px] min-w-[720px] md:min-w-0 md:w-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <ComposedChart data={qcLineBarData}>
+                          <CartesianGrid
+                            strokeDasharray="3 3"
+                            vertical={false}
+                            className="stroke-muted"
+                          />
+                          <XAxis
+                            dataKey="stage"
+                            tickLine={false}
+                            axisLine={false}
+                            tickMargin={8}
+                            angle={-45}
+                            textAnchor="end"
+                            height={100}
+                            interval={0}
+                            tick={{ fontSize: 11 }}
+                          />
+                          <YAxis
+                            allowDecimals={false}
+                            tickLine={false}
+                            axisLine={false}
+                          />
+                          <Tooltip
+                            contentStyle={{
+                              backgroundColor: "hsl(var(--background))",
+                              border: "1px solid hsl(var(--border))",
+                              borderRadius: "6px",
+                            }}
+                            labelStyle={{ fontWeight: 600, marginBottom: 4 }}
+                          />
+                          <Legend wrapperStyle={{ display: "none" }} />
+                          <Bar
+                            dataKey="approved"
+                            name="Approved"
+                            fill="#15803d"
+                            radius={[4, 4, 0, 0]}
+                          />
+                          <Bar
+                            dataKey="hold"
+                            name="Hold"
+                            fill="#b45309"
+                            radius={[4, 4, 0, 0]}
+                          />
+                          <Bar
+                            dataKey="pending"
+                            name="Pending"
+                            fill="#1d4ed8"
+                            radius={[4, 4, 0, 0]}
+                          />
+                          <Line
+                            type="monotone"
+                            dataKey="total"
+                            name="Total"
+                            stroke="#EC4899"
+                            strokeWidth={3}
+                            dot={{ r: 5, fill: "#EC4899" }}
+                            activeDot={{ r: 7 }}
+                          />
+                        </ComposedChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                </>
+              )}
           </CardContent>
         </Card>
       </div>

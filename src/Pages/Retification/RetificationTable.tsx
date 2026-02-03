@@ -39,15 +39,16 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import axios, { AxiosError } from "axios";
 import { apiClient } from "@/utils/apiClient";
 import { toast } from "sonner";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import { useParams } from "react-router";
+import { useNavigate, useParams } from "react-router";
 import { formatDisplayDate } from "@/utils/formatdate";
 import PageHeader from "@/components/ui/PageHeader";
+import { ProjectContext } from "@/Provider/ProjectProvider";
 
 export type Retification = {
   id: number;
@@ -67,6 +68,7 @@ export type Retification = {
 };
 
 export const getColumns = (
+  permissions: string[],
   handleAction: (elementId: number, action: "approve" | "reject") => void
 ): ColumnDef<Retification>[] => [
   {
@@ -94,9 +96,24 @@ export const getColumns = (
   {
     accessorKey: "element_id",
     header: "Element Name",
-    cell: ({ row }) => (
-      <div className="capitalize">{row.getValue("element_id")}</div>
-    ),
+    cell: ({ row }) => {
+      const navigate = useNavigate();
+      const { projectId } = useParams();
+      return (
+        <div
+          className="capitalize"
+          onClick={() => {
+            if (permissions?.includes("ViewElementDetail")) {
+              navigate(
+                `/project/${projectId}/element-detail/${row.original.element_id}`
+              );
+            }
+          }}
+        >
+          {row.getValue("element_id")}
+        </div>
+      );
+    },
   },
   //   name column
   {
@@ -187,6 +204,8 @@ const getErrorMessage = (error: AxiosError | unknown, data: string): string => {
 export function RetificationTable() {
   const [sorting, setSorting] = useState<SortingState>([]);
   const { projectId } = useParams();
+  const projectCtx = useContext(ProjectContext);
+  const permissions = projectCtx?.permissions || [];
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState({});
@@ -293,7 +312,7 @@ export function RetificationTable() {
 
   const table = useReactTable({
     data,
-    columns: getColumns(handleAction),
+    columns: getColumns(permissions, handleAction),
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
@@ -376,7 +395,7 @@ export function RetificationTable() {
   return (
     <div className="w-full py-4 px-4">
       <div>
-        <PageHeader title="Retification" />
+        <PageHeader title="Rectification" />
       </div>
       {/* top toolbar */}
       <div className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
@@ -472,7 +491,7 @@ export function RetificationTable() {
             ) : (
               <TableRow>
                 <TableCell
-                  colSpan={getColumns(handleAction).length}
+                  colSpan={getColumns(permissions, handleAction).length}
                   className="h-24 text-center"
                 >
                   No results.

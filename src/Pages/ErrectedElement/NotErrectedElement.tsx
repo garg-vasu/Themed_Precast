@@ -38,14 +38,15 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import axios, { AxiosError } from "axios";
 import { apiClient } from "@/utils/apiClient";
 import { toast } from "sonner";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { formatDisplayDate } from "@/utils/formatdate";
-import { useParams } from "react-router";
+import { useNavigate, useParams } from "react-router";
+import { ProjectContext } from "@/Provider/ProjectProvider";
 
 export type AlreadyErrectedElement = {
   id: number;
@@ -65,7 +66,9 @@ export type AlreadyErrectedElement = {
   floor_id: number;
 };
 
-const getColumns = (): ColumnDef<AlreadyErrectedElement>[] => [
+const getColumns = (
+  permissions: string[]
+): ColumnDef<AlreadyErrectedElement>[] => [
   {
     id: "select",
     header: ({ table }) => (
@@ -102,9 +105,24 @@ const getColumns = (): ColumnDef<AlreadyErrectedElement>[] => [
   {
     accessorKey: "element_id",
     header: "Element ID",
-    cell: ({ row }) => (
-      <div className="capitalize">{row.getValue("element_id")}</div>
-    ),
+    cell: ({ row }) => {
+      const navigate = useNavigate();
+      const { projectId } = useParams();
+      return (
+        <div
+          className="capitalize cursor-pointer"
+          onClick={() => {
+            if (permissions?.includes("ViewElementDetail")) {
+              navigate(
+                `/project/${projectId}/element-detail/${row.original.element_id}`
+              );
+            }
+          }}
+        >
+          {row.getValue("element_id")}
+        </div>
+      );
+    },
   },
 
   {
@@ -115,15 +133,15 @@ const getColumns = (): ColumnDef<AlreadyErrectedElement>[] => [
     ),
   },
   {
-    accessorKey: "errected",
+    accessorKey: "erected",
     header: "Status",
     cell: ({ row }) => (
       <div
         className={`capitalize ${
-          row.getValue("errected") ? "text-green-600" : "text-yellow-600"
+          row.getValue("erected") ? "text-green-600" : "text-yellow-600"
         }`}
       >
-        {row.getValue("errected") ? "Yes" : "No"}
+        {row.getValue("errected") ? "Erected" : "Not Erected"}
       </div>
     ),
   },
@@ -189,6 +207,8 @@ const getErrorMessage = (error: AxiosError | unknown, data: string): string => {
 export function NotErrectedElementTable() {
   const [sorting, setSorting] = useState<SortingState>([]);
   const { projectId } = useParams();
+  const projectCtx = useContext(ProjectContext);
+  const permissions = projectCtx?.permissions || [];
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState({});
@@ -302,7 +322,7 @@ export function NotErrectedElementTable() {
 
   const table = useReactTable({
     data,
-    columns: getColumns(),
+    columns: getColumns(permissions),
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     enableRowSelection: true,
@@ -502,7 +522,7 @@ export function NotErrectedElementTable() {
             ) : (
               <TableRow>
                 <TableCell
-                  colSpan={getColumns().length}
+                  colSpan={getColumns(permissions).length}
                   className="h-24 text-center"
                 >
                   No results.

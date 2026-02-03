@@ -45,6 +45,13 @@ import autoTable from "jspdf-autotable";
 import { formatDisplayDate } from "@/utils/formatdate";
 import { useParams } from "react-router";
 import PageHeader from "@/components/ui/PageHeader";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import ItemDialog from "../DispatchReceving/ItemDialog";
 import { generatePDFFromTable } from "@/utils/pdfGenerator";
 
 export type AcceptedDispatch = {
@@ -65,6 +72,33 @@ type Item = {
   element_type_name: string;
   weight: number;
 };
+
+function ViewItemsButton({ dispatchLog }: { dispatchLog: AcceptedDispatch }) {
+  const [isItemsDialogOpen, setIsItemsDialogOpen] = useState(false);
+
+  return (
+    <>
+      <Button
+        variant="link"
+        className="h-auto p-0 text-primary"
+        onClick={() => setIsItemsDialogOpen(true)}
+      >
+        View Items ({dispatchLog.items?.length || 0})
+      </Button>
+      <Dialog open={isItemsDialogOpen} onOpenChange={setIsItemsDialogOpen}>
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Items - {dispatchLog.dispatch_order_id}</DialogTitle>
+          </DialogHeader>
+          <ItemDialog
+            items={dispatchLog.items || []}
+            onClose={() => setIsItemsDialogOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
 
 const getColumns = (
   setDownloading: React.Dispatch<React.SetStateAction<Record<number, boolean>>>
@@ -106,6 +140,20 @@ const getColumns = (
     cell: ({ row }) => (
       <div className="capitalize">{row.getValue("project_name")}</div>
     ),
+  },
+  {
+    accessorKey: "item count",
+    header: "Item Count",
+    cell: ({ row }) => (
+      <div className="capitalize">{row.original.items?.length || 0}</div>
+    ),
+  },
+  {
+    id: "view_items",
+    header: "Items",
+    cell: ({ row }) => {
+      return <ViewItemsButton dispatchLog={row.original} />;
+    },
   },
   {
     accessorKey: "dispatch_date",
@@ -150,6 +198,7 @@ const getColumns = (
   },
   {
     id: "actions",
+    header: "Actions",
     cell: ({ row }) => {
       const dispatch = row.original;
 
@@ -219,20 +268,23 @@ const getColumns = (
       };
 
       return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem onClick={handleDownloadPDF}>
-              Download PDF
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <Button variant="ghost" onClick={handleDownloadPDF}>
+          Download PDF
+        </Button>
+        // <DropdownMenu>
+        //   <DropdownMenuTrigger asChild>
+        //     <Button variant="ghost" className="h-8 w-8 p-0">
+        //       <span className="sr-only">Open menu</span>
+        //       <MoreHorizontal className="h-4 w-4" />
+        //     </Button>
+        //   </DropdownMenuTrigger>
+        //   <DropdownMenuContent align="end">
+        //     <DropdownMenuLabel>Actions</DropdownMenuLabel>
+        //     <DropdownMenuItem onClick={handleDownloadPDF}>
+        //       Download PDF
+        //     </DropdownMenuItem>
+        //   </DropdownMenuContent>
+        // </DropdownMenu>
       );
     },
   },
@@ -284,7 +336,8 @@ export function DispatchedElementTable() {
           );
         } else {
           toast.error(
-            response.data?.message || "Failed to fetch already dispatched order data"
+            response.data?.message ||
+              "Failed to fetch already dispatched order data"
           );
         }
       } catch (err: unknown) {
@@ -320,15 +373,22 @@ export function DispatchedElementTable() {
     },
   });
 
-   const handleDownloadPDF = () => {
+  const handleDownloadPDF = () => {
     const selectedRows = table.getFilteredSelectedRowModel().rows;
 
     generatePDFFromTable({
       selectedRows,
       title: "Dispatched Element Report",
-      headers: ["Dispatch Order ID", "Project Name", "Dispatch Date", "Action At"],
+      headers: [
+        "Dispatch Order ID",
+        "Project Name",
+        "Dispatch Date",
+        "Action At",
+      ],
       dataMapper: (row): string[] => {
-        const dispatchedElement = row.original as AcceptedDispatch & { Action_at?: string };
+        const dispatchedElement = row.original as AcceptedDispatch & {
+          Action_at?: string;
+        };
         return [
           dispatchedElement.dispatch_order_id || "—",
           dispatchedElement.project_name || "—",
@@ -336,8 +396,11 @@ export function DispatchedElementTable() {
           formatDisplayDate(dispatchedElement.Action_at),
         ];
       },
-      fileName: `dispatched-element-report-${new Date().toISOString().split("T")[0]}.pdf`,
-      successMessage: "PDF downloaded successfully with {count} dispatched element(s)",
+      fileName: `dispatched-element-report-${
+        new Date().toISOString().split("T")[0]
+      }.pdf`,
+      successMessage:
+        "PDF downloaded successfully with {count} dispatched element(s)",
       emptySelectionMessage: "Please select at least one row to download",
       titleFontSize: 24,
       headerColor: "#283C6E",

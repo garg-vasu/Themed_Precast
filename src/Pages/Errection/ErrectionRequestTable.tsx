@@ -21,6 +21,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -29,7 +30,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import axios, { AxiosError } from "axios";
 import { apiClient } from "@/utils/apiClient";
 import { toast } from "sonner";
@@ -38,11 +39,13 @@ import autoTable from "jspdf-autotable";
 import { formatDisplayDate } from "@/utils/formatdate";
 import { useNavigate, useParams } from "react-router";
 import PageHeader from "@/components/ui/PageHeader";
+import { ProjectContext } from "@/Provider/ProjectProvider";
 
 export type ErrectionRequest = {
   id: number;
   stock_erected_id: number;
   element_id: number;
+  disable?: boolean;
   status: string;
   acted_by: number;
   acted_by_name: string;
@@ -54,7 +57,9 @@ export type ErrectionRequest = {
   floor_name: string;
 };
 
-export const columns: ColumnDef<ErrectionRequest>[] = [
+export const columns = (
+  permissions: string[]
+): ColumnDef<ErrectionRequest>[] => [
   {
     id: "select",
     header: ({ table }) => (
@@ -67,13 +72,17 @@ export const columns: ColumnDef<ErrectionRequest>[] = [
         aria-label="Select all"
       />
     ),
-    cell: ({ row }) => (
-      <Checkbox
-        checked={row.getIsSelected()}
-        onCheckedChange={(value) => row.toggleSelected(!!value)}
-        aria-label="Select row"
-      />
-    ),
+    cell: ({ row }) => {
+      const isDisabled = row.original.disable;
+      return (
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
+          aria-label="Select row"
+          disabled={isDisabled}
+        />
+      );
+    },
     enableSorting: false,
     enableHiding: false,
   },
@@ -81,9 +90,28 @@ export const columns: ColumnDef<ErrectionRequest>[] = [
   {
     accessorKey: "element_id",
     header: "Element ID",
-    cell: ({ row }) => (
-      <div className="capitalize">{row.getValue("element_id")}</div>
-    ),
+    cell: ({ row }) => {
+      const navigate = useNavigate();
+      const { projectId } = useParams();
+      const isDisabled = row.original.disable;
+      return (
+        <div
+          className={`capitalize ${
+            isDisabled ? "cursor-not-allowed" : "cursor-pointer"
+          }`}
+          onClick={() => {
+            if (isDisabled) return;
+            if (permissions?.includes("ViewElementDetail")) {
+              navigate(
+                `/project/${projectId}/element-detail/${row.original.element_id}`
+              );
+            }
+          }}
+        >
+          {row.getValue("element_id")}
+        </div>
+      );
+    },
   },
 
   {
@@ -103,9 +131,30 @@ export const columns: ColumnDef<ErrectionRequest>[] = [
   {
     accessorKey: "status",
     header: "Status",
-    cell: ({ row }) => (
-      <div className="capitalize">{row.getValue("status")}</div>
-    ),
+    cell: ({ row }) => {
+      const status = row.getValue("status") as string;
+      const statusLower = status?.toLowerCase() || "";
+
+      let variant: "default" | "secondary" | "destructive" | "outline" =
+        "secondary";
+      let className = "";
+
+      if (statusLower === "erected") {
+        className = "bg-green-500 hover:bg-green-600 text-white";
+      } else if (statusLower === "pending") {
+        className = "bg-yellow-500 hover:bg-yellow-600 text-white";
+      } else if (statusLower === "received") {
+        className = "bg-blue-500 hover:bg-blue-600 text-white";
+      } else {
+        className = "bg-gray-500 hover:bg-gray-600 text-white";
+      }
+
+      return (
+        <Badge className={className} variant={variant}>
+          {status || "Unknown"}
+        </Badge>
+      );
+    },
   },
   {
     accessorKey: "acted_by_name",
@@ -181,6 +230,8 @@ const getErrorMessage = (error: AxiosError | unknown, data: string): string => {
 export function ErrectionRequestTable() {
   const [sorting, setSorting] = useState<SortingState>([]);
   const { projectId } = useParams();
+  const projectCtx = useContext(ProjectContext);
+  const permissions = projectCtx?.permissions || [];
   const navigate = useNavigate();
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
@@ -224,7 +275,7 @@ export function ErrectionRequestTable() {
 
   const table = useReactTable({
     data,
-    columns,
+    columns: columns(permissions),
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
@@ -315,13 +366,15 @@ export function ErrectionRequestTable() {
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <PageHeader title="Errection Request" />
         <div className="flex items-center gap-2 justify-center">
-          <Button
-            variant="outline"
-            className="sm:w-auto"
-            onClick={() => navigate(`/project/${projectId}/dispatch-request`)}
-          >
-            Add Request
-          </Button>
+          {permissions?.includes("AddErrectionRequest") && (
+            <Button
+              variant="outline"
+              className="sm:w-auto"
+              onClick={() => navigate(`/project/${projectId}/dispatch-request`)}
+            >
+              Add Request
+            </Button>
+          )}
         </div>
       </div>
       {/* top toolbar */}
@@ -399,13 +452,22 @@ export function ErrectionRequestTable() {
           <TableBody>
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => {
+                const isDisabled = row.original.disable;
                 return (
                   <TableRow
                     key={row.id}
                     data-state={row.getIsSelected() && "selected"}
+                    className={
+                      isDisabled
+                        ? "opacity-50 bg-gray-100 cursor-not-allowed"
+                        : ""
+                    }
                   >
                     {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id}>
+                      <TableCell
+                        key={cell.id}
+                        className={`${isDisabled ? "text-gray-500" : ""}`}
+                      >
                         {flexRender(
                           cell.column.columnDef.cell,
                           cell.getContext()
@@ -418,7 +480,7 @@ export function ErrectionRequestTable() {
             ) : (
               <TableRow>
                 <TableCell
-                  colSpan={columns.length}
+                  colSpan={columns(permissions).length}
                   className="h-24 text-center"
                 >
                   No results.

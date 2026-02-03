@@ -33,7 +33,7 @@ export default function MixDispatch() {
   const tabLinks = useMemo<TabLink[]>(() => {
     const tabs: TabLink[] = [];
 
-    if (permissions?.includes("ViewDrawing")) {
+    if (permissions?.includes("ViewDispatchLog")) {
       tabs.push({
         id: "1",
         label: "Dispatch",
@@ -42,7 +42,7 @@ export default function MixDispatch() {
         content: <AcceptedDispatchTable />,
       });
     }
-    if (permissions?.includes("ViewDispatchedElement")) {
+    if (permissions?.includes("ViewRequestedDispatchLog")) {
       tabs.push({
         id: "2",
         label: "Received",
@@ -52,7 +52,7 @@ export default function MixDispatch() {
       });
     }
 
-    if (permissions?.includes("ViewDrawingType")) {
+    if (permissions?.includes("ViewDispatchLog")) {
       tabs.push({
         id: "3",
         label: "Element for Dispatch",
@@ -94,12 +94,14 @@ export default function MixDispatch() {
     <div className="flex flex-col gap-2 py-4 px-4">
       <div className="flex items-center justify-between">
         <PageHeader title=" Dispatch Log" />
-        <Button
-          variant="outline"
-          onClick={() => navigate(`/project/${projectId}/vehicle-dispatch`)}
-        >
-          Add Dispatch
-        </Button>
+        {permissions?.includes("AddDispatchLog") && (
+          <Button
+            variant="outline"
+            onClick={() => navigate(`/project/${projectId}/vehicle-dispatch`)}
+          >
+            Add Dispatch
+          </Button>
+        )}
       </div>
       {/* pills section  */}
       <div className="flex flex-col gap-2">

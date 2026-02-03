@@ -29,15 +29,16 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import axios, { AxiosError } from "axios";
 import { apiClient } from "@/utils/apiClient";
 import { toast } from "sonner";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { formatDisplayDate } from "@/utils/formatdate";
-import { useParams } from "react-router";
+import { useNavigate, useParams } from "react-router";
 import { generatePDFFromTable } from "@/utils/pdfGenerator";
+import { ProjectContext } from "@/Provider/ProjectProvider";
 
 export type Stockyard = {
   id: number;
@@ -67,7 +68,7 @@ export type Stockyard = {
   disable: boolean;
 };
 
-export const columns: ColumnDef<Stockyard>[] = [
+export const getColumns = (permissions: string[]): ColumnDef<Stockyard>[] => [
   {
     id: "select",
     header: ({ table }) => (
@@ -80,13 +81,17 @@ export const columns: ColumnDef<Stockyard>[] = [
         aria-label="Select all"
       />
     ),
-    cell: ({ row }) => (
-      <Checkbox
-        checked={row.getIsSelected()}
-        onCheckedChange={(value) => row.toggleSelected(!!value)}
-        aria-label="Select row"
-      />
-    ),
+    cell: ({ row }) => {
+      const isDisabled = row.original.disable;
+      return (
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
+          aria-label="Select row"
+          disabled={isDisabled}
+        />
+      );
+    },
     enableSorting: false,
     enableHiding: false,
   },
@@ -94,9 +99,28 @@ export const columns: ColumnDef<Stockyard>[] = [
   {
     accessorKey: "element_name",
     header: "Element Name",
-    cell: ({ row }) => (
-      <div className="capitalize">{row.getValue("element_name")}</div>
-    ),
+    cell: ({ row }) => {
+      const navigate = useNavigate();
+      const { projectId } = useParams();
+      const isDisabled = row.original.disable;
+      return (
+        <div
+          className={`capitalize ${
+            isDisabled ? "cursor-not-allowed" : "cursor-pointer"
+          }`}
+          onClick={() => {
+            if (isDisabled) return;
+            if (permissions?.includes("ViewElementDetail")) {
+              navigate(
+                `/project/${projectId}/element-detail/${row.original.element_id}`
+              );
+            }
+          }}
+        >
+          {row.getValue("element_name")}
+        </div>
+      );
+    },
   },
 
   {
@@ -233,6 +257,8 @@ const getErrorMessage = (error: AxiosError | unknown, data: string): string => {
 export function StockyardTable() {
   const [sorting, setSorting] = useState<SortingState>([]);
   const { projectId } = useParams();
+  const projectCtx = useContext(ProjectContext);
+  const permissions = projectCtx?.permissions || [];
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState({});
@@ -273,7 +299,7 @@ export function StockyardTable() {
 
   const table = useReactTable({
     data,
-    columns,
+    columns: getColumns(permissions),
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
@@ -290,13 +316,23 @@ export function StockyardTable() {
     },
   });
 
-   const handleDownloadPDF = () => {
+  const handleDownloadPDF = () => {
     const selectedRows = table.getFilteredSelectedRowModel().rows;
 
     generatePDFFromTable({
       selectedRows,
       title: "Stockyard Report",
-      headers: ["Element Name", "Element Type", "Thickness", "Length", "Height", "Mass", "Production Date", "Floor Name", "Tower Name"],
+      headers: [
+        "Element Name",
+        "Element Type",
+        "Thickness",
+        "Length",
+        "Height",
+        "Mass",
+        "Production Date",
+        "Floor Name",
+        "Tower Name",
+      ],
       dataMapper: (row): string[] => {
         const stockyard = row.original as Stockyard;
         return [
@@ -311,7 +347,9 @@ export function StockyardTable() {
           stockyard.tower_name || "—",
         ];
       },
-      fileName: `stockyard-report-${new Date().toISOString().split("T")[0]}.pdf`,
+      fileName: `stockyard-report-${
+        new Date().toISOString().split("T")[0]
+      }.pdf`,
       successMessage: "PDF downloaded successfully with {count} stockyard(s)",
       emptySelectionMessage: "Please select at least one row to download",
       titleFontSize: 24,
@@ -426,7 +464,7 @@ export function StockyardTable() {
             ) : (
               <TableRow>
                 <TableCell
-                  colSpan={columns.length}
+                  colSpan={getColumns(permissions).length}
                   className="h-24 text-center"
                 >
                   No results.
