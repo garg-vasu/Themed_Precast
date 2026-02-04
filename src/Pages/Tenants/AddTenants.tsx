@@ -63,7 +63,7 @@ const getErrorMessage = (error: AxiosError | unknown, data: string): string => {
 // Schema - password is optional (will be validated in onSubmit)
 const schema = z.object({
   email: z.string().email().min(1, "Email is required"),
-  password: z.string().optional(),
+  password: z.string().min(8, "Password must be at least 8 characters"),
   first_name: z.string().min(1, "First name is required"),
   organization: z.string().min(1, "Organization name is required"),
   last_name: z.string().min(1, "Last name is required"),
@@ -218,7 +218,7 @@ export default function AddTenants({ user }: TenantFormProps) {
 
     return {
       email: user.email || "",
-      password: "",
+      password: user.password || "",
       first_name: user.first_name || "",
       organization: user.organization || "",
       last_name: user.last_name || "",

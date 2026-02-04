@@ -177,7 +177,7 @@ export const columns: ColumnDef<Invoice>[] = [
           className="capitalize cursor-pointer"
           onClick={() =>
             navigate(
-              `/invoice-detail/${row.original.id}/${row.original.work_order_id}`,
+              `/invoice-detail/${row.original.id}/${row.original.work_order_id}`
             )
           }
         >
@@ -367,7 +367,7 @@ export function InvoiceTable() {
         setCurrentPage(1); // Reset to first page when filters change
       }
     },
-    [filterState],
+    [filterState]
   );
 
   const handleFilterClose = useCallback(() => {
@@ -604,7 +604,7 @@ export function InvoiceTable() {
       doc.save(fileName);
 
       toast.success(
-        `PDF downloaded successfully with ${selectedRows.length} invoice(s)`,
+        `PDF downloaded successfully with ${selectedRows.length} invoice(s)`
       );
     } catch (error) {
       console.error("Error generating PDF:", error);
@@ -617,12 +617,10 @@ export function InvoiceTable() {
       {/* top toolbar */}
       <div className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
         <Input
-          placeholder="Filter by organization..."
-          value={
-            (table.getColumn("organization")?.getFilterValue() as string) ?? ""
-          }
+          placeholder="Filter by name..."
+          value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
           onChange={(event) =>
-            table.getColumn("organization")?.setFilterValue(event.target.value)
+            table.getColumn("name")?.setFilterValue(event.target.value)
           }
           className="w-full max-w-sm sm:max-w-xs"
         />
@@ -698,7 +696,7 @@ export function InvoiceTable() {
                           ? null
                           : flexRender(
                               header.column.columnDef.header,
-                              header.getContext(),
+                              header.getContext()
                             )}
                       </TableHead>
                     );
@@ -718,7 +716,7 @@ export function InvoiceTable() {
                       <TableCell key={cell.id} className="py-2">
                         {flexRender(
                           cell.column.columnDef.cell,
-                          cell.getContext(),
+                          cell.getContext()
                         )}
                       </TableCell>
                     ))}
@@ -794,7 +792,7 @@ export function InvoiceTable() {
                 setCurrentPage((prev) =>
                   pagination
                     ? Math.min(pagination.total_pages, prev + 1)
-                    : prev + 1,
+                    : prev + 1
                 )
               }
               disabled={

@@ -316,15 +316,18 @@ export default function ProjectCardView() {
       </div>
 
       {/* stats summary section */}
-      <div className="grid grid-row-1 md:grid-cols-2 gap-4 mt-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
         {/* Bar Chart Card */}
         <Card className="flex flex-col">
-          <CardHeader>
+          <CardHeader className="pb-2 sm:pb-4">
             <CardTitle className="space-y-1">
-              <div>All Projects</div>
+              <div className="text-base sm:text-lg">All Projects</div>
               {projectStats && (
-                <div className="text-md text-muted-foreground hover:text-foreground cursor-pointer items-center">
-                  <span className="text-primary text-4xl pr-1">
+                <div
+                  onClick={() => navigate("/projects")}
+                  className="text-sm sm:text-md text-muted-foreground hover:text-foreground cursor-pointer items-center"
+                >
+                  <span className="text-primary text-3xl sm:text-4xl pr-1">
                     {projectStats.total_projects}
                   </span>
                   Total Projects
@@ -332,16 +335,26 @@ export default function ProjectCardView() {
               )}
             </CardTitle>
           </CardHeader>
-          <CardContent className="flex-1">
+          <CardContent className="flex-1 px-2 sm:px-6">
             {projectStats ? (
-              <ChartContainer config={chartConfig} className="h-[300px] w-full">
+              <ChartContainer
+                config={chartConfig}
+                className="h-[200px] sm:h-[250px] lg:h-[300px] w-full"
+              >
                 <LineChart data={chartData}>
                   <CartesianGrid vertical={false} strokeDasharray="3 3" />
-                  <XAxis dataKey="name" tickLine={false} axisLine={false} />
+                  <XAxis
+                    dataKey="name"
+                    tickLine={false}
+                    axisLine={false}
+                    tick={{ fontSize: 11 }}
+                  />
                   <YAxis
                     allowDecimals={false}
                     tickLine={false}
                     axisLine={false}
+                    tick={{ fontSize: 11 }}
+                    width={30}
                   />
                   <ChartTooltip content={<ChartTooltipContent />} />
                   <Line
@@ -349,8 +362,8 @@ export default function ProjectCardView() {
                     dataKey="value"
                     stroke="#6366F1"
                     strokeWidth={2}
-                    dot={{ r: 4 }}
-                    activeDot={{ r: 6 }}
+                    dot={{ r: 3 }}
+                    activeDot={{ r: 5 }}
                   />
                 </LineChart>
               </ChartContainer>
@@ -361,73 +374,87 @@ export default function ProjectCardView() {
             )}
           </CardContent>
         </Card>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm font-medium text-primary">
+
+        {/* Stats Cards Grid */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3 lg:gap-4">
+          <Card className="p-0">
+            <CardHeader className="p-3 sm:p-4 pb-1 sm:pb-2">
+              <CardTitle className="text-xs sm:text-sm font-medium text-primary">
                 In Planned
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-[10px] sm:text-xs hidden sm:block">
                 Currently in production pipeline
               </CardDescription>
             </CardHeader>
-            <CardContent className="text-3xl font-semibold">
+            <CardContent className="p-3 sm:p-4 pt-0 text-2xl sm:text-3xl font-semibold">
               {data?.aggregates.in_production ?? "-"}
             </CardContent>
           </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm font-medium text-primary">
+          <Card className="p-0">
+            <CardHeader className="p-3 sm:p-4 pb-1 sm:pb-2">
+              <CardTitle className="text-xs sm:text-sm font-medium text-primary">
                 In Stock
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-[10px] sm:text-xs hidden sm:block">
                 Ready to be dispatched / erected
               </CardDescription>
             </CardHeader>
-            <CardContent className="text-3xl font-semibold">
+            <CardContent className="p-3 sm:p-4 pt-0 text-2xl sm:text-3xl font-semibold">
               {data?.aggregates.in_stock ?? "-"}
             </CardContent>
           </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm font-medium text-primary">
+          <Card className="p-0">
+            <CardHeader className="p-3 sm:p-4 pb-1 sm:pb-2">
+              <CardTitle className="text-xs sm:text-sm font-medium text-primary">
                 Balance
               </CardTitle>
+              <CardDescription className="text-[10px] sm:text-xs hidden sm:block">
+                Remaining to cast
+              </CardDescription>
             </CardHeader>
-            <CardContent className="text-3xl font-semibold">
+            <CardContent className="p-3 sm:p-4 pt-0 text-2xl sm:text-3xl font-semibold">
               {data
                 ? data.aggregates.total_elements -
                   (data.aggregates.casted_elements ?? 0)
                 : "-"}
             </CardContent>
           </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm font-medium text-primary">
+          <Card className="p-0">
+            <CardHeader className="p-3 sm:p-4 pb-1 sm:pb-2">
+              <CardTitle className="text-xs sm:text-sm font-medium text-primary">
                 Casted
               </CardTitle>
+              <CardDescription className="text-[10px] sm:text-xs hidden sm:block">
+                Total casted elements
+              </CardDescription>
             </CardHeader>
-            <CardContent className="text-3xl font-semibold">
+            <CardContent className="p-3 sm:p-4 pt-0 text-2xl sm:text-3xl font-semibold">
               {data?.aggregates.casted_elements ?? "-"}
             </CardContent>
           </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm font-medium text-primary">
+          <Card className="p-0">
+            <CardHeader className="p-3 sm:p-4 pb-1 sm:pb-2">
+              <CardTitle className="text-xs sm:text-sm font-medium text-primary">
                 Element Types
               </CardTitle>
+              <CardDescription className="text-[10px] sm:text-xs hidden sm:block">
+                Unique element types
+              </CardDescription>
             </CardHeader>
-            <CardContent className="text-3xl font-semibold">
+            <CardContent className="p-3 sm:p-4 pt-0 text-2xl sm:text-3xl font-semibold">
               {data?.aggregates.element_type_count ?? "-"}
             </CardContent>
           </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm font-medium text-primary">
-                Project Members
+          <Card className="p-0">
+            <CardHeader className="p-3 sm:p-4 pb-1 sm:pb-2">
+              <CardTitle className="text-xs sm:text-sm font-medium text-primary">
+                Members
               </CardTitle>
+              <CardDescription className="text-[10px] sm:text-xs hidden sm:block">
+                Total project members
+              </CardDescription>
             </CardHeader>
-            <CardContent className="text-3xl font-semibold">
+            <CardContent className="p-3 sm:p-4 pt-0 text-2xl sm:text-3xl font-semibold">
               {data?.aggregates.project_members_count ?? "-"}
             </CardContent>
           </Card>

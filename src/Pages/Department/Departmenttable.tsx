@@ -162,14 +162,6 @@ export const getColumns = (
             <DropdownMenuItem onClick={handleEdit}>
               Edit Department
             </DropdownMenuItem>
-            <DropdownMenuItem>
-              <button
-                className="flex gap-2 w-full text-left"
-                onClick={() => handleDelete(department.id)}
-              >
-                Delete Department
-              </button>
-            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       );
@@ -290,7 +282,9 @@ export function Departmenttable({ refresh }: { refresh: () => void }) {
           formatDisplayDate(department.updated_at),
         ];
       },
-      fileName: `departments-report-${new Date().toISOString().split("T")[0]}.pdf`,
+      fileName: `departments-report-${
+        new Date().toISOString().split("T")[0]
+      }.pdf`,
       successMessage: "PDF downloaded successfully with {count} department(s)",
       emptySelectionMessage: "Please select at least one row to download",
       titleFontSize: 24,

@@ -87,7 +87,7 @@ const getErrorMessage = (error: AxiosError | unknown, data: string): string => {
   return "An unexpected error occurred. Please try again later.";
 };
 
-export default function AddCategory({
+export default function AddDepartment({
   refresh,
   initialData: propInitialData,
   id,
@@ -284,7 +284,7 @@ export default function AddCategory({
               if (onClose) {
                 onClose();
               } else {
-                navigate("/categories");
+                navigate("/departments");
               }
             }}
           >
@@ -294,8 +294,8 @@ export default function AddCategory({
             {isSubmitting || isLoading
               ? "Saving..."
               : isEditMode
-              ? "Update Category"
-              : "Create Category"}
+              ? "Update Department"
+              : "Create Department"}
           </Button>
         </div>
       </form>

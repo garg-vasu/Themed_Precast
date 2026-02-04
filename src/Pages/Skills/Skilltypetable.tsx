@@ -186,14 +186,6 @@ export const getColumns = (
               <DropdownMenuItem onClick={handleEdit}>
                 Edit Skill Type
               </DropdownMenuItem>
-              <DropdownMenuItem>
-                <button
-                  className="flex gap-2 w-full text-left"
-                  onClick={() => handleDelete(skillType.id)}
-                >
-                  Delete Skill Type
-                </button>
-              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         );

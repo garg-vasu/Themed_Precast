@@ -320,13 +320,23 @@ export function AttendanceTable() {
     },
   });
 
-   const handleDownloadPDF = () => {
+  const handleDownloadPDF = () => {
     const selectedRows = table.getFilteredSelectedRowModel().rows;
 
     generatePDFFromTable({
       selectedRows,
       title: "Attendance Report",
-      headers: ["Project Name", "Tower Name", "Department Name", "Category Name", "People Name", "Skill Type Name", "Skill Name", "Count", "Date"],
+      headers: [
+        "Project Name",
+        "Tower Name",
+        "Department Name",
+        "Category Name",
+        "People Name",
+        "Skill Type Name",
+        "Skill Name",
+        "Count",
+        "Date",
+      ],
       dataMapper: (row): string[] => {
         const attendance = row.original as Attendance;
         return [
@@ -341,7 +351,9 @@ export function AttendanceTable() {
           attendance.date || "—",
         ];
       },
-      fileName: `attendance-report-${new Date().toISOString().split("T")[0]}.pdf`,
+      fileName: `attendance-report-${
+        new Date().toISOString().split("T")[0]
+      }.pdf`,
       successMessage: "PDF downloaded successfully with {count} attendance(s)",
       emptySelectionMessage: "Please select at least one row to download",
       titleFontSize: 24,
@@ -356,17 +368,17 @@ export function AttendanceTable() {
       {/* top toolbar */}
       <div className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
         <Input
-          placeholder="Filter by People Name..."
+          placeholder="Filter by Project Name..."
           value={
-            (table.getColumn("people_name")?.getFilterValue() as string) ?? ""
+            (table.getColumn("project_name")?.getFilterValue() as string) ?? ""
           }
           onChange={(event) =>
-            table.getColumn("people_name")?.setFilterValue(event.target.value)
+            table.getColumn("project_name")?.setFilterValue(event.target.value)
           }
           className="w-full max-w-sm sm:max-w-xs"
         />
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-center">
-           {table.getFilteredSelectedRowModel().rows.length > 0 && (
+          {table.getFilteredSelectedRowModel().rows.length > 0 && (
             <Button
               variant="default"
               className="w-full sm:w-auto"
@@ -388,14 +400,14 @@ export function AttendanceTable() {
               Clear Filters
             </Button>
           )}
-           <Button
-              variant="default"
-              className="w-full sm:w-auto"
-              onClick={() => navigate("/add-attendance")}
-            >
-              <Download className="mr-2 h-4 w-4" />
-              Mark Attendance
-            </Button>
+          <Button
+            variant="default"
+            className="w-full sm:w-auto"
+            onClick={() => navigate("/add-attendance")}
+          >
+            <Download className="mr-2 h-4 w-4" />
+            Mark Attendance
+          </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" className="w-full sm:w-auto">

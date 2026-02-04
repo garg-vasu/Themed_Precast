@@ -251,8 +251,8 @@ export const columns: ColumnDef<WorkOrder>[] = [
     ),
   },
 
-  // project name column 
-   {
+  // project name column
+  {
     id: "project_name",
     header: "Project Name",
     cell: ({ row }) => (
@@ -305,7 +305,7 @@ export function WorkOrderTable() {
   const [limit, setLimit] = useState<number>(10);
   const [pagination, setPagination] = useState<PaginationInfo | null>(null);
 
-    //   filter state
+  //   filter state
   const [filterState, setFilterState] = useState<FilterStateWorkOrder>({
     selectedProject: 0,
     workordernumber: "",
@@ -318,7 +318,7 @@ export function WorkOrderTable() {
     createdat: "",
   });
 
-   const handleFilterChange = useCallback(
+  const handleFilterChange = useCallback(
     (filters: FilterStateWorkOrder) => {
       // Only update if filters actually changed
       if (JSON.stringify(filters) !== JSON.stringify(filterState)) {
@@ -539,17 +539,17 @@ export function WorkOrderTable() {
       {/* top toolbar */}
       <div className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
         <Input
-          placeholder="Filter by organization..."
+          placeholder="Filter by work order number..."
           value={
-            (table.getColumn("organization")?.getFilterValue() as string) ?? ""
+            (table.getColumn("wo_number")?.getFilterValue() as string) ?? ""
           }
           onChange={(event) =>
-            table.getColumn("organization")?.setFilterValue(event.target.value)
+            table.getColumn("wo_number")?.setFilterValue(event.target.value)
           }
           className="w-full max-w-sm sm:max-w-xs"
         />
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-center">
-           <Button
+          <Button
             variant={hasActiveFilters() ? "default" : "outline"}
             className="w-full sm:w-auto"
             onClick={() => setFilterOpen((prev) => !prev)}
@@ -606,7 +606,7 @@ export function WorkOrderTable() {
           </DropdownMenu>
         </div>
       </div>
-       {filterOpen && (
+      {filterOpen && (
         <AdvanceWorkOrderFilter
           onFilterChange={handleFilterChange}
           onClose={handleFilterClose}
@@ -666,7 +666,7 @@ export function WorkOrderTable() {
           </Table>
         </div>
       </div>
-       <div className="flex flex-col gap-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-4 py-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="text-muted-foreground flex-1 text-sm">
           {table.getFilteredSelectedRowModel().rows.length} of{" "}
           {table.getRowModel().rows.length} row(s) selected on this page.
@@ -725,7 +725,9 @@ export function WorkOrderTable() {
                     : prev + 1
                 )
               }
-              disabled={!pagination || pagination.current_page >= pagination.total_pages}
+              disabled={
+                !pagination || pagination.current_page >= pagination.total_pages
+              }
             >
               Next
             </Button>

@@ -164,7 +164,7 @@ export default function AddSkilltype({
         });
 
         if (response.status === 200) {
-          setEndClients(response.data);
+          setEndClients(response.data.data);
         } else {
           toast.error(response.data?.message || "Failed to fetch end clients");
         }
@@ -261,7 +261,7 @@ export default function AddSkilltype({
         {/* 2 row layout  */}
         <div>
           {/* two grid layout */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+          <div className="grid grid-cols-1 md:grid-cols-2  gap-4 mt-4">
             {/* name */}
             <div className="grid w-full items-center gap-1.5">
               <Label htmlFor="skill_type_name">

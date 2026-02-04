@@ -136,6 +136,7 @@ const menuItemsByRole: Record<string, NavigationItem[]> = {
         { name: "Overview", href: "/projectOverview", icon: BarChart },
       ],
     },
+    { name: "All Projects", href: "/projects", icon: FolderKanban },
     { name: "End Clients", href: "/end-clients", icon: UserCircle },
     { name: "Calculator", href: "/calculator", icon: Calculator },
     { name: "Work Order", href: "/work-order", icon: ClipboardList },

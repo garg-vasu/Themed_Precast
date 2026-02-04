@@ -73,6 +73,7 @@ const statuses = [
   { value: "Completed", label: "Completed" },
   { value: "Ongoing", label: "Ongoing" },
   { value: "Inactive", label: "Inactive" },
+  { value: "OnHold", label: "On Hold" },
 ];
 
 // high, Medium , Low
@@ -484,7 +485,7 @@ export default function AddProjects({ user }: UserFormProps) {
         // Update existing project
         const response = await apiClient.put(
           `/projects/${user.project_id}`,
-          payload,
+          payload
         );
         if (response.status === 200 || response.status === 201) {
           toast.success("Project updated successfully!");
@@ -501,7 +502,7 @@ export default function AddProjects({ user }: UserFormProps) {
     } catch (error: unknown) {
       const errorMessage = getErrorMessage(
         error,
-        isEditMode ? "update project" : "create project",
+        isEditMode ? "update project" : "create project"
       );
       toast.error(errorMessage);
     } finally {
@@ -558,7 +559,7 @@ export default function AddProjects({ user }: UserFormProps) {
               htmlFor="logo-upload"
               className={cn(
                 "flex items-center gap-2 px-4 py-2 rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground cursor-pointer transition-colors",
-                isUploadingImage && "opacity-50 cursor-not-allowed",
+                isUploadingImage && "opacity-50 cursor-not-allowed"
               )}
             >
               {isUploadingImage ? (
@@ -647,7 +648,7 @@ export default function AddProjects({ user }: UserFormProps) {
                   onValueChange={(val) => {
                     field.onChange(val);
                     const selectedStatus = statuses.find(
-                      (status) => status.value === val,
+                      (status) => status.value === val
                     );
                     if (selectedStatus) {
                       setValue("project_status", selectedStatus.value);
@@ -688,7 +689,7 @@ export default function AddProjects({ user }: UserFormProps) {
                   onValueChange={(val) => {
                     field.onChange(val);
                     const selectedPriority = priority.find(
-                      (priority) => priority.value === val,
+                      (priority) => priority.value === val
                     );
                     if (selectedPriority) {
                       setValue("priority", selectedPriority.value);
@@ -729,7 +730,7 @@ export default function AddProjects({ user }: UserFormProps) {
                   onValueChange={(val) => {
                     field.onChange(Number(val));
                     const selectedTemplate = templates.find(
-                      (template) => template.id === Number(val),
+                      (template) => template.id === Number(val)
                     );
                     if (selectedTemplate) {
                       setValue("template_id", selectedTemplate.id);
@@ -773,7 +774,7 @@ export default function AddProjects({ user }: UserFormProps) {
                   onValueChange={(val) => {
                     field.onChange(Number(val));
                     const selectedEndClient = endClients.find(
-                      (endClient) => endClient.id === Number(val),
+                      (endClient) => endClient.id === Number(val)
                     );
                     if (selectedEndClient) {
                       setValue("client_id", selectedEndClient.id);
@@ -818,7 +819,7 @@ export default function AddProjects({ user }: UserFormProps) {
                       variant="outline"
                       className={cn(
                         "w-full justify-start text-left font-normal",
-                        !field.value && "text-muted-foreground",
+                        !field.value && "text-muted-foreground"
                       )}
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
@@ -865,7 +866,7 @@ export default function AddProjects({ user }: UserFormProps) {
                       variant="outline"
                       className={cn(
                         "w-full justify-start text-left font-normal",
-                        !field.value && "text-muted-foreground",
+                        !field.value && "text-muted-foreground"
                       )}
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
@@ -915,7 +916,7 @@ export default function AddProjects({ user }: UserFormProps) {
                       variant="outline"
                       className={cn(
                         "w-full justify-start text-left font-normal",
-                        !field.value && "text-muted-foreground",
+                        !field.value && "text-muted-foreground"
                       )}
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
@@ -965,7 +966,7 @@ export default function AddProjects({ user }: UserFormProps) {
                       variant="outline"
                       className={cn(
                         "w-full justify-start text-left font-normal",
-                        !field.value && "text-muted-foreground",
+                        !field.value && "text-muted-foreground"
                       )}
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />

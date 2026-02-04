@@ -122,7 +122,7 @@ export default function EditTenants() {
   const editTenantData: EditTenant = {
     id: Number(tenantId),
     email: data.email || "",
-    password: data.password,
+    password: data.password || "",
     first_name: data.first_name || "",
     last_name: data.last_name || "",
     organization: data.organization || "",

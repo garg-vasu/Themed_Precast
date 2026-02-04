@@ -1,24 +1,13 @@
 import PageHeader from "@/components/ui/PageHeader";
 import { apiClient } from "@/utils/apiClient";
 import axios, { AxiosError } from "axios";
-import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
-  Bar,
-  BarChart,
-  CartesianGrid,
   Cell,
-  Line,
-  LineChart,
   Pie,
   PieChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
 } from "recharts";
-import type { TooltipProps } from "recharts";
 import {
   ChartContainer,
   ChartTooltip,
@@ -86,65 +75,6 @@ export interface ProjectData {
   [key: string]: number | string;
 }
 
-const LabourTooltip = ({
-  active,
-  label,
-  payload,
-}: TooltipProps<number, string>) => {
-  if (!active || !payload || payload.length === 0) return null;
-
-  return (
-    <div className="rounded-md border bg-background px-3 py-2 shadow-md text-xs md:text-sm">
-      <div className="mb-2 font-semibold">{label}</div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-1 max-w-xs md:max-w-md">
-        {payload.map((item) => (
-          <div
-            key={String(item.dataKey)}
-            className="flex items-center gap-1 whitespace-nowrap"
-          >
-            <span
-              className="h-2 w-2 rounded-full"
-              style={{ backgroundColor: item.color || "#22C55E" }}
-            />
-            <span className="truncate">
-              {item.name} : {item.value}
-            </span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-};
-
-const ProjectTooltip = ({
-  active,
-  label,
-  payload,
-}: TooltipProps<number, string>) => {
-  if (!active || !payload || payload.length === 0) return null;
-  return (
-    <div className="rounded-md border bg-background px-3 py-2 shadow-md text-xs md:text-sm">
-      <div className="mb-2 font-semibold">{label}</div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-1 max-w-xs md:max-w-md">
-        {payload.map((item) => (
-          <div
-            key={String(item.dataKey)}
-            className="flex items-center gap-1 whitespace-nowrap"
-          >
-            <span
-              className="h-2 w-2 rounded-full"
-              style={{ backgroundColor: item.color || "#22C55E" }}
-            />
-            <span className="truncate">
-              {item.name} : {item.value}
-            </span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-};
-
 const getErrorMessage = (error: AxiosError | unknown): string => {
   if (axios.isAxiosError(error)) {
     if (error.response?.status === 401) {
@@ -161,27 +91,17 @@ const getErrorMessage = (error: AxiosError | unknown): string => {
   return "An unexpected error occurred. Please try again later.";
 };
 
-const chartConfig = {
-  projects: {
-    label: "Projects",
-  },
-  Casted: {
-    label: "Casted",
-    color: "#0EA5E9",
-  },
-  Erected: {
-    label: "Erected",
-    color: "#22C55E",
-  },
-  "In Production": {
-    label: "In Production",
-    color: "#F59E0B",
-  },
-  "In Stock": {
-    label: "In Stock",
-    color: "#6366F1",
-  },
-} satisfies ChartConfig;
+const LabourChart = lazy(() =>
+  import("./HomeCharts").then((module) => ({
+    default: module.LabourChart,
+  }))
+);
+
+const ProjectChart = lazy(() =>
+  import("./HomeCharts").then((module) => ({
+    default: module.ProjectChart,
+  }))
+);
 
 export default function Home() {
   const [projectStats, setProjectStats] = useState<ProjectStats>();
@@ -194,263 +114,172 @@ export default function Home() {
   const [trends, setTrends] = useState<Trends>();
   const [humanResources, setHumanResources] = useState<HumanResouce[]>([]);
   const [projectData, setProjectData] = useState<ProjectData[]>([]);
+  const chartsRef = useRef<HTMLDivElement | null>(null);
+  const [chartsInView, setChartsInView] = useState(false);
+
+  const chartConfig = useMemo(
+    () =>
+      ({
+        projects: {
+          label: "Projects",
+        },
+        Casted: {
+          label: "Casted",
+          color: "#0EA5E9",
+        },
+        Erected: {
+          label: "Erected",
+          color: "#22C55E",
+        },
+        "In Production": {
+          label: "In Production",
+          color: "#F59E0B",
+        },
+        "In Stock": {
+          label: "In Stock",
+          color: "#6366F1",
+        },
+      }) satisfies ChartConfig,
+    []
+  );
+
+  const labourColors = useMemo(
+    () => [
+      "#0EA5E9",
+      "#22C55E",
+      "#F97316",
+      "#6366F1",
+      "#EC4899",
+      "#14B8A6",
+      "#EAB308",
+      "#8B5CF6",
+      "#F97373",
+      "#10B981",
+    ],
+    []
+  );
 
   // project id query parameter
-  const WithProjectParam = (endpoint: string) => {
-    return selectedProject
+  const WithProjectParam = (endpoint: string) =>
+    selectedProject
       ? `${endpoint}?${`project_id=${selectedProject.id}`}`
       : endpoint;
-  };
 
-  // fetch trends
+  // observe chart visibility for lazy loading
   useEffect(() => {
-    const source = axios.CancelToken.source();
+    if (!chartsRef.current || chartsInView) return;
 
-    const fetchTrends = async () => {
-      try {
-        const response = await apiClient.get(
-          WithProjectParam("/dashboard_trends"),
-          {
-            cancelToken: source.token,
-          }
-        );
-
-        if (response.status === 200) {
-          setTrends(response.data);
-        } else {
-          toast.error(response.data?.message || "Failed to fetch trends");
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setChartsInView(true);
+          observer.disconnect();
         }
-      } catch (err: unknown) {
-        if (!axios.isCancel(err)) {
-          toast.error(getErrorMessage(err));
-        }
-      }
-    };
+      },
+      { rootMargin: "200px" }
+    );
 
-    fetchTrends();
+    observer.observe(chartsRef.current);
 
     return () => {
-      source.cancel();
+      observer.disconnect();
     };
-  }, []);
+  }, [chartsInView]);
 
-  // fetch human resources
+  // batched fetch for dashboard data
   useEffect(() => {
     const source = axios.CancelToken.source();
 
-    const fetchHumanResources = async () => {
-      try {
-        const response = await apiClient.get(
-          WithProjectParam("/manpower-count/dashboard"),
-          {
-            cancelToken: source.token,
+    const fetchAll = async () => {
+      const requests = [
+        apiClient.get(WithProjectParam("/dashboard_trends"), {
+          cancelToken: source.token,
+        }),
+        apiClient.get(WithProjectParam("/manpower-count/dashboard"), {
+          cancelToken: source.token,
+        }),
+        apiClient.get(WithProjectParam("/element_graph"), {
+          cancelToken: source.token,
+        }),
+        apiClient.get(WithProjectParam("/element_status"), {
+          cancelToken: source.token,
+        }),
+        apiClient.get(WithProjectParam("/average_casted"), {
+          cancelToken: source.token,
+        }),
+        apiClient.get(WithProjectParam("/average_erected"), {
+          cancelToken: source.token,
+        }),
+        apiClient.get(WithProjectParam("/total_rejections"), {
+          cancelToken: source.token,
+        }),
+      ];
+
+      const results = await Promise.allSettled(requests);
+
+      results.forEach((result, index) => {
+        if (result.status === "rejected") {
+          if (!axios.isCancel(result.reason)) {
+            toast.error(getErrorMessage(result.reason));
           }
-        );
+          return;
+        }
 
-        if (response.status === 200) {
-          if (Array.isArray(response.data) && response.data.length > 0) {
-            const validateData = response.data.filter(
-              (item: HumanResouce) =>
-                item && typeof item === "object" && "name" in item
-            );
-            setHumanResources(validateData);
-          } else {
-            toast.error(
-              response.data?.message || "Failed to fetch human resources"
-            );
-          }
-        } else {
-          toast.error(
-            response.data?.message || "Failed to fetch human resources"
-          );
+        const response = result.value;
+        if (response.status !== 200) {
+          toast.error(response.data?.message || "Failed to fetch dashboard data");
+          return;
         }
-      } catch (err: unknown) {
-        if (!axios.isCancel(err)) {
-          toast.error(getErrorMessage(err));
+
+        switch (index) {
+          case 0:
+            setTrends(response.data);
+            break;
+          case 1:
+            if (Array.isArray(response.data) && response.data.length > 0) {
+              const validateData = response.data.filter(
+                (item: HumanResouce) =>
+                  item && typeof item === "object" && "name" in item
+              );
+              setHumanResources(validateData);
+            } else {
+              toast.error(
+                response.data?.message || "Failed to fetch human resources"
+              );
+            }
+            break;
+          case 2:
+            if (Array.isArray(response.data) && response.data.length > 0) {
+              const validateData = response.data.filter(
+                (item: ProjectData) =>
+                  item && typeof item === "object" && "day" in item
+              );
+              setProjectData(validateData);
+            } else {
+              toast.error(
+                response.data?.message || "Failed to fetch project data"
+              );
+            }
+            break;
+          case 3:
+            setElementStatus(response.data);
+            break;
+          case 4:
+            setAverage(response.data);
+            break;
+          case 5:
+            setAverageErectedElements(response.data);
+            break;
+          case 6:
+            setTotalRejections(response.data);
+            break;
+          default:
+            break;
         }
-      }
+      });
     };
 
-    fetchHumanResources();
-
-    return () => {
-      source.cancel();
-    };
-  }, []);
-
-  // fetch project data
-  useEffect(() => {
-    const source = axios.CancelToken.source();
-
-    const fetchProjectData = async () => {
-      try {
-        const response = await apiClient.get(
-          WithProjectParam("/element_graph"),
-          {
-            cancelToken: source.token,
-          }
-        );
-
-        if (response.status === 200) {
-          if (Array.isArray(response.data) && response.data.length > 0) {
-            const validateData = response.data.filter(
-              (item: ProjectData) =>
-                item && typeof item === "object" && "day" in item
-            );
-            setProjectData(validateData);
-          } else {
-            toast.error(
-              response.data?.message || "Failed to fetch project data"
-            );
-          }
-        } else {
-          toast.error(response.data?.message || "Failed to fetch project data");
-        }
-      } catch (err: unknown) {
-        if (!axios.isCancel(err)) {
-          toast.error(getErrorMessage(err));
-        }
-      }
-    };
-
-    fetchProjectData();
-
-    return () => {
-      source.cancel();
-    };
-  }, []);
-
-  // project stats
-
-  useEffect(() => {
-    const source = axios.CancelToken.source();
-
-    const fetchElementStatus = async () => {
-      try {
-        const response = await apiClient.get(
-          WithProjectParam("/element_status"),
-          {
-            cancelToken: source.token,
-          }
-        );
-
-        if (response.status === 200) {
-          setElementStatus(response.data);
-        } else {
-          toast.error(
-            response.data?.message || "Failed to fetch element status"
-          );
-        }
-      } catch (err: unknown) {
-        if (!axios.isCancel(err)) {
-          toast.error(getErrorMessage(err));
-        }
-      }
-    };
-
-    fetchElementStatus();
-
-    return () => {
-      source.cancel();
-    };
-  }, []);
-
-  // fetch average casted elements
-  useEffect(() => {
-    const source = axios.CancelToken.source();
-
-    const fetchAverageCastedElements = async () => {
-      try {
-        const response = await apiClient.get(
-          WithProjectParam("/average_casted"),
-          {
-            cancelToken: source.token,
-          }
-        );
-
-        if (response.status === 200) {
-          setAverage(response.data);
-        } else {
-          toast.error(
-            response.data?.message || "Failed to fetch average casted elements"
-          );
-        }
-      } catch (err: unknown) {
-        if (!axios.isCancel(err)) {
-          toast.error(getErrorMessage(err));
-        }
-      }
-    };
-
-    fetchAverageCastedElements();
-
-    return () => {
-      source.cancel();
-    };
-  }, []);
-
-  // fetch average erected elements
-  useEffect(() => {
-    const source = axios.CancelToken.source();
-
-    const fetchAverageErectedElements = async () => {
-      try {
-        const response = await apiClient.get(
-          WithProjectParam("/average_erected"),
-          {
-            cancelToken: source.token,
-          }
-        );
-
-        if (response.status === 200) {
-          setAverageErectedElements(response.data);
-        } else {
-          toast.error(
-            response.data?.message || "Failed to fetch average erected elements"
-          );
-        }
-      } catch (err: unknown) {
-        if (!axios.isCancel(err)) {
-          toast.error(getErrorMessage(err));
-        }
-      }
-    };
-
-    fetchAverageErectedElements();
-
-    return () => {
-      source.cancel();
-    };
-  }, []);
-
-  // total rejections
-  useEffect(() => {
-    const source = axios.CancelToken.source();
-
-    const fetchTotalRejections = async () => {
-      try {
-        const response = await apiClient.get(
-          WithProjectParam("/total_rejections"),
-          {
-            cancelToken: source.token,
-          }
-        );
-
-        if (response.status === 200) {
-          setTotalRejections(response.data);
-        } else {
-          toast.error(
-            response.data?.message || "Failed to fetch total rejections"
-          );
-        }
-      } catch (err: unknown) {
-        if (!axios.isCancel(err)) {
-          toast.error(getErrorMessage(err));
-        }
-      }
-    };
-
-    fetchTotalRejections();
+    fetchAll();
 
     return () => {
       source.cancel();
@@ -551,18 +380,25 @@ export default function Home() {
     [projectData]
   );
 
-  const labourColors = [
-    "#0EA5E9",
-    "#22C55E",
-    "#F97316",
-    "#6366F1",
-    "#EC4899",
-    "#14B8A6",
-    "#EAB308",
-    "#8B5CF6",
-    "#F97373",
-    "#10B981",
-  ];
+  const averageCastedText = useMemo(
+    () => average?.average_casted_elements.toFixed(2) ?? "--",
+    [average]
+  );
+
+  const averageErectedText = useMemo(
+    () => averageErectedElements?.average_erected_elements.toFixed(2) ?? "--",
+    [averageErectedElements]
+  );
+
+  const totalRejectionsText = useMemo(
+    () => totalRejections?.total_rejections.toFixed(2) ?? "--",
+    [totalRejections]
+  );
+
+  const monthlyForecastText = useMemo(() => {
+    if (!averageErectedElements?.average_erected_elements) return "0";
+    return (averageErectedElements.average_erected_elements * 30).toFixed(2);
+  }, [averageErectedElements]);
 
   return (
     <div className="flex flex-col gap-2 py-4 px-4">
@@ -570,17 +406,18 @@ export default function Home() {
         <PageHeader title="Monthly Overview" />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
         {/* Pie Chart Card */}
-        <Card className="flex flex-col">
-          <CardHeader>
-            <CardTitle className="space-y-1">
-              <div>Element Status</div>
-            </CardTitle>
+        <Card className="flex flex-col lg:col-span-7">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg md:text-xl">Element Status</CardTitle>
           </CardHeader>
           <CardContent className="flex-1">
             {elementStatus ? (
-              <ChartContainer config={chartConfig} className="h-[300px] w-full">
+              <ChartContainer
+                config={chartConfig}
+                className="h-[260px] sm:h-[300px] lg:h-[340px] w-full"
+              >
                 <PieChart>
                   <Pie
                     data={pieData}
@@ -612,17 +449,17 @@ export default function Home() {
             )}
           </CardContent>
         </Card>
-        <div className="grid grid-rows-1 md:grid-rows-2 gap-4 ">
+        <div className="grid gap-4 lg:col-span-5">
           {/* first column with 4 card in grid layout  */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* first card  */}
             <Card>
-              <CardContent>
+              <CardContent className="p-4 md:p-6">
                 {/* two block in the card content */}
                 {/* two row   */}
-                <div className="flex flex-col gap-2 items-center justify-center">
-                  <div className="text-lg md:text-2xl font-semibold">
-                    {average?.average_casted_elements.toFixed(2)}
+                <div className="flex flex-col gap-1.5 items-center justify-center text-center">
+                  <div className="text-lg md:text-2xl font-semibold tabular-nums">
+                    {averageCastedText}
                   </div>
                   {/* can we use lighter vesrion of text-primary color for this text */}
                   <div className="text-sm text-primary/80">
@@ -632,12 +469,10 @@ export default function Home() {
               </CardContent>
             </Card>
             <Card>
-              <CardContent>
-                <div className="flex flex-col gap-2 items-center justify-center">
-                  <div className="text-lg md:text-2xl font-semibold">
-                    {averageErectedElements?.average_erected_elements.toFixed(
-                      2
-                    )}
+              <CardContent className="p-4 md:p-6">
+                <div className="flex flex-col gap-1.5 items-center justify-center text-center">
+                  <div className="text-lg md:text-2xl font-semibold tabular-nums">
+                    {averageErectedText}
                   </div>
                   <div className="text-sm text-primary/80">
                     Avg. Elements Erected Daily
@@ -646,10 +481,10 @@ export default function Home() {
               </CardContent>
             </Card>
             <Card>
-              <CardContent>
-                <div className="flex flex-col gap-2 items-center justify-center">
-                  <div className="text-lg md:text-2xl font-semibold">
-                    {totalRejections?.total_rejections.toFixed(2)}
+              <CardContent className="p-4 md:p-6">
+                <div className="flex flex-col gap-1.5 items-center justify-center text-center">
+                  <div className="text-lg md:text-2xl font-semibold tabular-nums">
+                    {totalRejectionsText}
                   </div>
                   <div className="text-sm text-primary/80">
                     Total Rejections
@@ -658,14 +493,10 @@ export default function Home() {
               </CardContent>
             </Card>
             <Card>
-              <CardContent>
-                <div className="flex flex-col gap-2 items-center justify-center">
-                  <div className="text-lg md:text-2xl font-semibold">
-                    {averageErectedElements?.average_erected_elements
-                      ? (
-                          averageErectedElements.average_erected_elements * 30
-                        ).toFixed(2)
-                      : 0}
+              <CardContent className="p-4 md:p-6">
+                <div className="flex flex-col gap-1.5 items-center justify-center text-center">
+                  <div className="text-lg md:text-2xl font-semibold tabular-nums">
+                    {monthlyForecastText}
                   </div>
                   <div className="text-sm text-primary/80">
                     Erections Forecasted This Month
@@ -686,28 +517,28 @@ export default function Home() {
                 on the average number of elements erected daily.
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-4 md:p-6">
               {/* body has 3 metric blocks; keep them aligned across breakpoints */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="flex flex-col gap-1">
+                <div className="flex flex-col gap-1 text-center sm:text-left">
                   {/* show current month count */}
-                  <div className="text-lg md:text-3xl font-semibold leading-tight">
+                  <div className="text-lg md:text-3xl font-semibold leading-tight tabular-nums">
                     {trends?.current_month_count}
                   </div>
                   <div className="text-xs md:text-sm text-primary/80">
                     Current Month Count
                   </div>
                 </div>
-                <div className="flex flex-col gap-1">
-                  <div className="text-lg md:text-3xl font-semibold leading-tight">
+                <div className="flex flex-col gap-1 text-center sm:text-left">
+                  <div className="text-lg md:text-3xl font-semibold leading-tight tabular-nums">
                     {trends?.previous_month_count}
                   </div>
                   <div className="text-xs md:text-sm text-primary/80">
                     Previous Month Count
                   </div>
                 </div>
-                <div className="flex flex-col gap-1">
-                  <div className="text-lg md:text-2xl font-semibold leading-tight break-words">
+                <div className="flex flex-col gap-1 text-center sm:text-left">
+                  <div className="text-lg md:text-2xl font-semibold leading-tight break-words tabular-nums">
                     {trends?.difference}
                   </div>
                   <div className="text-xs md:text-sm text-primary/80">
@@ -721,178 +552,84 @@ export default function Home() {
       </div>
       {/* second row   */}
 
-      {/* labour graph first row  */}
-      <div className="grid grid-cols-1 gap-4 mt-4">
-        <Card>
-          <CardHeader className="space-y-1">
-            <CardTitle className="text-lg md:text-xl">
-              Manpower Report
-            </CardTitle>
-            {/* <CardDescription className="text-sm">
-              Daily manpower distribution by role. X-axis shows the day of the
-              month.
-            </CardDescription> */}
-          </CardHeader>
-
-          <CardContent>
-            {labourChartData.length ? (
-              <>
-                {labourMetricKeys.length > 0 && (
-                  <div className="mb-4 w-full overflow-x-auto">
-                    <div className="flex flex-wrap gap-3 pb-2">
-                      {labourMetricKeys.map((key, index) => (
-                        <div
-                          key={key}
-                          className="flex items-center gap-2 text-xs md:text-sm text-muted-foreground whitespace-nowrap"
-                        >
-                          <span
-                            className="h-2 w-2 rounded-full flex-shrink-0"
-                            style={{
-                              backgroundColor:
-                                labourColors[index % labourColors.length],
-                            }}
-                          />
-                          <span className="truncate max-w-[160px]" title={key}>
-                            {key}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                <div className="w-full overflow-x-auto overflow-y-hidden pb-2">
-                  <div className="h-[480px] min-w-[720px] md:min-w-0 md:w-full">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={labourChartData}>
-                        <CartesianGrid
-                          strokeDasharray="3 3"
-                          vertical={false}
-                          className="stroke-muted"
-                        />
-                        <XAxis
-                          dataKey="index"
-                          tickLine={false}
-                          axisLine={false}
-                          tickMargin={8}
-                        />
-                        <YAxis
-                          allowDecimals={false}
-                          tickLine={false}
-                          axisLine={false}
-                        />
-                        <Tooltip content={<LabourTooltip />} />
-                        {labourMetricKeys.map((key, index) => (
-                          <Bar
-                            key={key}
-                            dataKey={key}
-                            stackId="labour"
-                            fill={labourColors[index % labourColors.length]}
-                            radius={
-                              index === labourMetricKeys.length - 1
-                                ? [4, 4, 0, 0]
-                                : 0
-                            }
-                          />
-                        ))}
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                </div>
-              </>
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                No labour data available for this period.
-              </p>
-            )}
-          </CardContent>
-        </Card>
+      <div ref={chartsRef} className="grid grid-cols-1 gap-4 mt-4">
+        <Suspense
+          fallback={
+            <Card>
+              <CardHeader className="space-y-1">
+                <CardTitle className="text-lg md:text-xl">
+                  Manpower Report
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  Loading manpower report...
+                </p>
+              </CardContent>
+            </Card>
+          }
+        >
+          {chartsInView ? (
+            <LabourChart
+              labourChartData={labourChartData}
+              labourMetricKeys={labourMetricKeys}
+              labourColors={labourColors}
+            />
+          ) : (
+            <Card>
+              <CardHeader className="space-y-1">
+                <CardTitle className="text-lg md:text-xl">
+                  Manpower Report
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  Scroll to load chart...
+                </p>
+              </CardContent>
+            </Card>
+          )}
+        </Suspense>
       </div>
 
-      {/* project graph second row  */}
       <div className="grid grid-cols-1 gap-4 mt-4">
-        <Card>
-          <CardHeader className="space-y-1">
-            <CardTitle className="text-lg md:text-xl">
-              Daily Project Report (Current Month)
-            </CardTitle>
-            {/* <CardDescription className="text-sm">
-              Daily project distribution by status. X-axis shows the day of the
-              month and Y-axis shows the number of elements.
-            </CardDescription> */}
-          </CardHeader>
-
-          <CardContent>
-            {projectChartData.length ? (
-              <>
-                {projectMetricKeys.length > 0 && (
-                  <div className="mb-4 w-full overflow-x-auto">
-                    <div className="flex flex-wrap gap-3 pb-2">
-                      {projectMetricKeys.map((key, index) => (
-                        <div
-                          key={key}
-                          className="flex items-center gap-2 text-xs md:text-sm text-muted-foreground whitespace-nowrap"
-                        >
-                          <span
-                            className="h-2 w-2 rounded-full flex-shrink-0"
-                            style={{
-                              backgroundColor:
-                                labourColors[index % labourColors.length],
-                            }}
-                          />
-                          <span className="truncate max-w-[160px]" title={key}>
-                            {key}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                <div className="w-full overflow-x-auto overflow-y-hidden pb-2">
-                  <div className="h-[480px] min-w-[720px] md:min-w-0 md:w-full">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={projectChartData}>
-                        <CartesianGrid
-                          strokeDasharray="3 3"
-                          vertical={false}
-                          className="stroke-muted"
-                        />
-                        <XAxis
-                          dataKey="index"
-                          tickLine={false}
-                          axisLine={false}
-                          tickMargin={8}
-                        />
-                        <YAxis
-                          allowDecimals={false}
-                          tickLine={false}
-                          axisLine={false}
-                        />
-                        <Tooltip content={<LabourTooltip />} />
-                        {projectMetricKeys.map((key, index) => (
-                          <Line
-                            key={key}
-                            type="monotone"
-                            dataKey={key}
-                            stroke={labourColors[index % labourColors.length]}
-                            strokeWidth={2}
-                            dot={{ r: 3 }}
-                            activeDot={{ r: 5 }}
-                          />
-                        ))}
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </div>
-                </div>
-              </>
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                No project data available for this period.
-              </p>
-            )}
-          </CardContent>
-        </Card>
+        <Suspense
+          fallback={
+            <Card>
+              <CardHeader className="space-y-1">
+                <CardTitle className="text-lg md:text-xl">
+                  Daily Project Report (Current Month)
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  Loading project report...
+                </p>
+              </CardContent>
+            </Card>
+          }
+        >
+          {chartsInView ? (
+            <ProjectChart
+              projectChartData={projectChartData}
+              projectMetricKeys={projectMetricKeys}
+              labourColors={labourColors}
+            />
+          ) : (
+            <Card>
+              <CardHeader className="space-y-1">
+                <CardTitle className="text-lg md:text-xl">
+                  Daily Project Report (Current Month)
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  Scroll to load chart...
+                </p>
+              </CardContent>
+            </Card>
+          )}
+        </Suspense>
       </div>
     </div>
   );

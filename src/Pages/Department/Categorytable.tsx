@@ -172,14 +172,6 @@ export const getColumns = (
             <DropdownMenuItem onClick={handleEdit}>
               Edit Category
             </DropdownMenuItem>
-            <DropdownMenuItem>
-              <button
-                className="flex gap-2 w-full text-left"
-                onClick={() => handleDelete(category.id)}
-              >
-                Delete Category
-              </button>
-            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       );
@@ -278,7 +270,7 @@ export function Categorytable({ refresh }: { refresh: () => void }) {
     },
   });
 
-   const handleDownloadPDF = () => {
+  const handleDownloadPDF = () => {
     const selectedRows = table.getFilteredSelectedRowModel().rows;
 
     generatePDFFromTable({
@@ -294,7 +286,9 @@ export function Categorytable({ refresh }: { refresh: () => void }) {
           formatDisplayDate(category.updated_at),
         ];
       },
-      fileName: `categories-report-${new Date().toISOString().split("T")[0]}.pdf`,
+      fileName: `categories-report-${
+        new Date().toISOString().split("T")[0]
+      }.pdf`,
       successMessage: "PDF downloaded successfully with {count} category(s)",
       emptySelectionMessage: "Please select at least one row to download",
       titleFontSize: 24,
