@@ -43,7 +43,7 @@ import { toast } from "sonner";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { formatDisplayDate } from "@/utils/formatdate";
-import { useParams } from "react-router";
+import { useNavigate, useParams } from "react-router";
 import PageHeader from "@/components/ui/PageHeader";
 import { generatePDFFromTable } from "@/utils/pdfGenerator";
 
@@ -90,9 +90,25 @@ const getColumns = (
   {
     accessorKey: "element_element_id",
     header: "Element Name",
-    cell: ({ row }) => (
-      <div className="capitalize">{row.getValue("element_element_id")}</div>
-    ),
+    cell: ({ row }) => {
+      const navigate = useNavigate();
+      const { projectId } = useParams();
+      return (
+        <div
+          className="flex flex-col gap-2"
+          onClick={() => {
+            navigate(
+              `/project/${projectId}/element-detail/${row.original.stock_element_id}`
+            );
+          }}
+        >
+          {row.getValue("element_element_id")}
+          <span className="text-xs text-accent-foreground">
+            {row.original.stock_element_id}
+          </span>
+        </div>
+      );
+    },
   },
 
   {
@@ -220,7 +236,14 @@ export function DispatchedReadyTable() {
     generatePDFFromTable({
       selectedRows,
       title: "Dispatched Ready Report",
-      headers: ["Element Name", "Element Type", "Element Type Name", "Weight", "Floor Name", "Tower Name"],
+      headers: [
+        "Element Name",
+        "Element Type",
+        "Element Type Name",
+        "Weight",
+        "Floor Name",
+        "Tower Name",
+      ],
       dataMapper: (row): string[] => {
         const dispatchedReady = row.original as DispatchedReady;
         return [
@@ -232,8 +255,11 @@ export function DispatchedReadyTable() {
           dispatchedReady.tower_name || "—",
         ];
       },
-      fileName: `dispatched-ready-report-${new Date().toISOString().split("T")[0]}.pdf`,
-      successMessage: "PDF downloaded successfully with {count} dispatched ready(s)",
+      fileName: `dispatched-ready-report-${
+        new Date().toISOString().split("T")[0]
+      }.pdf`,
+      successMessage:
+        "PDF downloaded successfully with {count} dispatched ready(s)",
       emptySelectionMessage: "Please select at least one row to download",
       titleFontSize: 24,
       headerColor: "#283C6E",

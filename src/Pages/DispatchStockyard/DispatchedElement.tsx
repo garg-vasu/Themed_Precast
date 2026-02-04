@@ -159,7 +159,8 @@ const getColumns = (
     accessorKey: "dispatch_date",
     header: ({ column }) => (
       <Button
-        variant="ghost"
+        variant="customPadding"
+        size="noPadding"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
       >
         Dispatch Date
@@ -268,7 +269,7 @@ const getColumns = (
       };
 
       return (
-        <Button variant="ghost" onClick={handleDownloadPDF}>
+        <Button color="primary" onClick={handleDownloadPDF}>
           Download PDF
         </Button>
         // <DropdownMenu>

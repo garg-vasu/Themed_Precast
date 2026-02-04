@@ -158,10 +158,8 @@ function NavigationItemComponent({
           onClick={() => !isCollapsed && setIsOpen(!isOpen)}
           className={`flex items-center w-full ${
             isCollapsed ? "justify-center" : "justify-between"
-          } px-3 py-2 rounded-md text-sm font-normal transition-colors duration-150 ${
-            hasActiveChild
-              ? "bg-sidebar-accent/50 border-l-2 border-sidebar-primary text-sidebar-foreground"
-              : "hover:bg-sidebar-accent text-sidebar-foreground"
+          } px-3 py-2 rounded-md text-sm font-normal transition-colors duration-150 hover:bg-sidebar-accent ${
+            hasActiveChild ? "text-sidebar-primary" : "text-sidebar-foreground"
           }`}
           style={{
             paddingLeft: isCollapsed
@@ -224,7 +222,7 @@ function NavigationItemComponent({
         isCollapsed ? "justify-center" : "justify-start"
       } space-x-3 px-3 py-2 rounded-md text-sm font-normal transition-colors duration-150 ${
         isActive
-          ? "bg-sidebar-primary text-sidebar-primary-foreground"
+          ? "text-sidebar-primary"
           : "hover:bg-sidebar-accent text-sidebar-foreground"
       }`}
       style={{
@@ -234,7 +232,7 @@ function NavigationItemComponent({
     >
       <Icon
         className={`h-5 w-5 flex-shrink-0 ${
-          isActive ? "text-sidebar-primary-foreground" : ""
+          isActive ? "text-sidebar-primary" : ""
         }`}
       />
       {!isCollapsed && <span className="truncate">{item.name}</span>}

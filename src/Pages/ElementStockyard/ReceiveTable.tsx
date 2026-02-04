@@ -89,6 +89,7 @@ interface StockyardOption {
 type Element = {
   element_id: number;
   element_name: string;
+  element_type_name: string;
   element_type: string;
   thickness?: number;
   length?: number;
@@ -195,11 +196,19 @@ export function ReceiveTable() {
       ),
     },
     {
+      accessorKey: "element_type_name",
+      header: "Element Type Name",
+      cell: ({ row }) => (
+        <div className="capitalize">{row.getValue("element_type_name")}</div>
+      ),
+    },
+    {
       accessorKey: "thickness",
       header: ({ column }) => {
         return (
           <Button
-            variant="ghost"
+            variant="customPadding"
+            size="noPadding"
             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           >
             Thickness
@@ -216,7 +225,8 @@ export function ReceiveTable() {
       header: ({ column }) => {
         return (
           <Button
-            variant="ghost"
+            variant="customPadding"
+            size="noPadding"
             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           >
             Length
@@ -233,7 +243,8 @@ export function ReceiveTable() {
       header: ({ column }) => {
         return (
           <Button
-            variant="ghost"
+            variant="customPadding"
+            size="noPadding"
             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           >
             Height
@@ -250,7 +261,8 @@ export function ReceiveTable() {
       header: ({ column }) => {
         return (
           <Button
-            variant="ghost"
+            variant="customPadding"
+            size="noPadding"
             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           >
             Mass
@@ -261,11 +273,7 @@ export function ReceiveTable() {
       // round of the mass to 3 decimal places
       cell: ({ row }) => {
         const mass = row.getValue("mass") as number;
-        return (
-          <div className="text-right font-medium">
-            {mass ? mass.toFixed(3) : "—"}
-          </div>
-        );
+        return <div className="">{mass ? mass.toFixed(3) : "—"}</div>;
       },
     },
 
@@ -274,7 +282,8 @@ export function ReceiveTable() {
       accessorKey: "production_date",
       header: ({ column }) => (
         <Button
-          variant="ghost"
+          variant="customPadding"
+          size="noPadding"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
           Production Date

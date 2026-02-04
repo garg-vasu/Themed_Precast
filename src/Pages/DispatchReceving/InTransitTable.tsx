@@ -279,7 +279,8 @@ export const getColumns = (
     accessorKey: "dispatch_date",
     header: ({ column }) => (
       <Button
-        variant="ghost"
+        variant="customPadding"
+        size="noPadding"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
       >
         Dispatch Date
@@ -407,7 +408,15 @@ export function InTransitTable({ refresh }: { refresh: () => void }) {
     generatePDFFromTable({
       selectedRows,
       title: "In Transit Report",
-      headers: ["Dispatch Order ID", "Project Name", "Driver Name", "Vehicle ID", "Item Count", "Status", "Dispatch Date"],
+      headers: [
+        "Dispatch Order ID",
+        "Project Name",
+        "Driver Name",
+        "Vehicle ID",
+        "Item Count",
+        "Status",
+        "Dispatch Date",
+      ],
       dataMapper: (row): string[] => {
         const inTransit = row.original as DispatchLog;
         return [
@@ -420,8 +429,11 @@ export function InTransitTable({ refresh }: { refresh: () => void }) {
           formatDisplayDate(inTransit.dispatch_date) || "—",
         ];
       },
-      fileName: `in-transit-report-${new Date().toISOString().split("T")[0]}.pdf`,
-      successMessage: "PDF downloaded successfully with {count} in transit order(s)",
+      fileName: `in-transit-report-${
+        new Date().toISOString().split("T")[0]
+      }.pdf`,
+      successMessage:
+        "PDF downloaded successfully with {count} in transit order(s)",
       emptySelectionMessage: "Please select at least one row to download",
       titleFontSize: 24,
       headerColor: "#283C6E",

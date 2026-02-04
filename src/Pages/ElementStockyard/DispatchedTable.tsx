@@ -29,19 +29,21 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import axios, { AxiosError } from "axios";
 import { apiClient } from "@/utils/apiClient";
 import { toast } from "sonner";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { formatDisplayDate } from "@/utils/formatdate";
-import { useParams } from "react-router";
+import { useNavigate, useParams } from "react-router";
 import { generatePDFFromTable } from "@/utils/pdfGenerator";
+import { ProjectContext } from "@/Provider/ProjectProvider";
 
 export type Stockyard = {
   id: number;
   element_name: string;
+  element_type_name: string;
   element_id: number;
   element_type: string;
   element_type_id: number;
@@ -67,7 +69,7 @@ export type Stockyard = {
   disable: boolean;
 };
 
-export const columns: ColumnDef<Stockyard>[] = [
+export const columns = (permissions: string[]): ColumnDef<Stockyard>[] => [
   {
     id: "select",
     header: ({ table }) => (
@@ -98,9 +100,31 @@ export const columns: ColumnDef<Stockyard>[] = [
   {
     accessorKey: "element_name",
     header: "Element Name",
-    cell: ({ row }) => (
-      <div className="capitalize">{row.getValue("element_name")}</div>
-    ),
+    cell: ({ row }) => {
+      const navigate = useNavigate();
+      const { projectId } = useParams();
+      return (
+        <div
+          className={`flex flex-col gap-2 ${
+            permissions?.includes("ViewElementDetail")
+              ? "cursor-pointer"
+              : "cursor-not-allowed"
+          }`}
+          onClick={() => {
+            if (permissions?.includes("ViewElementDetail")) {
+              navigate(
+                `/project/${projectId}/element-detail/${row.original.element_id}`
+              );
+            }
+          }}
+        >
+          {row.getValue("element_name")}
+          <span className="text-xs text-accent-foreground">
+            {row.original.element_id}
+          </span>
+        </div>
+      );
+    },
   },
 
   {
@@ -111,11 +135,19 @@ export const columns: ColumnDef<Stockyard>[] = [
     ),
   },
   {
+    accessorKey: "element_type_name",
+    header: "Element Type Name",
+    cell: ({ row }) => (
+      <div className="capitalize">{row.getValue("element_type_name")}</div>
+    ),
+  },
+  {
     accessorKey: "thickness",
     header: ({ column }) => {
       return (
         <Button
-          variant="ghost"
+          variant="customPadding"
+          size="noPadding"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
           Thickness
@@ -132,7 +164,8 @@ export const columns: ColumnDef<Stockyard>[] = [
     header: ({ column }) => {
       return (
         <Button
-          variant="ghost"
+          variant="customPadding"
+          size="noPadding"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
           Length
@@ -149,7 +182,8 @@ export const columns: ColumnDef<Stockyard>[] = [
     header: ({ column }) => {
       return (
         <Button
-          variant="ghost"
+          variant="customPadding"
+          size="noPadding"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
           Height
@@ -166,7 +200,8 @@ export const columns: ColumnDef<Stockyard>[] = [
     header: ({ column }) => {
       return (
         <Button
-          variant="ghost"
+          variant="customPadding"
+          size="noPadding"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
           Mass
@@ -177,11 +212,7 @@ export const columns: ColumnDef<Stockyard>[] = [
     // round of the mass to 3 decimal places
     cell: ({ row }) => {
       const mass = row.getValue("mass") as number;
-      return (
-        <div className="text-right font-medium">
-          {mass ? mass.toFixed(3) : "—"}
-        </div>
-      );
+      return <div className="">{mass ? mass.toFixed(3) : "—"}</div>;
     },
   },
 
@@ -190,7 +221,8 @@ export const columns: ColumnDef<Stockyard>[] = [
     accessorKey: "production_date",
     header: ({ column }) => (
       <Button
-        variant="ghost"
+        variant="customPadding"
+        size="noPadding"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
       >
         Production Date
@@ -236,6 +268,8 @@ const getErrorMessage = (error: AxiosError | unknown, data: string): string => {
 
 export function DispatchedTable() {
   const [sorting, setSorting] = useState<SortingState>([]);
+  const projectCtx = useContext(ProjectContext);
+  const permissions = projectCtx?.permissions || [];
   const { projectId } = useParams();
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
@@ -279,7 +313,7 @@ export function DispatchedTable() {
 
   const table = useReactTable({
     data,
-    columns,
+    columns: columns(permissions),
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),

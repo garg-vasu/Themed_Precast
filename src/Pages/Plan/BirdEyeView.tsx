@@ -4,6 +4,8 @@ import { useParams } from "react-router-dom";
 import {
   ChevronDown,
   ChevronUp,
+  ChevronsDown,
+  ChevronsUp,
   QrCode,
   Download,
   Loader2,
@@ -154,6 +156,18 @@ const TableView = () => {
 
   const toggleExpand = (index: number) => {
     setExpanded((prev) => ({ ...prev, [index]: !prev[index] }));
+  };
+
+  const expandAll = () => {
+    const allExpanded: { [key: number]: boolean } = {};
+    tasks.forEach((_, index) => {
+      allExpanded[index] = true;
+    });
+    setExpanded(allExpanded);
+  };
+
+  const collapseAll = () => {
+    setExpanded({});
   };
 
   const getStatusColor = (status: string, qc_status: string | undefined) => {
@@ -339,6 +353,16 @@ const TableView = () => {
 
   return (
     <>
+      <div className="flex gap-2 mb-4">
+        <Button variant="outline" size="sm" onClick={expandAll}>
+          <ChevronsDown className="h-4 w-4 mr-2" />
+          Expand All
+        </Button>
+        <Button variant="outline" size="sm" onClick={collapseAll}>
+          <ChevronsUp className="h-4 w-4 mr-2" />
+          Collapse All
+        </Button>
+      </div>
       <div className="space-y-2">
         {tasks.map((listView, index) => {
           const stageNames = [

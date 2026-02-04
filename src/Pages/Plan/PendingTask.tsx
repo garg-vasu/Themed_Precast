@@ -318,7 +318,7 @@ export default function PendingTask() {
                                 <SelectItem value="completed">
                                   Completed
                                 </SelectItem>
-                                <SelectItem value="InProgress">
+                                <SelectItem value="Inprogress">
                                   In Progress
                                 </SelectItem>
                                 <SelectItem value="Onhold">On Hold</SelectItem>

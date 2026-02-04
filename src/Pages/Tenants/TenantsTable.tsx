@@ -326,7 +326,7 @@ export function TenantsTable() {
         setCurrentPage(1); // Reset to first page when filters change
       }
     },
-    [filterState],
+    [filterState]
   );
 
   const handleFilterClose = useCallback(() => {
@@ -448,7 +448,8 @@ export function TenantsTable() {
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
+    manualPagination: true,
+    pageCount: pagination?.total_pages ?? 0,
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
@@ -588,7 +589,7 @@ export function TenantsTable() {
                         ? null
                         : flexRender(
                             header.column.columnDef.header,
-                            header.getContext(),
+                            header.getContext()
                           )}
                     </TableHead>
                   );
@@ -607,7 +608,7 @@ export function TenantsTable() {
                     <TableCell key={cell.id}>
                       {flexRender(
                         cell.column.columnDef.cell,
-                        cell.getContext(),
+                        cell.getContext()
                       )}
                     </TableCell>
                   ))}
@@ -682,7 +683,7 @@ export function TenantsTable() {
                 setCurrentPage((prev) =>
                   pagination
                     ? Math.min(pagination.total_pages, prev + 1)
-                    : prev + 1,
+                    : prev + 1
                 )
               }
               disabled={

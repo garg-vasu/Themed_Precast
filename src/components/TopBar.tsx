@@ -50,6 +50,13 @@ interface TopBarProps {
   onToggleSidebar: () => void;
 }
 
+const buildAvatarSrc = (profilePicture?: string) => {
+  if (!profilePicture) return "";
+  const baseUrl = import.meta.env.VITE_API_URL;
+  if (!baseUrl) return profilePicture;
+  return `${baseUrl}/get-file?file=${encodeURIComponent(profilePicture)}`;
+};
+
 export default function TopBar({ onToggleSidebar }: TopBarProps) {
   const navigate = useNavigate();
   const { user } = useContext(UserContext);
@@ -99,10 +106,10 @@ export default function TopBar({ onToggleSidebar }: TopBarProps) {
               >
                 <Avatar className="size-8">
                   <AvatarImage
-                    src={user?.profile_picture}
+                    src={buildAvatarSrc(user?.profile_picture)}
                     alt={user?.first_name || "User"}
                   />
-                  <AvatarFallback className="bg-primary text-primary-foreground text-sm font-medium">
+                  <AvatarFallback className="bg-primary text-white text-sm font-medium">
                     {getInitials()}
                   </AvatarFallback>
                 </Avatar>

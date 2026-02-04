@@ -188,7 +188,8 @@ export const getColumns = (): ColumnDef<DispatchLog>[] => [
     accessorKey: "dispatch_date",
     header: ({ column }) => (
       <Button
-        variant="ghost"
+        variant="customPadding"
+        size="noPadding"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
       >
         Dispatch Date
@@ -199,11 +200,6 @@ export const getColumns = (): ColumnDef<DispatchLog>[] => [
       const raw = row.getValue("dispatch_date") as string | undefined;
       return <div>{formatDisplayDate(raw)}</div>;
     },
-  },
-
-  {
-    id: "actions",
-    enableHiding: false,
   },
 ];
 
@@ -301,13 +297,21 @@ export function DeliveredTable({ refresh }: { refresh: () => void }) {
     },
   });
 
-   const handleDownloadPDF = () => {
+  const handleDownloadPDF = () => {
     const selectedRows = table.getFilteredSelectedRowModel().rows;
 
     generatePDFFromTable({
       selectedRows,
       title: "Delivered Report",
-      headers: ["Dispatch Order ID", "Project Name", "Driver Name", "Vehicle ID", "Item Count", "Status", "Dispatch Date"],
+      headers: [
+        "Dispatch Order ID",
+        "Project Name",
+        "Driver Name",
+        "Vehicle ID",
+        "Item Count",
+        "Status",
+        "Dispatch Date",
+      ],
       dataMapper: (row): string[] => {
         const delivered = row.original as DispatchLog;
         return [
@@ -320,8 +324,11 @@ export function DeliveredTable({ refresh }: { refresh: () => void }) {
           formatDisplayDate(delivered.dispatch_date) || "—",
         ];
       },
-      fileName: `delivered-report-${new Date().toISOString().split("T")[0]}.pdf`,
-      successMessage: "PDF downloaded successfully with {count} delivered order(s)",
+      fileName: `delivered-report-${
+        new Date().toISOString().split("T")[0]
+      }.pdf`,
+      successMessage:
+        "PDF downloaded successfully with {count} delivered order(s)",
       emptySelectionMessage: "Please select at least one row to download",
       titleFontSize: 24,
       headerColor: "#283C6E",

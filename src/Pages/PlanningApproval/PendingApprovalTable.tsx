@@ -96,7 +96,7 @@ export const getColumns = (
       const isDisabled = row.original.disable;
       return (
         <div
-          className={`capitalize ${
+          className={`flex flex-col gap-2 ${
             isDisabled ? "cursor-not-allowed" : "cursor-pointer"
           }`}
           onClick={() => {
@@ -109,6 +109,9 @@ export const getColumns = (
           }}
         >
           {row.getValue("element_name")}
+          <span className="text-xs text-accent-foreground">
+            {row.original.element_id}
+          </span>
         </div>
       );
     },

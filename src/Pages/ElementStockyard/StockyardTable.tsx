@@ -42,6 +42,7 @@ import { ProjectContext } from "@/Provider/ProjectProvider";
 
 export type Stockyard = {
   id: number;
+  element_type_name: string;
   element_name: string;
   element_id: number;
   element_type: string;
@@ -117,7 +118,13 @@ export const getColumns = (permissions: string[]): ColumnDef<Stockyard>[] => [
             }
           }}
         >
-          {row.getValue("element_name")}
+          <div className="flex flex-col gap-2">
+            {row.getValue("element_name")}
+            {/* apply accent color  */}
+            <span className="text-xs text-accent-foreground">
+              {row.original.element_id}
+            </span>
+          </div>
         </div>
       );
     },
@@ -131,11 +138,19 @@ export const getColumns = (permissions: string[]): ColumnDef<Stockyard>[] => [
     ),
   },
   {
+    accessorKey: "element_type_name",
+    header: "Element Type Name",
+    cell: ({ row }) => (
+      <div className="capitalize">{row.getValue("element_type_name")}</div>
+    ),
+  },
+  {
     accessorKey: "thickness",
     header: ({ column }) => {
       return (
         <Button
-          variant="ghost"
+          variant="customPadding"
+          size="noPadding"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
           Thickness
@@ -152,7 +167,8 @@ export const getColumns = (permissions: string[]): ColumnDef<Stockyard>[] => [
     header: ({ column }) => {
       return (
         <Button
-          variant="ghost"
+          variant="customPadding"
+          size="noPadding"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
           Length
@@ -169,7 +185,8 @@ export const getColumns = (permissions: string[]): ColumnDef<Stockyard>[] => [
     header: ({ column }) => {
       return (
         <Button
-          variant="ghost"
+          variant="customPadding"
+          size="noPadding"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
           Height
@@ -186,7 +203,8 @@ export const getColumns = (permissions: string[]): ColumnDef<Stockyard>[] => [
     header: ({ column }) => {
       return (
         <Button
-          variant="ghost"
+          variant="customPadding"
+          size="noPadding"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
           Mass
@@ -197,11 +215,7 @@ export const getColumns = (permissions: string[]): ColumnDef<Stockyard>[] => [
     // round of the mass to 3 decimal places
     cell: ({ row }) => {
       const mass = row.getValue("mass") as number;
-      return (
-        <div className="text-right font-medium">
-          {mass ? mass.toFixed(3) : "—"}
-        </div>
-      );
+      return <div className="">{mass ? mass.toFixed(3) : "—"}</div>;
     },
   },
 
@@ -210,7 +224,8 @@ export const getColumns = (permissions: string[]): ColumnDef<Stockyard>[] => [
     accessorKey: "production_date",
     header: ({ column }) => (
       <Button
-        variant="ghost"
+        variant="customPadding"
+        size="noPadding"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
       >
         Production Date

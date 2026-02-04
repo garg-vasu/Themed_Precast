@@ -90,6 +90,8 @@ export default function AddAssignMember({
   const { projectId } = useParams<{ projectId: string }>();
   const [users, setUsers] = useState<User[]>([]);
 
+  console.log(initialData);
+
   const getDefaultValues = (): Partial<FormData> => {
     if (!initialData) {
       return {
@@ -200,7 +202,7 @@ export default function AddAssignMember({
         {/* 2 row layout  */}
         <div>
           {/* two grid layout */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4 mt-4">
+          <div className="grid grid-cols-1  gap-4 mt-4">
             {/* select a project */}
             <div className="grid w-full items-center gap-1.5">
               <Label htmlFor="select_user">
@@ -225,8 +227,8 @@ export default function AddAssignMember({
                         {users && users.length > 0 ? (
                           users.map((user) => (
                             <SelectItem
-                              key={user.id}
-                              value={user.id.toString()}
+                              key={user.user_id}
+                              value={user.user_id.toString()}
                             >
                               {`${user.first_name || ""} ${
                                 user.last_name || ""
