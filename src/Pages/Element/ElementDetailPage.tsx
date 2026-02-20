@@ -132,7 +132,7 @@ export default function ElementDetailPage() {
   }
 
   return (
-    <div className="flex w-full flex-col gap-2 px-4 py-4">
+    <div className="flex w-full flex-col gap-2 px-4 py-4 text-sm">
       <PageHeader title={`Element ${elementdata.element_id ?? ""}`} />
 
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
@@ -142,13 +142,13 @@ export default function ElementDetailPage() {
             <CardTitle>Basics</CardTitle>
           </CardHeader>
           <CardContent>
-            <dl className="grid grid-cols-1 gap-2">
+            <dl className="grid grid-cols-1 gap-2 text-sm">
               <div>
                 <dt className="text-muted-foreground">Name</dt>
                 <dd>{elementdata.element_id || "-"}</dd>
               </div>
               <div>
-                <dt className="text-muted-foreground">Element type version</dt>
+                <dt className="text-muted-foreground ">Element type version</dt>
                 <dd>{elementdata.element_type?.element_type || "-"}</dd>
               </div>
               <div>
@@ -179,12 +179,7 @@ export default function ElementDetailPage() {
               </div>
               <div>
                 <dt className="text-muted-foreground">Created by</dt>
-                <dd>
-                  {elementdata.element_type?.created_by || "-"}{" "}
-                  {formatCustomDate(
-                    elementdata.element_type?.created_at_formatted
-                  )}
-                </dd>
+                <dd>{elementdata.element_type?.created_by || "-"} </dd>
               </div>
               <div>
                 <dt className="text-muted-foreground">Created at</dt>
@@ -194,7 +189,7 @@ export default function ElementDetailPage() {
                 <dt className="text-muted-foreground">Updated at</dt>
                 <dd>
                   {formatCustomDate(
-                    elementdata.element_type?.updated_at_formatted
+                    elementdata.element_type?.updated_at_formatted,
                   )}
                 </dd>
               </div>
@@ -209,18 +204,18 @@ export default function ElementDetailPage() {
                     "-"}
                 </dd>
               </div>
-              <div>
+              {/* <div>
                 <dt className="text-muted-foreground">Stressing type</dt>
                 <dd>
                   {elementdata.element_type?.stressing_type || "Reinforced"}
                 </dd>
-              </div>
+              </div> */}
             </dl>
           </CardContent>
         </Card>
 
         {/* Drawings & BOM */}
-        <Card className="md:col-span-1 xl:col-span-2">
+        <Card className="md:col-span-1 xl:col-span-2 text-sm">
           <CardHeader>
             <CardTitle>Drawings & materials</CardTitle>
           </CardHeader>
@@ -279,7 +274,7 @@ export default function ElementDetailPage() {
                               rel="noopener noreferrer"
                               className="text-primary underline-offset-4 hover:underline"
                             >
-                              File
+                              View
                             </a>
                           ) : (
                             <span className="text-muted-foreground">
@@ -316,7 +311,7 @@ export default function ElementDetailPage() {
                                       rel="noopener noreferrer"
                                       className="text-primary underline-offset-4 hover:underline"
                                     >
-                                      File
+                                      View
                                     </a>
                                   ) : (
                                     <span className="text-muted-foreground">

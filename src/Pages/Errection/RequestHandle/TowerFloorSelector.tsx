@@ -7,7 +7,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface Data {
@@ -41,91 +40,107 @@ const TowerFloorSelector: React.FC<TowerFloorSelectorProps> = ({
   const floorError = showErrors && !!selectedTower && !selectedFloor;
 
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <CardTitle className="text-base md:text-lg">
-          Step 1 · Choose tower & floor
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3">
+    <section className="space-y-3 ">
+      <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-sm font-semibold md:text-base">
+          Step 1 · Choose tower &amp; floor
+        </p>
         {!hasAnyData && (
-          <Alert variant="destructive">
-            <AlertDescription>
-              No towers or floors are available for this project.
-            </AlertDescription>
-          </Alert>
+          <span className="text-xs text-muted-foreground">
+            No towers or floors configured for this project.
+          </span>
         )}
+      </div>
 
-        <div className="grid gap-3 md:grid-cols-2">
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between">
-              <Label
-                htmlFor="tower-select"
-                className="text-sm font-medium text-muted-foreground"
-              >
-                Tower
-              </Label>
-              {towerError && (
-                <span className="text-xs text-destructive">Required</span>
-              )}
-            </div>
-            <Select
-              value={selectedTower}
-              onValueChange={onSelectTower}
-              disabled={!hasAnyData}
+      {!hasAnyData && (
+        <Alert variant="destructive">
+          <AlertDescription>
+            No towers or floors are available for this project.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      <div className="grid gap-2  grid-cols-2 w-full ">
+        <div className="space-y-1.5 w-full">
+          <div className="flex items-center justify-between w-full">
+            <Label
+              htmlFor="tower-select"
+              className="text-xs font-medium text-muted-foreground sm:text-sm"
             >
-              <SelectTrigger
-                id="tower-select"
-                className={towerError ? "border-destructive" : ""}
-              >
-                <SelectValue placeholder="Select a tower" />
-              </SelectTrigger>
-              <SelectContent>
-                {Object.keys(data).map((tower) => (
-                  <SelectItem key={tower} value={tower}>
-                    {tower}
+              Tower
+            </Label>
+            {towerError && (
+              <span className="text-xs text-destructive">Required</span>
+            )}
+          </div>
+          <Select
+            value={selectedTower}
+            onValueChange={onSelectTower}
+            disabled={!hasAnyData}
+          >
+            <SelectTrigger
+              id="tower-select"
+              className={`h-9 text-xs sm:text-sm ${
+                towerError ? "border-destructive" : ""
+              }`}
+            >
+              <SelectValue placeholder="Select a tower" />
+            </SelectTrigger>
+            <SelectContent>
+              {Object.keys(data).map((tower) => (
+                <SelectItem
+                  key={tower}
+                  value={tower}
+                  className="text-xs sm:text-sm"
+                >
+                  {tower}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between">
+            <Label
+              htmlFor="floor-select"
+              className="text-xs font-medium text-muted-foreground sm:text-sm"
+            >
+              Floor
+            </Label>
+            {floorError && (
+              <span className="text-xs text-destructive">Required</span>
+            )}
+          </div>
+          <Select
+            value={selectedFloor}
+            onValueChange={onSelectFloor}
+            disabled={!selectedTower}
+          >
+            <SelectTrigger
+              id="floor-select"
+              className={`h-9 text-xs sm:text-sm ${
+                floorError ? "border-destructive" : ""
+              }`}
+            >
+              <SelectValue placeholder="Select a floor" />
+            </SelectTrigger>
+            <SelectContent>
+              {selectedTower &&
+                Object.keys(data[selectedTower]).map((floor) => (
+                  <SelectItem
+                    key={floor}
+                    value={floor}
+                    className="text-xs sm:text-sm"
+                  >
+                    {floor}
                   </SelectItem>
                 ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between">
-              <Label
-                htmlFor="floor-select"
-                className="text-sm font-medium text-muted-foreground"
-              >
-                Floor
-              </Label>
-              {floorError && (
-                <span className="text-xs text-destructive">Required</span>
-              )}
-            </div>
-            <Select
-              value={selectedFloor}
-              onValueChange={onSelectFloor}
-              disabled={!selectedTower}
-            >
-              <SelectTrigger
-                id="floor-select"
-                className={floorError ? "border-destructive" : ""}
-              >
-                <SelectValue placeholder="Select a floor" />
-              </SelectTrigger>
-              <SelectContent>
-                {selectedTower &&
-                  Object.keys(data[selectedTower]).map((floor) => (
-                    <SelectItem key={floor} value={floor}>
-                      {floor}
-                    </SelectItem>
-                  ))}
-              </SelectContent>
-            </Select>
-          </div>
+            </SelectContent>
+          </Select>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </section>
   );
 };
 

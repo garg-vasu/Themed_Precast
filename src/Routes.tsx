@@ -8,6 +8,8 @@ import ProjectMainLayout from "./ProjectLayout/ProjectMainLayout";
 import { ProjectProvider } from "./Provider/ProjectProvider";
 import ProjectRoleRoute from "./Pages/Limitation/ProjectRoleRoute";
 import RoleRoute from "./Pages/Limitation/RoleRoute";
+import CapabilityRoute from "./Pages/Limitation/CapabilityRoute";
+import type { Capabilities } from "./Provider/UserProvider";
 import NotFound from "./Pages/NotFound/NotFound";
 
 const Login = lazy(() => import("./Pages/Login"));
@@ -15,7 +17,7 @@ const Home = lazy(() => import("./Pages/Home"));
 const ProjectCardView = lazy(() => import("./Pages/Projects/ProjectCardView"));
 const Project = lazy(() => import("./Pages/Projects/Project"));
 const StoreWarehouse = lazy(
-  () => import("./Pages/StoreWarehouse/StoreWarehouse")
+  () => import("./Pages/StoreWarehouse/StoreWarehouse"),
 );
 const Warehouse = lazy(() => import("./Pages/Warehouse/Warehouse"));
 const Tenants = lazy(() => import("./Pages/Tenants/Tenants"));
@@ -32,90 +34,90 @@ const MixDepartemnt = lazy(() => import("./Pages/Department/MixDepartemnt"));
 const PeopleTable = lazy(() =>
   import("./Pages/People/PeopleTable").then((module) => ({
     default: module.PeopleTable,
-  }))
+  })),
 );
 const AttendanceReport = lazy(
-  () => import("./Pages/LabourReports/AttendanceReport")
+  () => import("./Pages/LabourReports/AttendanceReport"),
 );
 const TemplateTable = lazy(() =>
   import("./Pages/Template/TemplateTable").then((module) => ({
     default: module.TemplateTable,
-  }))
+  })),
 );
 const Member = lazy(() => import("./Pages/ProjectMember/Member"));
 const MixDrawing = lazy(() => import("./Pages/Drawing/MixDrawing"));
 const MixElementStockyard = lazy(
-  () => import("./Pages/ElementStockyard/MixElementStockyard")
+  () => import("./Pages/ElementStockyard/MixElementStockyard"),
 );
 const StockyardAssigntable = lazy(() =>
   import("./Pages/ElementStockyard/StockyardAssigntable").then((module) => ({
     default: module.StockyardAssigntable,
-  }))
+  })),
 );
 const MixErrection = lazy(
-  () => import("./Pages/DispatchReceving/MixErrection")
+  () => import("./Pages/DispatchReceving/MixErrection"),
 );
 const MixElement = lazy(() => import("./Pages/Elementtype/MixElement"));
 const BomTable = lazy(() =>
   import("./Pages/Bom/BomTable").then((module) => ({
     default: module.BomTable,
-  }))
+  })),
 );
 const MixPlanningApproval = lazy(
-  () => import("./Pages/PlanningApproval/MixPlanningApproval")
+  () => import("./Pages/PlanningApproval/MixPlanningApproval"),
 );
 const RetificationTable = lazy(() =>
   import("./Pages/Retification/RetificationTable").then((module) => ({
     default: module.RetificationTable,
-  }))
+  })),
 );
 const ErrectionRequestTable = lazy(() =>
   import("./Pages/Errection/ErrectionRequestTable").then((module) => ({
     default: module.ErrectionRequestTable,
-  }))
+  })),
 );
 const PaperTable = lazy(() =>
   import("./Pages/Plan/Paper.tsx/PaperTable").then((module) => ({
     default: module.PaperTable,
-  }))
+  })),
 );
 const StagesTable = lazy(() =>
   import("./Pages/Plan/Stages/StagesTable").then((module) => ({
     default: module.StagesTable,
-  }))
+  })),
 );
 const TagsTable = lazy(() =>
   import("./Pages/Plan/Tags/TagsTable").then((module) => ({
     default: module.TagsTable,
-  }))
+  })),
 );
 const MixPlan = lazy(() => import("./Pages/Plan/MixPlan"));
 const AddTask = lazy(() => import("./Pages/Plan/AddTask/AddTask"));
 const ProjectSummary = lazy(
-  () => import("./Pages/ProjectReport/ProjectSummary")
+  () => import("./Pages/ProjectReport/ProjectSummary"),
 );
 const StockyardSummary = lazy(
-  () => import("./Pages/ProjectReport/StockyardSummary")
+  () => import("./Pages/ProjectReport/StockyardSummary"),
 );
 const AddElementType = lazy(() => import("./Pages/Elementtype/AddElementtype"));
 const Elementtypedetail = lazy(
-  () => import("./Pages/Elementtype/ElementtypeDetailPage")
+  () => import("./Pages/Elementtype/ElementtypeDetailPage"),
 );
 const ElementDetailPage = lazy(
-  () => import("./Pages/Element/ElementDetailPage")
+  () => import("./Pages/Element/ElementDetailPage"),
 );
 const RequestHandler = lazy(
-  () => import("./Pages/Errection/RequestHandle/RequestHandler")
+  () => import("./Pages/Errection/RequestHandle/RequestHandler"),
 );
 const MixDispatch = lazy(() => import("./Pages/DispatchStockyard/MixDispatch"));
 const MixErrectedElement = lazy(
-  () => import("./Pages/ErrectedElement/MixErrectedElement")
+  () => import("./Pages/ErrectedElement/MixErrectedElement"),
 );
 const MixWorkorder = lazy(
-  () => import("./Pages/WorkOrder/Detail/MixWorkorder")
+  () => import("./Pages/WorkOrder/Detail/MixWorkorder"),
 );
 const NewProjectDashboard = lazy(
-  () => import("./Pages/Projects/NewProjectDashboard")
+  () => import("./Pages/Projects/NewProjectDashboard"),
 );
 const AddTenants = lazy(() => import("./Pages/Tenants/AddTenants"));
 const EditTenants = lazy(() => import("./Pages/Tenants/EditTenants"));
@@ -123,36 +125,36 @@ const TenantDetailPage = lazy(() => import("./Pages/Tenants/TenantDetailPage"));
 const AddEndClient = lazy(() =>
   import("./Pages/EndClient/AddEndClient").then((module) => ({
     default: module.AddEndClient,
-  }))
+  })),
 );
 const EditEndClient = lazy(() => import("./Pages/EndClient/EditEndClient"));
 const EndClientDetailPage = lazy(() =>
   import("./Pages/EndClient/EndClientDetailPage").then((module) => ({
     default: module.EndClientDetailPage,
-  }))
+  })),
 );
 const UserDetailPage = lazy(() => import("./Pages/Users/UserDetailPage"));
 const InvoiceDetailPage = lazy(() =>
   import("./Pages/Invoice/InvoiceDetailPage").then((module) => ({
     default: module.InvoiceDetailPage,
-  }))
+  })),
 );
 const LogTable = lazy(() =>
   import("./Pages/log/LogTable").then((module) => ({
     default: module.LogTable,
-  }))
+  })),
 );
 const TenantviaEndclientDashboard = lazy(() =>
   import("./Pages/Projects/TenantviaEndclientDashboard").then((module) => ({
     default: module.TenantviaEndclientDashboard,
-  }))
+  })),
 );
 const AddWorkOrder = lazy(() => import("./Pages/WorkOrder/AddWorkOrder"));
 const EditWorkOrder = lazy(() => import("./Pages/WorkOrder/EditWorkOrder"));
 const EditElementType = lazy(
-  () => import("./Pages/Elementtype/EditElementtype")
+  () => import("./Pages/Elementtype/EditElementtype"),
 );
-const MixHierarchy = lazy(() => import("./Pages/Hierarchy/MixHierarchy"));
+const MixHierarchy = lazy(() => import("./Pages/Hierarchy/HierarchyTable"));
 const AddAttendance = lazy(() => import("./Pages/Attendance/AddAttendance"));
 const AddMember = lazy(() => import("./Pages/ProjectMember/AddMember"));
 const VehicleDispatch = lazy(() => import("./Pages/Vehicle/VehicleDispatch"));
@@ -163,7 +165,7 @@ const PrivacyPolicy = lazy(() => import("./Pages/Legal/PrivacyPolicy"));
 const TermsOfService = lazy(() => import("./Pages/Legal/TermsOfService"));
 const Support = lazy(() => import("./Pages/Legal/Support"));
 const CuttingStockCalculator = lazy(
-  () => import("./Pages/calculator/CuttingStockCalculator")
+  () => import("./Pages/calculator/CuttingStockCalculator"),
 );
 
 const routeLoadingFallback = (
@@ -179,17 +181,27 @@ const withSuspense = (element: ReactNode) => (
 const roleGuard = (
   allowedRoles: string[],
   element: ReactNode,
-  redirectTo?: string
+  redirectTo?: string,
 ) => (
   <RoleRoute allowedRoles={allowedRoles} redirectTo={redirectTo}>
     {element}
   </RoleRoute>
 );
 
+const capabilityGuard = (
+  capability: keyof Capabilities,
+  element: ReactNode,
+  redirectTo?: string,
+) => (
+  <CapabilityRoute capability={capability} redirectTo={redirectTo}>
+    {element}
+  </CapabilityRoute>
+);
+
 const projectRoleGuard = (
   allowedPermissions: string[],
   element: ReactNode,
-  redirectTo?: string
+  redirectTo?: string,
 ) => (
   <ProjectRoleRoute
     allowedPermissions={allowedPermissions}
@@ -214,34 +226,46 @@ const mainChildren: RouteObject[] = [
   },
   { path: "stockyard", element: withSuspense(<Warehouse />) },
   { path: "tenants", element: withSuspense(<Tenants />) },
-  { path: "end-clients", element: withSuspense(<EndClient />) },
+  {
+    path: "end-clients",
+    element: roleGuard(
+      ["superadmin", "admin"],
+      withSuspense(<EndClient />),
+      "/login",
+    ),
+  },
   {
     path: "users",
     element: roleGuard(["superadmin"], withSuspense(<User />), "/login"),
   },
   {
     path: "invoices",
-    element: roleGuard(
-      ["admin", "superadmin"],
-      withSuspense(<MixInvoice />),
-      "/login"
+    element: capabilityGuard(
+      "invoice",
+      roleGuard(
+        ["admin", "superadmin"],
+        withSuspense(<MixInvoice />),
+        "/login",
+      ),
     ),
   },
   { path: "labour-summary", element: withSuspense(<LabourSummary />) },
   {
     path: "work-order",
-    element: roleGuard(
-      ["superadmin", "admin"],
-      withSuspense(<WorkOrder />),
-      "/login"
+    element: capabilityGuard(
+      "work_order",
+      roleGuard(["superadmin", "admin"], withSuspense(<WorkOrder />), "/login"),
     ),
   },
   {
     path: "attendance",
-    element: roleGuard(
-      ["superadmin", "admin"],
-      withSuspense(<MixAttendance />),
-      "/login"
+    element: capabilityGuard(
+      "hra",
+      roleGuard(
+        ["superadmin", "admin"],
+        withSuspense(<MixAttendance />),
+        "/login",
+      ),
     ),
   },
   {
@@ -249,7 +273,7 @@ const mainChildren: RouteObject[] = [
     element: roleGuard(
       ["superadmin", "admin"],
       withSuspense(<MixSkills />),
-      "/login"
+      "/login",
     ),
   },
   {
@@ -257,7 +281,7 @@ const mainChildren: RouteObject[] = [
     element: roleGuard(
       ["superadmin", "admin"],
       withSuspense(<MixDepartemnt />),
-      "/login"
+      "/login",
     ),
   },
   {
@@ -265,7 +289,7 @@ const mainChildren: RouteObject[] = [
     element: roleGuard(
       ["superadmin", "admin"],
       withSuspense(<PeopleTable refresh={() => {}} />),
-      "/login"
+      "/login",
     ),
   },
   {
@@ -273,7 +297,7 @@ const mainChildren: RouteObject[] = [
     element: roleGuard(
       ["superadmin", "admin"],
       withSuspense(<AttendanceReport />),
-      "/login"
+      "/login",
     ),
   },
   {
@@ -281,15 +305,18 @@ const mainChildren: RouteObject[] = [
     element: roleGuard(
       ["superadmin", "admin"],
       withSuspense(<TemplateTable refresh={() => {}} />),
-      "/login"
+      "/login",
     ),
   },
   {
     path: "work-order-detail/:workOrderId",
-    element: roleGuard(
-      ["admin", "superadmin"],
-      withSuspense(<MixWorkorder />),
-      "/login"
+    element: capabilityGuard(
+      "work_order",
+      roleGuard(
+        ["admin", "superadmin"],
+        withSuspense(<MixWorkorder />),
+        "/login",
+      ),
     ),
   },
   {
@@ -305,7 +332,7 @@ const mainChildren: RouteObject[] = [
     element: roleGuard(
       ["superadmin"],
       withSuspense(<TenantDetailPage />),
-      "/login"
+      "/login",
     ),
   },
   {
@@ -313,14 +340,17 @@ const mainChildren: RouteObject[] = [
     element: roleGuard(
       ["superadmin"],
       withSuspense(<TenantDetailPage />),
-      "/login"
+      "/login",
     ),
   },
-  { path: "add-attendance", element: withSuspense(<AddAttendance />) },
+  {
+    path: "add-attendance",
+    element: capabilityGuard("hra", withSuspense(<AddAttendance />)),
+  },
   {
     path: "add-end-client",
     element: withSuspense(
-      <AddEndClient refresh={() => {}} initialData={null} onClose={() => {}} />
+      <AddEndClient refresh={() => {}} initialData={null} onClose={() => {}} />,
     ),
   },
   {
@@ -334,10 +364,13 @@ const mainChildren: RouteObject[] = [
   { path: "user-detail/:user_id", element: withSuspense(<UserDetailPage />) },
   {
     path: "invoice-detail/:invoice_id/:wo_number",
-    element: roleGuard(
-      ["admin", "superadmin"],
-      withSuspense(<InvoiceDetailPage />),
-      "/login"
+    element: capabilityGuard(
+      "invoice",
+      roleGuard(
+        ["admin", "superadmin"],
+        withSuspense(<InvoiceDetailPage />),
+        "/login",
+      ),
     ),
   },
   {
@@ -350,10 +383,13 @@ const mainChildren: RouteObject[] = [
   },
   {
     path: "add-work-order",
-    element: roleGuard(
-      ["admin", "superadmin"],
-      withSuspense(<AddWorkOrder />),
-      "/login"
+    element: capabilityGuard(
+      "work_order",
+      roleGuard(
+        ["admin", "superadmin"],
+        withSuspense(<AddWorkOrder />),
+        "/login",
+      ),
     ),
   },
   {
@@ -361,21 +397,30 @@ const mainChildren: RouteObject[] = [
     element: roleGuard(
       ["superadmin"],
       withSuspense(<RolePermission />),
-      "/login"
+      "/login",
     ),
   },
   {
     path: "edit-work-order/:work_order_id",
-    element: roleGuard(
-      ["superadmin", "admin"],
-      withSuspense(<EditWorkOrder />),
-      "/login"
+    element: capabilityGuard(
+      "work_order",
+      roleGuard(
+        ["superadmin", "admin"],
+        withSuspense(<EditWorkOrder />),
+        "/login",
+      ),
     ),
   },
   { path: "privacy-policy", element: withSuspense(<PrivacyPolicy />) },
   { path: "terms-of-service", element: withSuspense(<TermsOfService />) },
   { path: "support", element: withSuspense(<Support />) },
-  { path: "calculator", element: withSuspense(<CuttingStockCalculator />) },
+  {
+    path: "calculator",
+    element: capabilityGuard(
+      "calculator",
+      withSuspense(<CuttingStockCalculator />),
+    ),
+  },
 ];
 
 const projectChildren: RouteObject[] = [
@@ -384,7 +429,7 @@ const projectChildren: RouteObject[] = [
     element: projectRoleGuard(
       ["ViewDashboard"],
       withSuspense(<NewProjectDashboard />),
-      "/"
+      "/",
     ),
   },
   {
@@ -396,7 +441,7 @@ const projectChildren: RouteObject[] = [
     element: projectRoleGuard(
       ["ViewDrawing", "ViewDrawingType"],
       withSuspense(<MixDrawing />),
-      "/"
+      "/",
     ),
   },
   {
@@ -404,7 +449,7 @@ const projectChildren: RouteObject[] = [
     element: projectRoleGuard(
       ["ViewStockyardElement", "ViewReceivableStockyard"],
       withSuspense(<MixElementStockyard />),
-      "/"
+      "/",
     ),
   },
   {
@@ -412,7 +457,7 @@ const projectChildren: RouteObject[] = [
     element: projectRoleGuard(
       ["StockyardAssign"],
       withSuspense(<StockyardAssigntable refresh={() => {}} />),
-      "/"
+      "/",
     ),
   },
   {
@@ -420,7 +465,7 @@ const projectChildren: RouteObject[] = [
     element: projectRoleGuard(
       ["ViewInTransitElement", "ViewDeliveredElement"],
       withSuspense(<MixErrection />),
-      "/"
+      "/",
     ),
   },
   {
@@ -428,7 +473,7 @@ const projectChildren: RouteObject[] = [
     element: projectRoleGuard(
       ["ViewElementType", "ViewElement"],
       withSuspense(<MixElement />),
-      "/"
+      "/",
     ),
   },
   {
@@ -436,7 +481,7 @@ const projectChildren: RouteObject[] = [
     element: projectRoleGuard(
       ["ViewBom"],
       withSuspense(<BomTable refresh={() => {}} />),
-      "/"
+      "/",
     ),
   },
   {
@@ -448,7 +493,7 @@ const projectChildren: RouteObject[] = [
     element: projectRoleGuard(
       ["ViewDispatchApproval"],
       withSuspense(<MixPlanningApproval />),
-      "/"
+      "/",
     ),
   },
   {
@@ -456,7 +501,7 @@ const projectChildren: RouteObject[] = [
     element: projectRoleGuard(
       ["RetificationRequest"],
       withSuspense(<RetificationTable />),
-      "/"
+      "/",
     ),
   },
   {
@@ -464,7 +509,7 @@ const projectChildren: RouteObject[] = [
     element: projectRoleGuard(
       ["ViewErrectionRequest"],
       withSuspense(<ErrectionRequestTable />),
-      "/"
+      "/",
     ),
   },
   {
@@ -472,7 +517,7 @@ const projectChildren: RouteObject[] = [
     element: projectRoleGuard(
       ["ViewPaper", "EditPaper", "AddPaper"],
       withSuspense(<PaperTable refresh={() => {}} />),
-      "/"
+      "/",
     ),
   },
   {
@@ -480,7 +525,7 @@ const projectChildren: RouteObject[] = [
     element: projectRoleGuard(
       ["ViewStage", "EditStage", "AddStage"],
       withSuspense(<StagesTable refresh={() => {}} />),
-      "/"
+      "/",
     ),
   },
   {
@@ -488,7 +533,7 @@ const projectChildren: RouteObject[] = [
     element: projectRoleGuard(
       ["ViewTag", "EditTag", "AddTag"],
       withSuspense(<TagsTable refresh={() => {}} />),
-      "/"
+      "/",
     ),
   },
   {
@@ -504,7 +549,7 @@ const projectChildren: RouteObject[] = [
     element: projectRoleGuard(
       ["SummaryReport"],
       withSuspense(<ProjectSummary />),
-      "/"
+      "/",
     ),
   },
   {
@@ -512,7 +557,7 @@ const projectChildren: RouteObject[] = [
     element: projectRoleGuard(
       ["StockyardReport"],
       withSuspense(<StockyardSummary />),
-      "/"
+      "/",
     ),
   },
   {
@@ -520,7 +565,7 @@ const projectChildren: RouteObject[] = [
     element: projectRoleGuard(
       ["AddElementType"],
       withSuspense(<AddElementType />),
-      "/"
+      "/",
     ),
   },
   {
@@ -528,7 +573,7 @@ const projectChildren: RouteObject[] = [
     element: projectRoleGuard(
       ["ViewElementTypeDetail"],
       withSuspense(<Elementtypedetail />),
-      "/"
+      "/",
     ),
   },
   {
@@ -536,7 +581,7 @@ const projectChildren: RouteObject[] = [
     element: projectRoleGuard(
       ["ViewDispatchLog", "ViewRequestedDispatchLog"],
       withSuspense(<MixDispatch />),
-      "/"
+      "/",
     ),
   },
   {
@@ -544,7 +589,7 @@ const projectChildren: RouteObject[] = [
     element: projectRoleGuard(
       ["ViewElementDetail"],
       withSuspense(<ElementDetailPage />),
-      "/"
+      "/",
     ),
   },
   {
@@ -552,7 +597,7 @@ const projectChildren: RouteObject[] = [
     element: projectRoleGuard(
       ["AddErrectionRequest"],
       withSuspense(<RequestHandler />),
-      "/"
+      "/",
     ),
   },
   {
@@ -560,22 +605,22 @@ const projectChildren: RouteObject[] = [
     element: projectRoleGuard(
       ["ViewElementInErrectionSite", "ViewNotErectedElement"],
       withSuspense(<MixErrectedElement />),
-      "/"
+      "/",
     ),
   },
   {
     path: "edit-element-type/:elementTypeId/:floorId",
     element: projectRoleGuard(
       ["EditElementType"],
-      withSuspense(<EditElementType />)
+      withSuspense(<EditElementType />),
     ),
   },
   {
     path: "hierarchy",
     element: projectRoleGuard(
       ["ViewStructure"],
-      withSuspense(<MixHierarchy />),
-      "/"
+      withSuspense(<MixHierarchy refresh={() => {}} />),
+      "/",
     ),
   },
   {
@@ -587,7 +632,7 @@ const projectChildren: RouteObject[] = [
     element: projectRoleGuard(
       ["AddDispatchLog"],
       withSuspense(<VehicleDispatch />),
-      "/"
+      "/",
     ),
   },
   {

@@ -6,6 +6,7 @@ import PageHeader from "@/components/ui/PageHeader";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { apiClient } from "@/utils/apiClient";
+import { useProject } from "@/Provider/ProjectProvider";
 
 // UI Components
 import { Input } from "@/components/ui/input";
@@ -99,6 +100,7 @@ interface ApiResponse<T> {
 export default function AddElementType() {
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
+  const { markSetupStepDone } = useProject();
   const [column, setColumn] = useState<ColumnLayout[]>([]);
 
   const apiUrl = import.meta.env.VITE_API_URL;
@@ -564,6 +566,7 @@ export default function AddElementType() {
       const response = await apiClient.post(`/elementtype_create`, finalData);
       if (response.status === 200) {
         toast.success("Element Type Created Successfully");
+        markSetupStepDone("is_elementtype");
         navigate(`/project/${pid}/element`);
       } else {
         toast.error("Failed to create element type");

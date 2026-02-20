@@ -10,7 +10,13 @@ import {
   type SortingState,
   type VisibilityState,
 } from "@tanstack/react-table";
-import { ChevronDown, MoreHorizontal, Download } from "lucide-react";
+import {
+  ChevronDown,
+  MoreHorizontal,
+  Download,
+  FileText,
+  Plus,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -46,6 +52,7 @@ import autoTable from "jspdf-autotable";
 import { useParams } from "react-router";
 import AddPaper from "./AddPaper";
 import PageHeader from "@/components/ui/PageHeader";
+import { useProject } from "@/Provider/ProjectProvider";
 
 export interface Option {
   id: number;
@@ -74,7 +81,7 @@ export type Paper = {
 };
 export const getColumns = (
   _refreshData: () => void,
-  onEdit?: (paper: Paper) => void
+  onEdit?: (paper: Paper) => void,
 ): ColumnDef<Paper>[] => [
   {
     id: "select",
@@ -165,11 +172,13 @@ const getErrorMessage = (error: AxiosError | unknown, data: string): string => {
 export function PaperTable({ refresh }: { refresh: () => void }) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const { projectId } = useParams();
+  const projectCtx = useProject();
   const [refreshKey, setRefreshKey] = useState<number>(0);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState({});
   const [data, setData] = useState<Paper[]>([]);
+  const [dataLoading, setDataLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingPaper, setEditingPaper] = useState<Paper | null>(null);
   const [paperData, setPaperData] = useState<{
@@ -251,7 +260,12 @@ export function PaperTable({ refresh }: { refresh: () => void }) {
         });
 
         if (response.status === 200) {
-          setData(response.data);
+          if (response.data.message) {
+            setData([]);
+            toast.error(response.data.message);
+          } else {
+            setData(response.data);
+          }
         } else {
           toast.error(response.data?.message || "Failed to fetch papers");
         }
@@ -259,6 +273,8 @@ export function PaperTable({ refresh }: { refresh: () => void }) {
         if (!axios.isCancel(err)) {
           toast.error(getErrorMessage(err, "papers data"));
         }
+      } finally {
+        setDataLoading(false);
       }
     };
 
@@ -337,7 +353,7 @@ export function PaperTable({ refresh }: { refresh: () => void }) {
       doc.save(fileName);
 
       toast.success(
-        `PDF downloaded successfully with ${selectedRows.length} paper(s)`
+        `PDF downloaded successfully with ${selectedRows.length} paper(s)`,
       );
     } catch (error) {
       console.error("Error generating PDF:", error);
@@ -345,145 +361,185 @@ export function PaperTable({ refresh }: { refresh: () => void }) {
     }
   };
 
+  const showSetupGuide = !dataLoading && data.length === 0 && !dataLoading;
+
   return (
     <div className="w-full py-4 px-4">
       <div className="flex items-center justify-between">
         <PageHeader title="Papers" />
       </div>
-      {/* top toolbar */}
-      <div className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
-        <Input
-          placeholder="Filter by paper name..."
-          value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
-          onChange={(event) =>
-            table.getColumn("name")?.setFilterValue(event.target.value)
-          }
-          className="w-full max-w-sm sm:max-w-xs"
-        />
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-center">
-          {table.getFilteredSelectedRowModel().rows.length > 0 && (
-            <Button
-              variant="default"
-              className="w-full sm:w-auto"
-              onClick={handleDownloadPDF}
-            >
-              <Download className="mr-2 h-4 w-4" />
-              Download PDF ({table.getFilteredSelectedRowModel().rows.length})
+      {showSetupGuide ? (
+        <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
+          <div className="w-full max-w-md space-y-6">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10">
+              <FileText className="w-8 h-8 text-primary" />
+            </div>
+            <div className="space-y-2">
+              <h2 className="text-xl font-semibold tracking-tight">
+                No Papers Yet
+              </h2>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Papers are quality-check questionnaires assigned to production
+                stages. They help your team follow standardised inspection
+                checklists and ensure every element meets project requirements
+                before moving to the next stage.
+              </p>
+            </div>
+            <div className="rounded-lg border bg-muted/40 p-4 text-left space-y-2">
+              <h3 className="text-sm font-medium">Getting started</h3>
+              <ul className="text-xs text-muted-foreground space-y-1 list-disc list-inside">
+                <li>Create a paper with a descriptive name</li>
+                <li>Add questions and multiple-choice options</li>
+                <li>Assign the paper to one or more production stages</li>
+              </ul>
+            </div>
+            <Button onClick={openCreateDialog} className="gap-2">
+              <Plus className="w-4 h-4" />
+              Create Your First Paper
             </Button>
-          )}
-          <Button
-            variant="outline"
-            className="w-full sm:w-auto"
-            onClick={openCreateDialog}
-          >
-            Add Paper
-          </Button>
-
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="w-full sm:w-auto">
-                Columns <ChevronDown className="ml-1 h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {table
-                .getAllColumns()
-                .filter((column) => column.getCanHide())
-                .map((column) => {
-                  return (
-                    <DropdownMenuCheckboxItem
-                      key={column.id}
-                      className="capitalize"
-                      checked={column.getIsVisible()}
-                      onCheckedChange={(value) =>
-                        column.toggleVisibility(!!value)
-                      }
-                    >
-                      {column.id}
-                    </DropdownMenuCheckboxItem>
-                  );
-                })}
-            </DropdownMenuContent>
-          </DropdownMenu>
+          </div>
         </div>
-      </div>
-      <div className="overflow-hidden rounded-md border">
-        <div className="hide-x-scrollbar">
-          <Table>
-            <TableHeader>
-              {table.getHeaderGroups().map((headerGroup) => (
-                <TableRow key={headerGroup.id} className="h-12">
-                  {headerGroup.headers.map((header) => {
-                    return (
-                      <TableHead key={header.id} className="py-2">
-                        {header.isPlaceholder
-                          ? null
-                          : flexRender(
-                              header.column.columnDef.header,
-                              header.getContext()
-                            )}
-                      </TableHead>
-                    );
-                  })}
-                </TableRow>
-              ))}
-            </TableHeader>
-            <TableBody>
-              {table.getRowModel().rows?.length ? (
-                table.getRowModel().rows.map((row) => (
-                  <TableRow
-                    key={row.id}
-                    data-state={row.getIsSelected() && "selected"}
-                    className="h-8"
-                  >
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id} className="py-2">
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext()
-                        )}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow className="h-12">
-                  <TableCell
-                    colSpan={table.getAllColumns().length}
-                    className="h-24 text-center py-2"
-                  >
-                    No results.
-                  </TableCell>
-                </TableRow>
+      ) : (
+        <>
+          {/* top toolbar */}
+          <div className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
+            <Input
+              placeholder="Filter by paper name..."
+              value={
+                (table.getColumn("name")?.getFilterValue() as string) ?? ""
+              }
+              onChange={(event) =>
+                table.getColumn("name")?.setFilterValue(event.target.value)
+              }
+              className="w-full max-w-sm sm:max-w-xs"
+            />
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-center">
+              {table.getFilteredSelectedRowModel().rows.length > 0 && (
+                <Button
+                  variant="default"
+                  className="w-full sm:w-auto"
+                  onClick={handleDownloadPDF}
+                >
+                  <Download className="mr-2 h-4 w-4" />
+                  Download PDF (
+                  {table.getFilteredSelectedRowModel().rows.length})
+                </Button>
               )}
-            </TableBody>
-          </Table>
-        </div>
-      </div>
-      <div className="flex items-center justify-end space-x-2 py-4">
-        <div className="text-muted-foreground flex-1 text-sm">
-          {table.getFilteredSelectedRowModel().rows.length} of{" "}
-          {table.getFilteredRowModel().rows.length} row(s) selected.
-        </div>
-        <div className="space-x-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-          >
-            Previous
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-          >
-            Next
-          </Button>
-        </div>
-      </div>
+              <Button
+                variant="outline"
+                className="w-full sm:w-auto"
+                onClick={openCreateDialog}
+              >
+                Add Paper
+              </Button>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="w-full sm:w-auto">
+                    Columns <ChevronDown className="ml-1 h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {table
+                    .getAllColumns()
+                    .filter((column) => column.getCanHide())
+                    .map((column) => {
+                      return (
+                        <DropdownMenuCheckboxItem
+                          key={column.id}
+                          className="capitalize"
+                          checked={column.getIsVisible()}
+                          onCheckedChange={(value) =>
+                            column.toggleVisibility(!!value)
+                          }
+                        >
+                          {column.id}
+                        </DropdownMenuCheckboxItem>
+                      );
+                    })}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
+          <div className="overflow-hidden rounded-md border">
+            <div className="hide-x-scrollbar">
+              <Table>
+                <TableHeader>
+                  {table.getHeaderGroups().map((headerGroup) => (
+                    <TableRow key={headerGroup.id} className="h-12">
+                      {headerGroup.headers.map((header) => {
+                        return (
+                          <TableHead key={header.id} className="py-2">
+                            {header.isPlaceholder
+                              ? null
+                              : flexRender(
+                                  header.column.columnDef.header,
+                                  header.getContext(),
+                                )}
+                          </TableHead>
+                        );
+                      })}
+                    </TableRow>
+                  ))}
+                </TableHeader>
+                <TableBody>
+                  {table.getRowModel().rows?.length ? (
+                    table.getRowModel().rows.map((row) => (
+                      <TableRow
+                        key={row.id}
+                        data-state={row.getIsSelected() && "selected"}
+                        className="h-8"
+                      >
+                        {row.getVisibleCells().map((cell) => (
+                          <TableCell key={cell.id} className="py-2">
+                            {flexRender(
+                              cell.column.columnDef.cell,
+                              cell.getContext(),
+                            )}
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow className="h-12">
+                      <TableCell
+                        colSpan={table.getAllColumns().length}
+                        className="h-24 text-center py-2"
+                      >
+                        No results.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
+          <div className="flex items-center justify-end space-x-2 py-4">
+            <div className="text-muted-foreground flex-1 text-sm">
+              {table.getFilteredSelectedRowModel().rows.length} of{" "}
+              {table.getFilteredRowModel().rows.length} row(s) selected.
+            </div>
+            <div className="space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => table.previousPage()}
+                disabled={!table.getCanPreviousPage()}
+              >
+                Previous
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => table.nextPage()}
+                disabled={!table.getCanNextPage()}
+              >
+                Next
+              </Button>
+            </div>
+          </div>
+        </>
+      )}
       <Dialog
         open={isDialogOpen}
         onOpenChange={(open) => {

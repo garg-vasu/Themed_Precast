@@ -10,7 +10,13 @@ import {
   type SortingState,
   type VisibilityState,
 } from "@tanstack/react-table";
-import { ArrowUpDown, ChevronDown, Download } from "lucide-react";
+import {
+  ArrowUpDown,
+  ChevronDown,
+  Download,
+  ListCheck,
+  Plus,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -40,6 +46,7 @@ import { formatDisplayDate } from "@/utils/formatdate";
 import { useNavigate, useParams } from "react-router";
 import PageHeader from "@/components/ui/PageHeader";
 import { ProjectContext } from "@/Provider/ProjectProvider";
+import { ProjectSetupGuide } from "@/components/ProjectSetupGuide";
 
 export type ErrectionRequest = {
   id: number;
@@ -58,7 +65,9 @@ export type ErrectionRequest = {
 };
 
 export const columns = (
-  permissions: string[]
+  permissions: string[],
+  navigate: ReturnType<typeof useNavigate>,
+  projectId: string | undefined,
 ): ColumnDef<ErrectionRequest>[] => [
   {
     id: "select",
@@ -86,13 +95,10 @@ export const columns = (
     enableSorting: false,
     enableHiding: false,
   },
-  //   name column
   {
     accessorKey: "element_id",
     header: "Element ID",
     cell: ({ row }) => {
-      const navigate = useNavigate();
-      const { projectId } = useParams();
       const isDisabled = row.original.disable;
       return (
         <div
@@ -103,7 +109,7 @@ export const columns = (
             if (isDisabled) return;
             if (permissions?.includes("ViewElementDetail")) {
               navigate(
-                `/project/${projectId}/element-detail/${row.original.element_id}`
+                `/project/${projectId}/element-detail/${row.original.element_id}`,
               );
             }
           }}
@@ -121,13 +127,7 @@ export const columns = (
       <div className="capitalize">{row.getValue("element_type_name")}</div>
     ),
   },
-  {
-    accessorKey: "acted_by_name",
-    header: "Acted By",
-    cell: ({ row }) => (
-      <div className="capitalize">{row.getValue("acted_by_name")}</div>
-    ),
-  },
+
   {
     accessorKey: "status",
     header: "Status",
@@ -140,13 +140,13 @@ export const columns = (
       let className = "";
 
       if (statusLower === "erected") {
-        className = "bg-green-500 hover:bg-green-600 text-white";
+        className = "bg-green-500 hover:bg-green-600 text-white text-xs";
       } else if (statusLower === "pending") {
-        className = "bg-yellow-500 hover:bg-yellow-600 text-white";
+        className = "bg-yellow-500 hover:bg-yellow-600 text-white text-xs";
       } else if (statusLower === "received") {
-        className = "bg-blue-500 hover:bg-blue-600 text-white";
+        className = "bg-blue-500 hover:bg-blue-600 text-white text-xs";
       } else {
-        className = "bg-gray-500 hover:bg-gray-600 text-white";
+        className = "bg-gray-500 hover:bg-gray-600 text-white text-xs";
       }
 
       return (
@@ -178,12 +178,12 @@ export const columns = (
       <div className="capitalize">{row.getValue("tower_name")}</div>
     ),
   },
-  //   start date column
   {
     accessorKey: "Action_at",
     header: ({ column }) => (
       <Button
-        variant="ghost"
+        variant="customPadding"
+        size="noPadding"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
       >
         Action At
@@ -194,20 +194,6 @@ export const columns = (
       const raw = row.getValue("Action_at") as string | undefined;
       return <div>{formatDisplayDate(raw)}</div>;
     },
-  },
-  {
-    accessorKey: "floor_name",
-    header: "Floor Name",
-    cell: ({ row }) => (
-      <div className="capitalize">{row.getValue("floor_name")}</div>
-    ),
-  },
-  {
-    accessorKey: "tower_name",
-    header: "Tower Name",
-    cell: ({ row }) => (
-      <div className="capitalize">{row.getValue("tower_name")}</div>
-    ),
   },
 ];
 
@@ -238,6 +224,16 @@ export function ErrectionRequestTable() {
   const [rowSelection, setRowSelection] = useState({});
   const [data, setData] = useState<ErrectionRequest[]>([]);
 
+  const isProjectSetupComplete =
+    projectCtx?.projectDetails?.is_stage_member &&
+    projectCtx?.projectDetails?.is_member &&
+    projectCtx?.projectDetails?.is_assign_stockyard &&
+    projectCtx?.projectDetails?.is_paper &&
+    projectCtx?.projectDetails?.is_hierachy &&
+    projectCtx?.projectDetails?.is_bom &&
+    projectCtx?.projectDetails?.is_drawingtype &&
+    projectCtx?.projectDetails?.is_elementtype;
+
   useEffect(() => {
     if (!projectId) return;
 
@@ -249,14 +245,14 @@ export function ErrectionRequestTable() {
           `/stock-erected/logs/${projectId}`,
           {
             cancelToken: source.token,
-          }
+          },
         );
 
         if (response.status === 200) {
-          setData(response.data);
+          setData(response.data ?? []);
         } else {
           toast.error(
-            response.data?.message || "Failed to fetch errection request"
+            response.data?.message || "Failed to fetch errection request",
           );
         }
       } catch (err: unknown) {
@@ -275,7 +271,7 @@ export function ErrectionRequestTable() {
 
   const table = useReactTable({
     data,
-    columns: columns(permissions),
+    columns: columns(permissions, navigate, projectId),
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
@@ -353,7 +349,7 @@ export function ErrectionRequestTable() {
       doc.save(fileName);
 
       toast.success(
-        `PDF downloaded successfully with ${selectedRows.length} errection request(s)`
+        `PDF downloaded successfully with ${selectedRows.length} errection request(s)`,
       );
     } catch (error) {
       console.error("Error generating PDF:", error);
@@ -361,10 +357,59 @@ export function ErrectionRequestTable() {
     }
   };
 
+  if (!isProjectSetupComplete) {
+    return (
+      <div className="w-full p-4">
+        <PageHeader title="Erection Request" />
+        <ProjectSetupGuide currentStep="is_stage_member" />
+      </div>
+    );
+  }
+
+  if (data.length === 0) {
+    return (
+      <div className="w-full p-4">
+        <PageHeader title="Erection Request" />
+        <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
+          <div className="w-full max-w-md space-y-6">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10">
+              <ListCheck className="w-8 h-8 text-primary" />
+            </div>
+            <div className="space-y-2">
+              <h2 className="text-xl font-semibold tracking-tight">
+                No Errection Requests Yet
+              </h2>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Errection requests are requests to erect elements in the
+                project. They are created when an element is dispatched and
+                needs to be erected.
+              </p>
+            </div>
+            <div className="rounded-lg border bg-muted/40 p-4 text-left space-y-2">
+              <h3 className="text-sm font-medium">Getting started</h3>
+              <ul className="text-xs text-muted-foreground space-y-1 list-disc list-inside">
+                <li>Create a errection request</li>
+                <li>Add elements to the errection request</li>
+                <li>Erect the elements</li>
+              </ul>
+            </div>
+            <Button
+              onClick={() => navigate(`/project/${projectId}/dispatch-request`)}
+              className="gap-2"
+            >
+              <Plus className="w-4 h-4" />
+              Create Your Errection Request
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full py-4 px-4">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <PageHeader title="Errection Request" />
+        <PageHeader title="Erection Request" />
         <div className="flex items-center gap-2 justify-center">
           {permissions?.includes("AddErrectionRequest") && (
             <Button
@@ -380,12 +425,12 @@ export function ErrectionRequestTable() {
       {/* top toolbar */}
       <div className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
         <Input
-          placeholder="Filter by Element Name..."
+          placeholder="Filter by Element ID..."
           value={
-            (table.getColumn("element_name")?.getFilterValue() as string) ?? ""
+            (table.getColumn("element_id")?.getFilterValue() as string) ?? ""
           }
           onChange={(event) =>
-            table.getColumn("element_name")?.setFilterValue(event.target.value)
+            table.getColumn("element_id")?.setFilterValue(event.target.value)
           }
           className="w-full max-w-sm sm:max-w-xs"
         />
@@ -441,7 +486,7 @@ export function ErrectionRequestTable() {
                         ? null
                         : flexRender(
                             header.column.columnDef.header,
-                            header.getContext()
+                            header.getContext(),
                           )}
                     </TableHead>
                   );
@@ -470,7 +515,7 @@ export function ErrectionRequestTable() {
                       >
                         {flexRender(
                           cell.column.columnDef.cell,
-                          cell.getContext()
+                          cell.getContext(),
                         )}
                       </TableCell>
                     ))}
@@ -480,7 +525,7 @@ export function ErrectionRequestTable() {
             ) : (
               <TableRow>
                 <TableCell
-                  colSpan={columns(permissions).length}
+                  colSpan={columns(permissions, navigate, projectId).length}
                   className="h-24 text-center"
                 >
                   No results.

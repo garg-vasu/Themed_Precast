@@ -3,7 +3,6 @@ import { useNavigate, useParams } from "react-router-dom";
 import axios, { type AxiosError } from "axios";
 
 import PageHeader from "@/components/ui/PageHeader";
-import { Separator } from "@/components/ui/separator";
 import { LoadingState } from "@/components/ui/loading-state";
 import { apiClient } from "@/utils/apiClient";
 import { toast } from "sonner";
@@ -68,12 +67,10 @@ export default function RequestHandler() {
   };
 
   return (
-    <div className="flex w-full flex-col gap-2 py-4 px-4">
-      <div className="flex items-center justify-between">
-        <PageHeader title="Create erection request" />
-      </div>
+    <div className="flex w-full flex-1 flex-col py-4 px-4">
+      <PageHeader title="Create erection request" />
 
-      <div className="mt-2 flex flex-col gap-4">
+      <div className="flex flex-1 mt-2 flex-col gap-3 overflow-hidden ">
         <TowerFloorEditor onSave={handleSaveAllBlocks} />
         {loading && (
           <LoadingState

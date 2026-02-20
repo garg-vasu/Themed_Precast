@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import {
   Select,
@@ -40,6 +40,11 @@ import {
 import { YearMonthFilter } from "@/components/common/yearmonthfilter";
 import { apiClient } from "@/utils/apiClient";
 import PageHeader from "@/components/ui/PageHeader";
+import {
+  ProjectSetupGuide,
+  SetupProgressCard,
+} from "@/components/ProjectSetupGuide";
+import { ProjectContext } from "@/Provider/ProjectProvider";
 
 export type TowerData = {
   id: number;
@@ -77,51 +82,52 @@ interface ElementDetails {
 
 interface FloorSummary {
   [elementType: string]: ElementDetails | number;
-balance: 8412,
-        balance_concrete: number;
-    dispatch: number;
-    dispatch_concrete: number;
-    erected: 286,
-    erected_concrete: 131.817248312,
-    erectedbalance: number;
-    erectedbalance_concrete: number;
-    erection: number;
-    erection_concrete: number;
-    notinproduction: number;
-    notinproduction_concrete: number;
-    production: number;
-    production_concrete: number;
-    stockyard: 688,
-    stockyard_concrete: number;
-    totalelement: number;
-    totalelement_concrete: number;
+  balance: 8412;
+  balance_concrete: number;
+  dispatch: number;
+  dispatch_concrete: number;
+  erected: 286;
+  erected_concrete: 131.817248312;
+  erectedbalance: number;
+  erectedbalance_concrete: number;
+  erection: number;
+  erection_concrete: number;
+  notinproduction: number;
+  notinproduction_concrete: number;
+  production: number;
+  production_concrete: number;
+  stockyard: 688;
+  stockyard_concrete: number;
+  totalelement: number;
+  totalelement_concrete: number;
 }
 
 interface FloorData {
   [floor: string]: FloorSummary | number;
- balance: number,
- balance_concrete: number,
-    dispatch: number;
-    dispatch_concrete: number;
-    erected: number;
-    erected_concrete: number;
-    erectedbalance: number;
-    erectedbalance_concrete: number;
-    erection: number;
-    erection_concrete: number;
-    notinproduction: number;
-    notinproduction_concrete: number;
-    production: number;
-    production_concrete: number;
-    stockyard: number;
-    stockyard_concrete: number;
-    totalelement: number;
-    totalelement_concrete: number;
+  balance: number;
+  balance_concrete: number;
+  dispatch: number;
+  dispatch_concrete: number;
+  erected: number;
+  erected_concrete: number;
+  erectedbalance: number;
+  erectedbalance_concrete: number;
+  erection: number;
+  erection_concrete: number;
+  notinproduction: number;
+  notinproduction_concrete: number;
+  production: number;
+  production_concrete: number;
+  stockyard: number;
+  stockyard_concrete: number;
+  totalelement: number;
+  totalelement_concrete: number;
 }
 
 export default function NewProjectDashboard() {
   const { projectId } = useParams<{ projectId: string }>();
   const [downloading, setDownloading] = useState<boolean>(false);
+  const projectCtx = useContext(ProjectContext);
   const [pdfDialogOpen, setPdfDialogOpen] = useState<boolean>(false);
   const [viewType, setViewType] = useState<
     "all" | "production" | "stockyard" | "dispatch" | "erected"
@@ -137,9 +143,22 @@ export default function NewProjectDashboard() {
   const [towerData, setTowerData] = useState<Tower>();
   const [selectedFloor, setSelectedFloor] = useState<string | null>("all");
   const [selectedElementType, setSelectedElementType] = useState<string | null>(
-    "all"
+    "all",
   );
-  const [collapsedFloors, setCollapsedFloors] = useState<Record<string, boolean>>({});
+  const [collapsedFloors, setCollapsedFloors] = useState<
+    Record<string, boolean>
+  >({});
+
+  // check if the project is setup complete
+  const isProjectSetupComplete =
+    projectCtx?.projectDetails?.is_bom &&
+    projectCtx?.projectDetails?.is_drawingtype &&
+    projectCtx?.projectDetails?.is_elementtype &&
+    projectCtx?.projectDetails?.is_hierachy &&
+    projectCtx?.projectDetails?.is_stage_member &&
+    projectCtx?.projectDetails?.is_member &&
+    projectCtx?.projectDetails?.is_assign_stockyard &&
+    projectCtx?.projectDetails?.is_paper;
 
   const toggleFloorCollapse = (floorName: string) => {
     setCollapsedFloors((prev) => ({
@@ -183,7 +202,7 @@ export default function NewProjectDashboard() {
         `/dashboard_pdf?${params.toString()}`,
         {
           responseType: "blob",
-        }
+        },
       );
 
       // Create a blob from the response data
@@ -207,12 +226,12 @@ export default function NewProjectDashboard() {
       } else if (pdfFilter.type === "monthly") {
         filenameParts.push(
           String(pdfFilter.year),
-          String((pdfFilter as any).month)
+          String((pdfFilter as any).month),
         );
       } else if (pdfFilter.type === "custom") {
         filenameParts.push(
           (pdfFilter as any).start_date,
-          (pdfFilter as any).end_date
+          (pdfFilter as any).end_date,
         );
       }
       link.download = `${filenameParts.join("_")}.pdf`;
@@ -265,7 +284,7 @@ export default function NewProjectDashboard() {
     setLoading(true);
     try {
       const response = await apiClient.get(
-        `/element_type_status_breakdown_multiple/${projectId}?hierarchy_ids=${selectedTower}`
+        `/element_type_status_breakdown_multiple/${projectId}?hierarchy_ids=${selectedTower}`,
       );
       if (response.status === 200) {
         setData(response.data);
@@ -330,7 +349,7 @@ export default function NewProjectDashboard() {
       "totalelement_concrete",
     ];
     const floorNames = Object.keys(data).filter(
-      (key) => typeof data[key] === "object" && !summaryKeys.includes(key)
+      (key) => typeof data[key] === "object" && !summaryKeys.includes(key),
     );
     if (floorNames.length === 0) return null;
 
@@ -341,7 +360,7 @@ export default function NewProjectDashboard() {
       if (floorData) {
         elementTypes = Object.entries(floorData).filter(
           ([, value]) =>
-            typeof value === "object" && value && "totalelement" in value
+            typeof value === "object" && value && "totalelement" in value,
         );
       }
     }
@@ -435,7 +454,7 @@ export default function NewProjectDashboard() {
         concrete: floorData.stockyard_concrete,
         icon: Warehouse,
       },
-      
+
       {
         label: "Erected",
         value: floorData.erected,
@@ -448,7 +467,6 @@ export default function NewProjectDashboard() {
         concrete: floorData.erectedbalance_concrete,
         icon: Package,
       },
-
     ];
 
     return (
@@ -484,7 +502,7 @@ export default function NewProjectDashboard() {
     // Get all element types (keys that are objects with 'totalelement')
     let elementTypes = Object.entries(floorData).filter(
       ([, value]) =>
-        typeof value === "object" && value && "totalelement" in value
+        typeof value === "object" && value && "totalelement" in value,
     );
 
     // Filter by selected element type if a specific floor is selected
@@ -494,7 +512,7 @@ export default function NewProjectDashboard() {
       selectedElementType
     ) {
       elementTypes = elementTypes.filter(
-        ([key]) => key === selectedElementType
+        ([key]) => key === selectedElementType,
       );
     }
 
@@ -536,18 +554,18 @@ export default function NewProjectDashboard() {
                     {el.balance} / {(el.balance_concrete ?? 0).toFixed(2)}
                   </span>
                 </TableCell>
-                  <TableCell>
+                <TableCell>
                   <span className="text-sm sm:text-base font-semibold">
                     {el.dispatch} / {(el.dispatch_concrete ?? 0).toFixed(2)}
                   </span>
                 </TableCell>
-                
+
                 <TableCell>
                   <span className="text-sm sm:text-base font-semibold">
                     {el.stockyard} / {(el.stockyard_concrete ?? 0).toFixed(2)}
                   </span>
                 </TableCell>
-              
+
                 <TableCell>
                   <span className="text-sm sm:text-base font-semibold">
                     {el.erected} / {(el.erected_concrete ?? 0).toFixed(2)}
@@ -569,9 +587,12 @@ export default function NewProjectDashboard() {
 
   const renderFloorDetails = (floorData: FloorSummary, floorName: string) => {
     const isCollapsed = collapsedFloors[floorName] ?? false;
-    
+
     return (
-      <div key={floorName} className="mb-3 sm:mb-4 border rounded-lg overflow-hidden">
+      <div
+        key={floorName}
+        className="mb-3 sm:mb-4 border rounded-lg overflow-hidden"
+      >
         <button
           onClick={() => toggleFloorCollapse(floorName)}
           className="w-full flex items-center justify-between px-4 py-3 bg-muted/50 hover:bg-muted transition-colors"
@@ -583,7 +604,7 @@ export default function NewProjectDashboard() {
             <ChevronUp className="h-5 w-5 text-muted-foreground" />
           )}
         </button>
-        
+
         {!isCollapsed && (
           <div className="p-4">
             {renderFloorSummaryCards(floorData)}
@@ -639,6 +660,17 @@ export default function NewProjectDashboard() {
             Loading, please wait...
           </div>
         </div>
+      </div>
+    );
+  }
+
+  if (!isProjectSetupComplete) {
+    return (
+      <div className="w-full p-4">
+        <div>
+          <PageHeader title="Project Dashboard" />
+        </div>
+        <ProjectSetupGuide currentStep="is_bom" />
       </div>
     );
   }
@@ -730,55 +762,30 @@ export default function NewProjectDashboard() {
                         | "production"
                         | "stockyard"
                         | "dispatch"
-                        | "erected"
+                        | "erected",
                     )
                   }
                   className="flex flex-wrap items-center gap-4"
                 >
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem
-                      id="view-all"
-                      value="all"
-                    />
-                    <Label htmlFor="view-all">
-                      All
-                    </Label>
+                    <RadioGroupItem id="view-all" value="all" />
+                    <Label htmlFor="view-all">All</Label>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem
-                      id="view-production"
-                      value="production"
-                    />
-                    <Label htmlFor="view-production">
-                      Production
-                    </Label>
+                    <RadioGroupItem id="view-production" value="production" />
+                    <Label htmlFor="view-production">Production</Label>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem
-                      id="view-stockyard"
-                      value="stockyard"
-                    />
-                    <Label htmlFor="view-stockyard">
-                      Stockyard
-                    </Label>
+                    <RadioGroupItem id="view-stockyard" value="stockyard" />
+                    <Label htmlFor="view-stockyard">Stockyard</Label>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem
-                      id="view-dispatch"
-                      value="dispatch"
-                    />
-                    <Label htmlFor="view-dispatch">
-                      Dispatch
-                    </Label>
+                    <RadioGroupItem id="view-dispatch" value="dispatch" />
+                    <Label htmlFor="view-dispatch">Dispatch</Label>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem
-                      id="view-erected"
-                      value="erected"
-                    />
-                    <Label htmlFor="view-erected">
-                      Erected
-                    </Label>
+                    <RadioGroupItem id="view-erected" value="erected" />
+                    <Label htmlFor="view-erected">Erected</Label>
                   </div>
                 </RadioGroup>
               </div>
@@ -806,14 +813,13 @@ export default function NewProjectDashboard() {
           </DialogContent>
         </Dialog>
 
+        <SetupProgressCard />
         {renderTowerPills()}
         {/* Overview section always visible */}
         {data && (
           <div>
-           <h4 className="text-xl font-bold mb-2 ">Overview</h4>
-            <div>
-              {renderFloorSummaryCards(data as FloorSummary)}
-            </div>
+            <h4 className="text-xl font-bold mb-2 ">Overview</h4>
+            <div>{renderFloorSummaryCards(data as FloorSummary)}</div>
           </div>
         )}
         {/* Filters Row */}
@@ -822,11 +828,11 @@ export default function NewProjectDashboard() {
         {selectedFloor === "all"
           ? renderFloorContent()
           : selectedFloor && data && data[selectedFloor]
-          ? renderFloorDetails(
-              data[selectedFloor] as FloorSummary,
-              selectedFloor
-            )
-          : null}
+            ? renderFloorDetails(
+                data[selectedFloor] as FloorSummary,
+                selectedFloor,
+              )
+            : null}
       </div>
     </div>
   );

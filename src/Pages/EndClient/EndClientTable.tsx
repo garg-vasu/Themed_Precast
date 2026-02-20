@@ -2,7 +2,6 @@ import {
   flexRender,
   getCoreRowModel,
   getFilteredRowModel,
-  getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
   type ColumnDef,
@@ -366,9 +365,17 @@ export function EndClientTable() {
         });
 
         if (response.status === 200) {
-          setData(response.data.data);
-          if (response.data.pagination) {
-            setPagination(response.data.pagination);
+          setData(response.data.data ?? []);
+          const pag = response.data.pagination;
+          if (pag) {
+            setPagination({
+              current_page: pag.current_page ?? pag.page ?? 1,
+              per_page: pag.per_page ?? pag.limit ?? limit,
+              total: pag.total ?? 0,
+              total_pages: pag.total_pages ?? 0,
+            });
+          } else {
+            setPagination(null);
           }
         } else {
           toast.error(response.data?.message || "Failed to fetch end clients");
@@ -393,7 +400,8 @@ export function EndClientTable() {
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
+    manualPagination: true,
+    pageCount: pagination?.total_pages ?? 0,
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
@@ -584,7 +592,7 @@ export function EndClientTable() {
           {table.getRowModel().rows.length} row(s) selected on this page.
           {pagination && (
             <span className="ml-2">
-              (Total: {pagination.total} work orders)
+              (Total: {pagination.total} end clients)
             </span>
           )}
         </div>
@@ -604,6 +612,7 @@ export function EndClientTable() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="2">2</SelectItem>
                 <SelectItem value="10">10</SelectItem>
                 <SelectItem value="25">25</SelectItem>
                 <SelectItem value="50">50</SelectItem>
@@ -614,7 +623,8 @@ export function EndClientTable() {
           {pagination && (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <span>
-                Page {pagination.current_page} of {pagination.total_pages}
+                Page {pagination.current_page} of{" "}
+                {Math.max(1, pagination.total_pages)}
               </span>
             </div>
           )}

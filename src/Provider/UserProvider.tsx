@@ -28,8 +28,16 @@ export interface User {
   role_name: string;
 }
 
+export type Capabilities = {
+  hra: boolean;
+  work_order: boolean;
+  invoice: boolean;
+  calculator: boolean;
+}
+
 interface UserContextType {
   user: User | null;
+  capabilities: Capabilities | null;
   loading: boolean;
   error: string | null;
 }
@@ -37,6 +45,7 @@ interface UserContextType {
 export const UserContext = createContext<UserContextType>({
   user: null,
   loading: false,
+  capabilities: null,
   error: null,
 });
 
@@ -63,6 +72,7 @@ const getErrorMessage = (error: AxiosError | unknown): string => {
 
 export const UserProvider = ({ children }: UserProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
+  const [capabilities, setCapabilities] = useState<Capabilities | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
@@ -84,7 +94,8 @@ export const UserProvider = ({ children }: UserProviderProps) => {
         });
 
         if (response.status === 200) {
-          setUser(response.data);
+          setUser(response.data.user);
+          setCapabilities(response.data.capabilities);
           setError(null);
         } else {
           const message =
@@ -117,7 +128,7 @@ export const UserProvider = ({ children }: UserProviderProps) => {
   }, [error]);
 
   return (
-    <UserContext.Provider value={{ user, loading, error }}>
+    <UserContext.Provider value={{ user, capabilities, loading, error }}>
       {children}
     </UserContext.Provider>
   );

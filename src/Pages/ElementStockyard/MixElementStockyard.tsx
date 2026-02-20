@@ -8,12 +8,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { List, MoreHorizontal } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useContext, useEffect, useMemo, useState } from "react";
 
-import { useProject } from "@/Provider/ProjectProvider";
+import { ProjectContext, useProject } from "@/Provider/ProjectProvider";
 import { StockyardTable } from "./StockyardTable";
 import { DispatchedTable } from "./DispatchedTable";
 import { ReceiveTable } from "./ReceiveTable";
+import { ProjectSetupGuide } from "@/components/ProjectSetupGuide";
 
 interface TabLink {
   id: string;
@@ -26,6 +27,17 @@ interface TabLink {
 export default function MixElementStockyard() {
   const { permissions } = useProject();
   const [activeTab, setActiveTab] = useState<string>("");
+  const projectCtx = useContext(ProjectContext);
+
+  const isProjectSetupComplete =
+    projectCtx?.projectDetails?.is_stage_member &&
+    projectCtx?.projectDetails?.is_member &&
+    projectCtx?.projectDetails?.is_assign_stockyard &&
+    projectCtx?.projectDetails?.is_paper &&
+    projectCtx?.projectDetails?.is_hierachy &&
+    projectCtx?.projectDetails?.is_bom &&
+    projectCtx?.projectDetails?.is_drawingtype &&
+    projectCtx?.projectDetails?.is_elementtype;
 
   const tabLinks = useMemo<TabLink[]>(() => {
     const tabs: TabLink[] = [];
@@ -93,42 +105,50 @@ export default function MixElementStockyard() {
       <div className="flex items-center justify-between">
         <PageHeader title="Stockyard" />
       </div>
-      {/* pills section  */}
-      <div className="flex flex-col gap-2">
-        {/* FOR DESKTOP and TABLET  */}
-
-        <div className=" hidden md:flex flex-wrap gap-2">
-          {tabLinks.map((tab) => (
-            <Button
-              key={tab.id}
-              variant={activeTab === tab.id ? "default" : "outline"}
-              className={activeTab === tab.id ? "text-white" : ""}
-              onClick={() => handleTabChange(tab.id)}
-            >
-              <tab.icon className="w-4 h-4" />
-              {tab.label}
-            </Button>
-          ))}
+      {!isProjectSetupComplete ? (
+        <div className="w-full">
+          <ProjectSetupGuide currentStep="is_assign_stockyard" />
         </div>
-        {/* for mobile  */}
-        <div className="md:hidden w-full">
-          <Select value={activeTab} onValueChange={handleTabChange}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select a tab" />
-            </SelectTrigger>
-            <SelectContent>
+      ) : (
+        <>
+          {/* pills section  */}
+          <div className="flex flex-col gap-2">
+            {/* FOR DESKTOP and TABLET  */}
+
+            <div className=" hidden md:flex flex-wrap gap-2">
               {tabLinks.map((tab) => (
-                <SelectItem key={tab.id} value={tab.id}>
+                <Button
+                  key={tab.id}
+                  variant={activeTab === tab.id ? "default" : "outline"}
+                  className={activeTab === tab.id ? "text-white" : ""}
+                  onClick={() => handleTabChange(tab.id)}
+                >
+                  <tab.icon className="w-4 h-4" />
                   {tab.label}
-                </SelectItem>
+                </Button>
               ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-      {/*content area   */}
+            </div>
+            {/* for mobile  */}
+            <div className="md:hidden w-full">
+              <Select value={activeTab} onValueChange={handleTabChange}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a tab" />
+                </SelectTrigger>
+                <SelectContent>
+                  {tabLinks.map((tab) => (
+                    <SelectItem key={tab.id} value={tab.id}>
+                      {tab.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          {/*content area   */}
 
-      {tabLinks.find((tab) => tab.id === activeTab)?.content}
+          {tabLinks.find((tab) => tab.id === activeTab)?.content}
+        </>
+      )}
     </div>
   );
 }

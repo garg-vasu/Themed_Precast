@@ -2,7 +2,6 @@ import {
   flexRender,
   getCoreRowModel,
   getFilteredRowModel,
-  getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
   type ColumnDef,
@@ -181,7 +180,7 @@ export const columns: ColumnDef<WorkOrder>[] = [
         size="noPadding"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
       >
-        Work Order Date
+        Start date
         <ArrowUpDown className="ml-1 h-4 w-4" />
       </Button>
     ),
@@ -198,7 +197,7 @@ export const columns: ColumnDef<WorkOrder>[] = [
         size="noPadding"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
       >
-        Work Order Validate
+        End date
         <ArrowUpDown className="ml-1 h-4 w-4" />
       </Button>
     ),
@@ -326,7 +325,7 @@ export function WorkOrderTable() {
         setCurrentPage(1); // Reset to first page when filters change
       }
     },
-    [filterState]
+    [filterState],
   );
 
   const handleFilterClose = useCallback(() => {
@@ -407,9 +406,17 @@ export function WorkOrderTable() {
         });
 
         if (response.status === 200) {
-          setData(response.data.data);
-          if (response.data.pagination) {
-            setPagination(response.data.pagination);
+          setData(response.data.data ?? []);
+          const pag = response.data.pagination;
+          if (pag) {
+            setPagination({
+              current_page: pag.current_page ?? pag.page ?? 1,
+              per_page: pag.per_page ?? pag.limit ?? limit,
+              total: pag.total ?? 0,
+              total_pages: pag.total_pages ?? 0,
+            });
+          } else {
+            setPagination(null);
           }
         } else {
           toast.error(response.data?.message || "Failed to fetch work orders");
@@ -434,7 +441,8 @@ export function WorkOrderTable() {
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
+    manualPagination: true,
+    pageCount: pagination?.total_pages ?? 0,
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
@@ -460,23 +468,28 @@ export function WorkOrderTable() {
 
       // Add title
       doc.setFontSize(18);
+      doc.setFont("helvetica", "bold");
       doc.text("Work Orders Report", 14, 20);
 
       // Add date
       doc.setFontSize(10);
       doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 30);
 
+      // Format Total Value for PDF - use explicit formatter to avoid locale issues
+      // (Intl can produce apostrophes as thousands sep in some envs, breaking PDF display)
+      const formatTotalValueForPDF = (val: number) => {
+        const n = Number(val) || 0;
+        const parts = n.toFixed(2).split(".");
+        parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        return `₹ ${parts.join(".")}`;
+      };
+
       // Prepare table data with all columns
       const tableData = selectedRows.map((row) => {
         const workOrder = row.original;
-        const formattedTotalValue = new Intl.NumberFormat("en-US", {
-          style: "currency",
-          currency: "INR",
-        }).format(workOrder.total_value || 0);
-        const formattedTotalPaid = new Intl.NumberFormat("en-US", {
-          style: "currency",
-          currency: "INR",
-        }).format((workOrder as any).total_paid || 0);
+        const formattedTotalValue = formatTotalValueForPDF(
+          workOrder.total_value || 0,
+        );
 
         return [
           workOrder.wo_number || "—",
@@ -484,11 +497,8 @@ export function WorkOrderTable() {
           formatDisplayDate(workOrder.wo_date) || "—",
           formatDisplayDate(workOrder.wo_validate) || "—",
           formatDisplayDate(workOrder.created_at) || "—",
-          formatDisplayDate(workOrder.updated_at) || "—",
           workOrder.contact_person || "—",
-          workOrder.work_order_id?.toString() || "—",
           formattedTotalValue,
-          formattedTotalPaid,
         ];
       });
 
@@ -498,14 +508,11 @@ export function WorkOrderTable() {
           [
             "Work Order Number",
             "Revision No",
-            "Work Order Date",
-            "Work Order Validate",
+            "Start date",
+            "End date",
             "Created At",
-            "Updated At",
             "Contact Person",
-            "Work Order ID",
             "Total Value",
-            "Total Paid",
           ],
         ],
         body: tableData,
@@ -514,19 +521,18 @@ export function WorkOrderTable() {
         headStyles: { fillColor: [59, 130, 246], fontSize: 8 }, // Blue header
         alternateRowStyles: { fillColor: [245, 247, 250] },
         columnStyles: {
-          8: { halign: "right" }, // Total Value - right align
-          9: { halign: "right" }, // Total Paid - right align
+          6: { halign: "right" }, // Total Value - right align
         },
       });
 
       // Save the PDF
-      const fileName = `work-orders-report-${
+      const fileName = `work-order-report-${
         new Date().toISOString().split("T")[0]
       }.pdf`;
       doc.save(fileName);
 
       toast.success(
-        `PDF downloaded successfully with ${selectedRows.length} work order(s)`
+        `PDF downloaded successfully with ${selectedRows.length} work order(s)`,
       );
     } catch (error) {
       console.error("Error generating PDF:", error);
@@ -626,7 +632,7 @@ export function WorkOrderTable() {
                           ? null
                           : flexRender(
                               header.column.columnDef.header,
-                              header.getContext()
+                              header.getContext(),
                             )}
                       </TableHead>
                     );
@@ -646,7 +652,7 @@ export function WorkOrderTable() {
                       <TableCell key={cell.id} className="py-2">
                         {flexRender(
                           cell.column.columnDef.cell,
-                          cell.getContext()
+                          cell.getContext(),
                         )}
                       </TableCell>
                     ))}
@@ -702,7 +708,8 @@ export function WorkOrderTable() {
           {pagination && (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <span>
-                Page {pagination.current_page} of {pagination.total_pages}
+                Page {pagination.current_page} of{" "}
+                {Math.max(1, pagination.total_pages)}
               </span>
             </div>
           )}
@@ -722,7 +729,7 @@ export function WorkOrderTable() {
                 setCurrentPage((prev) =>
                   pagination
                     ? Math.min(pagination.total_pages, prev + 1)
-                    : prev + 1
+                    : prev + 1,
                 )
               }
               disabled={

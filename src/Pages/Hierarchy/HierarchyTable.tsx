@@ -11,7 +11,14 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ChevronRight, Building2, Layers, FolderTree } from "lucide-react";
+import {
+  ChevronRight,
+  Building2,
+  Layers,
+  FolderTree,
+  Users,
+  Plus,
+} from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -21,10 +28,13 @@ import {
 import { cn } from "@/lib/utils";
 import AddHierarchy from "./AddHierarchy";
 import { ProjectContext } from "@/Provider/ProjectProvider";
+import { ProjectSetupGuide } from "@/components/ProjectSetupGuide";
+import PageHeader from "@/components/ui/PageHeader";
 
 export type Hierarchy = {
   id: number;
   project_id: number;
+  others: boolean;
   name: string;
   description: string;
   parent_id: number;
@@ -108,14 +118,14 @@ function TowerNode({
       <div
         className={cn(
           "border rounded-md bg-card shadow-sm transition-all duration-200",
-          isOpen && hasFloors && "ring-1 ring-primary/10"
+          isOpen && hasFloors && "ring-1 ring-primary/10",
         )}
       >
         <CollapsibleTrigger asChild>
           <div
             className={cn(
               "flex items-center justify-between px-2 py-1.5 cursor-pointer hover:bg-muted/50 rounded-md transition-colors",
-              isOpen && hasFloors && "border-b"
+              isOpen && hasFloors && "border-b",
             )}
           >
             <div className="flex items-center gap-2">
@@ -124,7 +134,7 @@ function TowerNode({
                 <ChevronRight
                   className={cn(
                     "h-3.5 w-3.5 text-muted-foreground transition-transform duration-200",
-                    isOpen && "rotate-90"
+                    isOpen && "rotate-90",
                   )}
                 />
               )}
@@ -156,11 +166,11 @@ function TowerNode({
             {/* Right side - badges only (no actions for tower) */}
             <div className="flex items-center gap-1.5">
               <Badge variant="secondary" className="text-xs px-1.5 py-0">
-                Tower
+                {tower.others ? "Other" : "Tower"}
               </Badge>
               {hasFloors && (
                 <Badge variant="outline" className="text-xs px-1.5 py-0">
-                  {tower.children?.length} Floor(s)
+                  {tower.children?.length} {tower.others ? tower.name : "Floor"}
                 </Badge>
               )}
             </div>
@@ -194,11 +204,22 @@ export default function HierarchyTable({ refresh }: { refresh: () => void }) {
   const [expandAll, setExpandAll] = useState<boolean | undefined>(undefined);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingHierarchy, setEditingHierarchy] = useState<Hierarchy | null>(
-    null
+    null,
   );
+
+  const isProjectSetupComplete =
+    projectCtx?.projectDetails?.is_member &&
+    projectCtx?.projectDetails?.is_paper &&
+    projectCtx?.projectDetails?.is_hierachy &&
+    projectCtx?.projectDetails?.is_bom &&
+    projectCtx?.projectDetails?.is_drawingtype &&
+    projectCtx?.projectDetails?.is_elementtype &&
+    projectCtx?.projectDetails?.is_stage_member &&
+    projectCtx?.projectDetails?.is_assign_stockyard;
 
   const refreshData = () => {
     setRefreshKey((prev) => prev + 1);
+    projectCtx?.markSetupStepDone("is_hierachy");
     if (refreshKey > 0) {
       refresh();
     }
@@ -219,11 +240,17 @@ export default function HierarchyTable({ refresh }: { refresh: () => void }) {
           `/get_precast_project/${projectId}`,
           {
             cancelToken: source.token,
-          }
+          },
         );
 
         if (response.status === 200) {
-          setData(response.data);
+          // sometime api did not return message in response.data when data is empty
+          if (response.data.message) {
+            setData([]);
+            toast.error(response.data.message);
+          } else {
+            setData(response.data);
+          }
         } else {
           toast.error(response.data?.message || "Failed to fetch hierarchy");
         }
@@ -295,31 +322,46 @@ export default function HierarchyTable({ refresh }: { refresh: () => void }) {
 
   if (data.length === 0) {
     return (
-      <div className="w-full">
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-8 gap-3">
-            <FolderTree className="h-10 w-10 text-muted-foreground/50" />
-            <div className="text-center">
-              <h3 className="font-medium text-sm">No hierarchy found</h3>
-              <p className="text-xs text-muted-foreground">
-                Start by adding towers and floors to your project.
+      <div className="w-full p-4">
+        <PageHeader title="Hierarchy" />
+        <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
+          <div className="w-full max-w-md space-y-6">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10">
+              <Users className="w-8 h-8 text-primary" />
+            </div>
+            <div className="space-y-2">
+              <h2 className="text-xl font-semibold tracking-tight">
+                No Hierarchy Yet
+              </h2>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Hierarchy is the structure of the project. It helps you manage
+                the project's structure and hierarchy.
               </p>
             </div>
-            {permissions?.includes("AddTower") ||
-              (permissions?.includes("AddFloor") && (
-                <Button size="sm" onClick={openCreateDialog}>
-                  Add Tower
-                </Button>
-              ))}
-          </CardContent>
-        </Card>
+            <div className="rounded-lg border bg-muted/40 p-4 text-left space-y-2">
+              <h3 className="text-sm font-medium">Getting started</h3>
+              <ul className="text-xs text-muted-foreground space-y-1 list-disc list-inside">
+                <li>Add a hierarchy to the project</li>
+                <li>Edit a hierarchy's details</li>
+                <li>Remove a hierarchy from the project</li>
+              </ul>
+            </div>
+            <Button onClick={openCreateDialog} className="gap-2">
+              <Plus className="w-4 h-4" />
+              Create Hierarchy
+            </Button>
+          </div>
+        </div>
         {renderDialog()}
       </div>
     );
   }
 
   return (
-    <div className="w-full space-y-2">
+    <div className="w-full p-4 space-y-2">
+      <div className="flex items-center justify-between">
+        <PageHeader title="Hierarchy" />
+      </div>
       {/* Header with stats */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5">
@@ -330,18 +372,17 @@ export default function HierarchyTable({ refresh }: { refresh: () => void }) {
             {countItems(data)} Total Items
           </Badge>
         </div>
-        <div className="flex items-center gap-1.5">
-          {permissions?.includes("AddTower") ||
-            (permissions?.includes("AddFloor") && (
-              <Button
-                variant="outline"
-                className="w-full sm:w-auto"
-                size="sm"
-                onClick={openCreateDialog}
-              >
-                Add Hierarchy
-              </Button>
-            ))}
+        <div className="flex items-center justify-end gap-1.5">
+          {permissions?.includes("AddTower") && (
+            <Button
+              variant="outline"
+              className="w-full sm:w-auto"
+              size="sm"
+              onClick={openCreateDialog}
+            >
+              Add Hierarchy
+            </Button>
+          )}
 
           <Button
             variant="outline"

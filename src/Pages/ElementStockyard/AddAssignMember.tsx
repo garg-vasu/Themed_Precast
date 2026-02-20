@@ -17,6 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { useProject } from "@/Provider/ProjectProvider";
 
 type User = {
   id: number;
@@ -84,6 +85,7 @@ export default function AddAssignMember({
 }: AssignMemberProps) {
   const navigate = useNavigate();
   const location = useLocation();
+  const { markSetupStepDone } = useProject();
   // Get initialData from props or location state
   const initialData = propInitialData || (location.state as any)?.initialData;
   const isEditMode = !!initialData?.user_id;
@@ -161,7 +163,7 @@ export default function AddAssignMember({
         // Update existing stockyard assign
         const response = await apiClient.put(
           `/project-stockyards/${initialData?.id}/manager`,
-          payload
+          payload,
         );
         if (response.status === 200 || response.status === 201) {
           toast.success("Stockyard Member assign updated successfully!");
@@ -177,9 +179,10 @@ export default function AddAssignMember({
         }
         const response = await apiClient.post(
           `/project-stockyards/${initialData.id}/manager`,
-          payload
+          payload,
         );
         if (response.status === 200 || response.status === 201) {
+          markSetupStepDone("is_assign_stockyard");
           toast.success("Stockyard Member assign created successfully!");
           if (onClose) {
             onClose();
@@ -189,7 +192,7 @@ export default function AddAssignMember({
     } catch (error: unknown) {
       const errorMessage = getErrorMessage(
         error,
-        isEditMode ? "update stockyard assign" : "create stockyard assign"
+        isEditMode ? "update stockyard assign" : "create stockyard assign",
       );
       toast.error(errorMessage);
     } finally {
@@ -271,8 +274,8 @@ export default function AddAssignMember({
             {isSubmitting
               ? "Saving..."
               : isEditMode
-              ? "Update Stockyard Member assign"
-              : "Create Stockyard Member assign"}
+                ? "Update Stockyard Member assign"
+                : "Create Stockyard Member assign"}
           </Button>
         </div>
       </form>

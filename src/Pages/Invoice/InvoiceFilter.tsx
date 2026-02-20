@@ -90,35 +90,35 @@ export default function InvoiceFilter({
 
   // Filter state
   const [selectedProject, setSelectedProject] = useState<number>(
-    currentFilter?.selectedProject || 0,
+    currentFilter?.selectedProject || 0
   );
   const [workorderid, setWorkorderid] = useState<string>(
-    currentFilter?.workorderid || "",
+    currentFilter?.workorderid || ""
   );
   const [endclient_id, setEndclient_id] = useState<number>(
-    currentFilter?.endclient_id || 0,
+    currentFilter?.endclient_id || 0
   );
   const [contact_person, setContact_person] = useState<string>(
-    currentFilter?.contact_person || "",
+    currentFilter?.contact_person || ""
   );
   const [contact_email, setContact_email] = useState<string>(
-    currentFilter?.contact_email || "",
+    currentFilter?.contact_email || ""
   );
   const [contact_number, setContact_number] = useState<string>(
-    currentFilter?.contact_number || "",
+    currentFilter?.contact_number || ""
   );
   const [payment_status, setPayment_status] = useState<string>(
-    currentFilter?.payment_status || "",
+    currentFilter?.payment_status || ""
   );
   const [total_paid, setTotal_paid] = useState<number>(
-    currentFilter?.total_paid || 0,
+    currentFilter?.total_paid || 0
   );
   const [wo_date, setWo_date] = useState<string>(currentFilter?.wo_date || "");
   const [wo_validate, setWo_validate] = useState<string>(
-    currentFilter?.wo_validate || "",
+    currentFilter?.wo_validate || ""
   );
   const [total_value, setTotal_value] = useState<number>(
-    currentFilter?.total_value || 0,
+    currentFilter?.total_value || 0
   );
 
   const [totalvalueFilterType, setTotalvalueFilterType] = useState<
@@ -129,10 +129,10 @@ export default function InvoiceFilter({
     "upto" | "exact"
   >(currentFilter?.totalpaidFilterType || "exact");
   const [billing_address, setBilling_address] = useState<string>(
-    currentFilter?.billing_address || "",
+    currentFilter?.billing_address || ""
   );
   const [shipping_address, setShipping_address] = useState<string>(
-    currentFilter?.shipping_address || "",
+    currentFilter?.shipping_address || ""
   );
 
   // Loading states
@@ -183,7 +183,7 @@ export default function InvoiceFilter({
         });
 
         if (response.status === 200) {
-          setEndclientData(response.data);
+          setEndclientData(response.data.data);
           setEndclientLoading(false);
         } else {
           toast.error(response.data?.message || "Failed to fetch end clients");

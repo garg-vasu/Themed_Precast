@@ -1028,6 +1028,16 @@ export default function MixElement() {
               Add Element Type
             </Button>
           )}
+          {permissions?.includes("ViewUploadElementType") && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate(`/project/${projectId}/upload-elementtype`)}
+              className="flex gap-2 items-center text-xs sm:text-sm"
+            >
+              Upload Element Type
+            </Button>
+          )}
         </div>
       </div>
 

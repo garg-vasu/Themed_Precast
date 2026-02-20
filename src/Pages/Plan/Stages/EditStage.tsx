@@ -20,6 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useProject } from "@/Provider/ProjectProvider";
 
 export type User = {
   id: number;
@@ -97,6 +98,7 @@ export default function EditStage({
 }: StageProps) {
   const navigate = useNavigate();
   const location = useLocation();
+  const { markSetupStepDone } = useProject();
   const { projectId } = useParams();
   // Get initialData from props or location state
   const initialData = propInitialData || (location.state as any)?.initialData;
@@ -171,7 +173,7 @@ export default function EditStage({
         }
         const response = await apiClient.put(
           `/update_project_stage/${stageId}`,
-          payload
+          payload,
         );
         if (response.status === 200 || response.status === 201) {
           toast.success("Stage updated successfully!");
@@ -186,6 +188,7 @@ export default function EditStage({
         const response = await apiClient.post("/create_projectstage", payload);
         if (response.status === 200 || response.status === 201) {
           toast.success("Stage created successfully!");
+          markSetupStepDone("is_stage_member");
           if (onClose) {
             onClose();
           } else {
@@ -196,7 +199,7 @@ export default function EditStage({
     } catch (error: unknown) {
       const errorMessage = getErrorMessage(
         error,
-        isEditMode ? "update stage" : "create stage"
+        isEditMode ? "update stage" : "create stage",
       );
       toast.error(errorMessage);
     } finally {
@@ -488,8 +491,8 @@ export default function EditStage({
             {isSubmitting
               ? "Saving..."
               : isEditMode
-              ? "Update Drawing Type"
-              : "Create Drawing Type"}
+                ? "Update Drawing Type"
+                : "Create Drawing Type"}
           </Button>
         </div>
       </form>

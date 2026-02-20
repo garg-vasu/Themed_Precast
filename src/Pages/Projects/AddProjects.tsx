@@ -33,6 +33,9 @@ import { apiClient } from "@/utils/apiClient";
 import MultiStockyard from "@/components/MultiStockyard/MultiStockyard";
 import MultiRole, { type Role } from "@/components/multirole/mulitrole";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { RadioGroup } from "@/components/ui/radio-group";
+import { RadioGroupItem } from "@/components/ui/radio-group";
+import { Switch } from "@/components/ui/switch";
 
 export type Template = {
   id: number;
@@ -61,6 +64,10 @@ const schema = z.object({
   client_id: z.number().min(1),
   roles: z.array(roleSchema).min(1, "Roles must be at least 1"),
   template_id: z.number().min(1),
+  hra: z.boolean().default(false),
+  work_order: z.boolean().default(false),
+  invoice: z.boolean().default(false),
+  calculator: z.boolean().default(false),
   stockyards: z.array(z.number()).min(1, "Stockyards must be at least 1"),
 });
 
@@ -145,6 +152,10 @@ interface EditProject {
   progress: number;
   template_id: number;
   stockyards: editStockyard[];
+  hra: boolean;
+  work_order: boolean;
+  invoice: boolean;
+  calculator: boolean;
   roles?: { role_id: number; quantity: number }[];
 }
 
@@ -281,6 +292,10 @@ export default function AddProjects({ user }: UserFormProps) {
         template_id: 0,
         roles: [],
         stockyards: [],
+        hra: false,
+        work_order: false,
+        invoice: false,
+        calculator: false,
       };
     }
 
@@ -300,6 +315,10 @@ export default function AddProjects({ user }: UserFormProps) {
       roles: user.roles || [],
       stockyards: user.stockyards?.map((sy) => sy.id) || [],
       logo: user.logo || "",
+      hra: user.hra || false,
+      work_order: user.work_order || false,
+      invoice: user.invoice || false,
+      calculator: user.calculator || false,
     };
   };
 
@@ -312,8 +331,8 @@ export default function AddProjects({ user }: UserFormProps) {
     reset,
     formState: { errors, isSubmitting },
   } = useForm<FormData>({
-    resolver: zodResolver(schema),
-    defaultValues: getDefaultValues(),
+    resolver: zodResolver(schema as any),
+    defaultValues: getDefaultValues() as any,
   });
 
   //   templates api call
@@ -484,8 +503,8 @@ export default function AddProjects({ user }: UserFormProps) {
       if (isEditMode && user) {
         // Update existing project
         const response = await apiClient.put(
-          `/projects/${user.project_id}`,
-          payload
+          `/project_update/${user.project_id}`,
+          payload,
         );
         if (response.status === 200 || response.status === 201) {
           toast.success("Project updated successfully!");
@@ -493,7 +512,7 @@ export default function AddProjects({ user }: UserFormProps) {
         }
       } else {
         // Create new project
-        const response = await apiClient.post("/projects", payload);
+        const response = await apiClient.post("/project_create", payload);
         if (response.status === 200 || response.status === 201) {
           toast.success("Project created successfully!");
           navigate("/projects");
@@ -502,7 +521,7 @@ export default function AddProjects({ user }: UserFormProps) {
     } catch (error: unknown) {
       const errorMessage = getErrorMessage(
         error,
-        isEditMode ? "update project" : "create project"
+        isEditMode ? "update project" : "create project",
       );
       toast.error(errorMessage);
     } finally {
@@ -559,7 +578,7 @@ export default function AddProjects({ user }: UserFormProps) {
               htmlFor="logo-upload"
               className={cn(
                 "flex items-center gap-2 px-4 py-2 rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground cursor-pointer transition-colors",
-                isUploadingImage && "opacity-50 cursor-not-allowed"
+                isUploadingImage && "opacity-50 cursor-not-allowed",
               )}
             >
               {isUploadingImage ? (
@@ -648,7 +667,7 @@ export default function AddProjects({ user }: UserFormProps) {
                   onValueChange={(val) => {
                     field.onChange(val);
                     const selectedStatus = statuses.find(
-                      (status) => status.value === val
+                      (status) => status.value === val,
                     );
                     if (selectedStatus) {
                       setValue("project_status", selectedStatus.value);
@@ -689,7 +708,7 @@ export default function AddProjects({ user }: UserFormProps) {
                   onValueChange={(val) => {
                     field.onChange(val);
                     const selectedPriority = priority.find(
-                      (priority) => priority.value === val
+                      (priority) => priority.value === val,
                     );
                     if (selectedPriority) {
                       setValue("priority", selectedPriority.value);
@@ -730,7 +749,7 @@ export default function AddProjects({ user }: UserFormProps) {
                   onValueChange={(val) => {
                     field.onChange(Number(val));
                     const selectedTemplate = templates.find(
-                      (template) => template.id === Number(val)
+                      (template) => template.id === Number(val),
                     );
                     if (selectedTemplate) {
                       setValue("template_id", selectedTemplate.id);
@@ -774,7 +793,7 @@ export default function AddProjects({ user }: UserFormProps) {
                   onValueChange={(val) => {
                     field.onChange(Number(val));
                     const selectedEndClient = endClients.find(
-                      (endClient) => endClient.id === Number(val)
+                      (endClient) => endClient.id === Number(val),
                     );
                     if (selectedEndClient) {
                       setValue("client_id", selectedEndClient.id);
@@ -819,7 +838,7 @@ export default function AddProjects({ user }: UserFormProps) {
                       variant="outline"
                       className={cn(
                         "w-full justify-start text-left font-normal",
-                        !field.value && "text-muted-foreground"
+                        !field.value && "text-muted-foreground",
                       )}
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
@@ -866,7 +885,7 @@ export default function AddProjects({ user }: UserFormProps) {
                       variant="outline"
                       className={cn(
                         "w-full justify-start text-left font-normal",
-                        !field.value && "text-muted-foreground"
+                        !field.value && "text-muted-foreground",
                       )}
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
@@ -916,7 +935,7 @@ export default function AddProjects({ user }: UserFormProps) {
                       variant="outline"
                       className={cn(
                         "w-full justify-start text-left font-normal",
-                        !field.value && "text-muted-foreground"
+                        !field.value && "text-muted-foreground",
                       )}
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
@@ -966,7 +985,7 @@ export default function AddProjects({ user }: UserFormProps) {
                       variant="outline"
                       className={cn(
                         "w-full justify-start text-left font-normal",
-                        !field.value && "text-muted-foreground"
+                        !field.value && "text-muted-foreground",
                       )}
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
@@ -1044,6 +1063,56 @@ export default function AddProjects({ user }: UserFormProps) {
             <p className="text-sm text-red-600 min-h-[20px]">
               {errors.roles?.message || "\u00A0"}
             </p>
+          </div>
+          {/* section show the radio button for the hra, work_order, invoice, calculator in the same row  */}
+          <div className="grid w-full items-center bg-blue-400 gap-0">
+            <Label htmlFor="modules" className=" bg-green-400">
+              Modules <span className="text-red-500">*</span>
+            </Label>
+            <div className="grid grid-cols-2 md:grid-cols-4  gap-2 bg-red-400 m-0">
+              {/* could we use switch case to show the radio button for the hra, work_order, invoice, calculator in the same row  */}
+
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="hra"
+                  checked={watch("hra")}
+                  onCheckedChange={(checked) => {
+                    setValue("hra", checked);
+                  }}
+                />
+                <Label htmlFor="hra">HRA</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="work_order"
+                  checked={watch("work_order")}
+                  onCheckedChange={(checked) => {
+                    setValue("work_order", checked);
+                  }}
+                />
+                <Label htmlFor="work_order">Work Order</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="invoice"
+                  checked={watch("invoice")}
+                  onCheckedChange={(checked) => {
+                    setValue("invoice", checked);
+                  }}
+                />
+                <Label htmlFor="invoice">Invoice</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="calculator"
+                  checked={watch("calculator")}
+                  onCheckedChange={(checked) => {
+                    setValue("calculator", checked);
+                  }}
+                />
+                <Label htmlFor="calculator">Calculator</Label>
+              </div>
+            </div>
           </div>
         </div>
 

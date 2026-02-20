@@ -154,6 +154,25 @@ export const getColumns = (
       return <div className="">{row.getValue("used_capacity")}</div>;
     },
   },
+  // total capacity
+  {
+    accessorKey: "capacity",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="customPadding"
+          size="noPadding"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Total Capacity
+          <ArrowUpDown />
+        </Button>
+      );
+    },
+    cell: ({ row }) => {
+      return <div className="">{row.getValue("capacity")}</div>;
+    },
+  },
 
   {
     id: "actions",
@@ -239,7 +258,7 @@ export function StoreWareHouseTable() {
         });
 
         if (response.status === 200) {
-          setData(response.data);
+          setData(response.data.data);
         } else {
           toast.error(
             response.data?.message || "Failed to fetch store / warehouses",

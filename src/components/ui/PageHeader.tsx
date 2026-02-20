@@ -9,7 +9,7 @@ export default function PageHeader({
     <div>
       {/* accent text color based on accent color  */}
       <h1
-        className={` text-primary  font-semibold text-lg md:text-xl 
+        className={` text-primary  font-semibold text-md
           
           `}
       >

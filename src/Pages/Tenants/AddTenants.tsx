@@ -302,7 +302,7 @@ export default function AddTenants({ user }: TenantFormProps) {
         });
 
         if (response.status === 200) {
-          setWarehouses(response.data);
+          setWarehouses(response.data.data);
         } else {
           toast.error(response.data?.message || "Failed to fetch warehouses");
         }
@@ -377,7 +377,7 @@ export default function AddTenants({ user }: TenantFormProps) {
     } catch (error: unknown) {
       const errorMessage = getErrorMessage(
         error,
-        isEditMode ? "update tenant" : "create tenant"
+        isEditMode ? "update tenant" : "create tenant",
       );
       toast.error(errorMessage);
     } finally {
@@ -388,7 +388,7 @@ export default function AddTenants({ user }: TenantFormProps) {
   return (
     <div className="flex flex-col gap-2 py-4 px-4">
       <div className="flex items-center justify-between">
-        <PageHeader title={isEditMode ? "Edit Tenant" : "Add Tenant"} />
+        <PageHeader title={isEditMode ? "Edit Client" : "Add Client"} />
       </div>
       <Separator />
       <form onSubmit={handleSubmit(onSubmit)}>
@@ -434,7 +434,7 @@ export default function AddTenants({ user }: TenantFormProps) {
               htmlFor="profile-upload"
               className={cn(
                 "flex items-center gap-2 px-4 py-2 rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground cursor-pointer transition-colors",
-                isUploadingImage && "opacity-50 cursor-not-allowed"
+                isUploadingImage && "opacity-50 cursor-not-allowed",
               )}
             >
               {isUploadingImage ? (
@@ -586,7 +586,7 @@ export default function AddTenants({ user }: TenantFormProps) {
                   onValueChange={(val) => {
                     field.onChange(Number(val));
                     const selectedPhoneCode = phonecodes.find(
-                      (code) => code.id === Number(val)
+                      (code) => code.id === Number(val),
                     );
                     if (selectedPhoneCode) {
                       setValue("phone_code", selectedPhoneCode.id);
@@ -645,7 +645,7 @@ export default function AddTenants({ user }: TenantFormProps) {
                   onValueChange={(val) => {
                     field.onChange(Number(val));
                     const selectedWarehouse = warehouses.find(
-                      (warehouse) => warehouse.id === Number(val)
+                      (warehouse) => warehouse.id === Number(val),
                     );
                     if (selectedWarehouse) {
                       setValue("store_id", selectedWarehouse.id);
@@ -778,9 +778,9 @@ export default function AddTenants({ user }: TenantFormProps) {
                 {isEditMode ? "Updating..." : "Creating..."}
               </>
             ) : isEditMode ? (
-              "Update Tenant"
+              "Update Client"
             ) : (
-              "Create Tenant"
+              "Create Client"
             )}
           </Button>
         </div>

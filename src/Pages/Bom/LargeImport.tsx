@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { apiClient } from "@/utils/apiClient";
+import { useProject } from "@/Provider/ProjectProvider";
 import PageHeader from "@/components/ui/PageHeader";
 
 export type Bom = {
@@ -74,6 +75,7 @@ export default function LargeImport() {
   };
   type SelectedBom = ExistingBom | NewCreatedBom;
   const { projectId } = useParams<{ projectId: string }>();
+  const { markSetupStepDone } = useProject();
   const [alreadySelectedBoms, setAlreadySelectedBoms] = useState<
     alreadySelectedBom[]
   >([]);
@@ -267,6 +269,7 @@ export default function LargeImport() {
       const response = await apiClient.post("/create_bom_products", payload);
       if (response.status === 200 || response.status === 201) {
         toast.success("BOM products created successfully");
+        markSetupStepDone("is_bom");
         navigate(`/project/${projectId}/bom`);
       } else {
         toast.error(response.data?.message || "Error creating BOM products");

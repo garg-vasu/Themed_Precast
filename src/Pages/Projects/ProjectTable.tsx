@@ -45,6 +45,7 @@ import { toast } from "sonner";
 import { useNavigate } from "react-router";
 import { UserContext, type User } from "@/Provider/UserProvider";
 import { formatDisplayDate } from "@/utils/formatdate";
+import { numberToWordsInr } from "@/utils/numberToWords";
 import { getStatusStyles } from "@/Pages/Projects/ProjectCardView";
 import type { FilterStateProject } from "./AdvanceProjectfilter";
 import type { FilterStateInvoiceFilter } from "../Invoice/InvoiceFilter";
@@ -89,7 +90,7 @@ type PaginationInfo = {
 // Function to generate columns based on user role
 const createColumns = (
   user: User | null,
-  navigate: ReturnType<typeof useNavigate>
+  navigate: ReturnType<typeof useNavigate>,
 ): ColumnDef<Project>[] => {
   const isSuperAdmin = user?.role_name === "superadmin";
 
@@ -160,12 +161,18 @@ const createColumns = (
       header: () => <div className="text-right">Budget</div>,
       cell: ({ row }) => {
         const budget = parseFloat(row.getValue("budget"));
-        // Format the amount as a dollar amount
-        const formatted = new Intl.NumberFormat("en-US", {
+        const formatted = new Intl.NumberFormat("en-IN", {
           style: "currency",
           currency: "INR",
+          maximumFractionDigits: 0,
+          minimumFractionDigits: 0,
         }).format(budget);
-        return <div className="text-right font-medium">{formatted}</div>;
+        const words = numberToWordsInr(budget);
+        return (
+          <div className="cursor-pointer text-right font-medium" title={words}>
+            {formatted}
+          </div>
+        );
       },
     },
 
@@ -315,7 +322,7 @@ export function ProjectTable() {
   // Create columns with user role awareness
   const columns = useMemo(
     () => createColumns(user, navigate),
-    [user, navigate]
+    [user, navigate],
   );
 
   const [filterState, setFilterState] = useState<FilterStateProject>({
@@ -337,7 +344,7 @@ export function ProjectTable() {
         setCurrentPage(1); // Reset to first page when filters change
       }
     },
-    [filterState]
+    [filterState],
   );
 
   const handleFilterClose = useCallback(() => {
@@ -411,7 +418,7 @@ export function ProjectTable() {
         });
 
         if (response.status === 200) {
-          setData(response.data.projects);
+          setData(response.data.projects ?? []);
           if (response.data.pagination) {
             setPagination(response.data.pagination);
           }
@@ -533,7 +540,7 @@ export function ProjectTable() {
                         ? null
                         : flexRender(
                             header.column.columnDef.header,
-                            header.getContext()
+                            header.getContext(),
                           )}
                     </TableHead>
                   );
@@ -561,7 +568,7 @@ export function ProjectTable() {
                       <TableCell key={cell.id}>
                         {flexRender(
                           cell.column.columnDef.cell,
-                          cell.getContext()
+                          cell.getContext(),
                         )}
                       </TableCell>
                     ))}
@@ -607,6 +614,7 @@ export function ProjectTable() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="2">2</SelectItem>
                 <SelectItem value="10">10</SelectItem>
                 <SelectItem value="25">25</SelectItem>
                 <SelectItem value="50">50</SelectItem>
@@ -637,7 +645,7 @@ export function ProjectTable() {
                 setCurrentPage((prev) =>
                   pagination
                     ? Math.min(pagination.total_pages, prev + 1)
-                    : prev + 1
+                    : prev + 1,
                 )
               }
               disabled={

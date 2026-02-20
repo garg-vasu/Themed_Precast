@@ -50,6 +50,7 @@ import ElementDrawing from "./ElementDrawing";
 import { formatDisplayDate } from "@/utils/formatdate";
 import { generatePDFFromTable } from "@/utils/pdfGenerator";
 import { ProjectContext } from "@/Provider/ProjectProvider";
+import { ProjectSetupGuide } from "@/components/ProjectSetupGuide";
 
 export type File = {
   drawing_id: number;
@@ -338,6 +339,7 @@ export function ElementtypeTable() {
   const [rowSelection, setRowSelection] = useState({});
   const [filterOpen, setFilterOpen] = useState(false);
   const [data, setData] = useState<Elementtype[]>([]);
+  const [dataLoading, setDataLoading] = useState(true);
   const projectCtx = useContext(ProjectContext);
   const permissions = projectCtx?.permissions || [];
   //   server side pagination
@@ -437,6 +439,8 @@ export function ElementtypeTable() {
         if (!axios.isCancel(err)) {
           toast.error(getErrorMessage(err, "element type data"));
         }
+      } finally {
+        setDataLoading(false);
       }
     };
 
@@ -512,6 +516,17 @@ export function ElementtypeTable() {
       bodyFontSize: 7,
     });
   };
+
+  const showSetupGuide =
+    !dataLoading && data.length === 0 && projectCtx?.projectDetails;
+
+  if (showSetupGuide) {
+    return (
+      <div className="w-full">
+        <ProjectSetupGuide currentStep="is_elementtype" />
+      </div>
+    );
+  }
 
   return (
     <div className="w-full">

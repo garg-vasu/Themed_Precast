@@ -17,22 +17,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Trash2, Building2, Layers } from "lucide-react";
+import { Plus, Trash2, Building2, Layers, Network } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 // Record schema for each hierarchy item
 const recordSchema = z.object({
   name: z.string().min(1, "Name is required"),
   description: z.string().optional(),
   prefix: z.string().min(1, "Prefix is required"),
+  others: z.boolean(),
+  // false means it is a tower and true means it is other ( not like floor and unit) other -> like manhole
 });
 
 // Main form schema
 const schema = z.object({
   parent_id: z.string(), // Empty string means creating a Tower (root level)
-  records: z
-    .array(recordSchema)
-    .min(1, "At least one record is required"),
+  records: z.array(recordSchema).min(1, "At least one record is required"),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -41,6 +42,7 @@ type ParentOption = {
   id: number;
   name: string;
   prefix: string;
+  others?: boolean;
 };
 
 const getErrorMessage = (error: AxiosError | unknown, data: string): string => {
@@ -72,6 +74,9 @@ export default function AddHierarchy({ refresh, onClose }: AddHierarchyProps) {
   const { projectId } = useParams();
   const [parentOptions, setParentOptions] = useState<ParentOption[]>([]);
   const [loadingParents, setLoadingParents] = useState(true);
+  const [hierarchyType, setHierarchyType] = useState<"tower" | "other">(
+    "tower",
+  );
 
   const {
     register,
@@ -84,7 +89,7 @@ export default function AddHierarchy({ refresh, onClose }: AddHierarchyProps) {
     resolver: zodResolver(schema),
     defaultValues: {
       parent_id: "none",
-      records: [{ name: "", description: "", prefix: "" }],
+      records: [{ name: "", description: "", prefix: "", others: false }],
     },
   });
 
@@ -94,22 +99,35 @@ export default function AddHierarchy({ refresh, onClose }: AddHierarchyProps) {
   });
 
   const selectedParentId = watch("parent_id");
-  const isCreatingTower = !selectedParentId || selectedParentId === "" || selectedParentId === "none";
+  const isCreatingTower =
+    !selectedParentId || selectedParentId === "" || selectedParentId === "none";
+
+  const selectedParent = !isCreatingTower
+    ? parentOptions.find(
+        (parent) => parent.id.toString() === selectedParentId,
+      )
+    : undefined;
+
+  const isOtherChildContext =
+    !isCreatingTower && selectedParent && selectedParent.others;
 
   // Fetch available parent options (towers)
   useEffect(() => {
     const fetchParents = async () => {
       if (!projectId) return;
-      
+
       setLoadingParents(true);
       try {
-        const response = await apiClient.get(`/get_precast_project/${projectId}`);
+        const response = await apiClient.get(
+          `/get_precast_project/${projectId}`,
+        );
         if (response.status === 200) {
           // Extract towers as parent options
           const towers = response.data.map((tower: any) => ({
             id: tower.id,
             name: tower.name,
             prefix: tower.prefix,
+            others: tower.others ?? tower.other ?? false,
           }));
           setParentOptions(towers);
         }
@@ -124,11 +142,30 @@ export default function AddHierarchy({ refresh, onClose }: AddHierarchyProps) {
   }, [projectId]);
 
   const onSubmit = async (data: FormData) => {
+    const parentForSubmit =
+      data.parent_id && data.parent_id !== "none"
+        ? parentOptions.find((parent) => parent.id === Number(data.parent_id))
+        : undefined;
+
+    const isOtherContext =
+      isCreatingTower && hierarchyType === "other"
+        ? true
+        : !isCreatingTower && parentForSubmit?.others
+          ? true
+          : false;
+
     try {
       const payload = {
         project_id: Number(projectId),
-        parent_id: data.parent_id && data.parent_id !== "none" ? Number(data.parent_id) : null,
-        records: data.records,
+        parent_id:
+          data.parent_id && data.parent_id !== "none"
+            ? Number(data.parent_id)
+            : null,
+        records: data.records.map((record) => ({
+          ...record,
+          others: isOtherContext,
+          other: isOtherContext,
+        })),
       };
 
       const response = await apiClient.post("/create_precast", payload);
@@ -137,7 +174,9 @@ export default function AddHierarchy({ refresh, onClose }: AddHierarchyProps) {
         toast.success(
           isCreatingTower
             ? "Tower(s) created successfully!"
-            : "Floor(s) created successfully!"
+            : parentForSubmit?.others
+              ? `${parentForSubmit.name}(s) created successfully!`
+              : "Floor(s) created successfully!",
         );
         // Close dialog first, then refresh data
         if (onClose) {
@@ -148,14 +187,43 @@ export default function AddHierarchy({ refresh, onClose }: AddHierarchyProps) {
     } catch (error: unknown) {
       const errorMessage = getErrorMessage(
         error,
-        isCreatingTower ? "create tower" : "create floor"
+        isCreatingTower
+          ? hierarchyType === "tower"
+            ? "create tower"
+            : "create other hierarchy"
+          : parentForSubmit?.others
+            ? "create other hierarchy"
+            : "create floor",
       );
       toast.error(errorMessage);
     }
   };
 
+  const handleHierarchyTypeChange = (value: "tower" | "other") => {
+    setHierarchyType(value);
+    // Reset records to initial state when type changes
+    setValue("records", [
+      {
+        name: "",
+        description: "",
+        prefix: "",
+        others: value === "other",
+      },
+    ]);
+  };
+
   const addRecord = () => {
-    append({ name: "", description: "", prefix: "" });
+    append({
+      name: "",
+      description: "",
+      prefix: "",
+      others:
+        isCreatingTower && hierarchyType === "other"
+          ? true
+          : !isCreatingTower && selectedParent && selectedParent.others
+            ? true
+            : false,
+    });
   };
 
   const removeRecord = (index: number) => {
@@ -170,7 +238,8 @@ export default function AddHierarchy({ refresh, onClose }: AddHierarchyProps) {
         {/* Parent Selection */}
         <div className="grid w-full items-center gap-1.5">
           <Label htmlFor="parent_id">
-            Parent (Leave empty to create Tower)
+            Parent (Leave empty to create{" "}
+            {hierarchyType === "tower" ? "Tower" : "Other"})
           </Label>
           <Select
             value={selectedParentId}
@@ -184,7 +253,7 @@ export default function AddHierarchy({ refresh, onClose }: AddHierarchyProps) {
               <SelectItem value="none">
                 <div className="flex items-center gap-2">
                   <Building2 className="h-4 w-4 text-primary" />
-                  <span>No Parent (Create Tower)</span>
+                  <span>Add or Create</span>
                 </div>
               </SelectItem>
               {parentOptions.map((parent) => (
@@ -193,7 +262,10 @@ export default function AddHierarchy({ refresh, onClose }: AddHierarchyProps) {
                     <Building2 className="h-4 w-4 text-muted-foreground" />
                     <span>{parent.name}</span>
                     {parent.prefix && (
-                      <Badge variant="outline" className="text-[10px] px-1 py-0">
+                      <Badge
+                        variant="outline"
+                        className="text-[10px] px-1 py-0"
+                      >
                         {parent.prefix}
                       </Badge>
                     )}
@@ -204,31 +276,91 @@ export default function AddHierarchy({ refresh, onClose }: AddHierarchyProps) {
           </Select>
           <p className="text-xs text-muted-foreground">
             {isCreatingTower
-              ? "Creating new Tower(s) at root level"
-              : "Creating Floor(s) under selected Tower"}
+              ? `Creating new ${hierarchyType === "tower" ? "Tower(s)" : "Other item(s)"} at root level`
+              : isOtherChildContext
+                ? `Creating ${selectedParent?.name ?? "Item"}(s) under selected parent`
+                : "Creating Floor(s) under selected Tower"}
           </p>
         </div>
 
-        {/* Type Indicator */}
-        <div className="flex items-center gap-2 p-2 rounded-md bg-muted/50">
-          {isCreatingTower ? (
-            <>
-              <Building2 className="h-4 w-4 text-primary" />
-              <span className="text-sm font-medium">Adding Tower(s)</span>
-            </>
-          ) : (
-            <>
-              <Layers className="h-4 w-4 text-blue-500" />
-              <span className="text-sm font-medium">Adding Floor(s)</span>
-            </>
-          )}
-        </div>
+        {/* Type Selection for Root Level */}
+        {isCreatingTower && (
+          <div className="space-y-3 pt-2">
+            <Label>Type</Label>
+            <RadioGroup
+              defaultValue="tower"
+              value={hierarchyType}
+              onValueChange={(val) =>
+                handleHierarchyTypeChange(val as "tower" | "other")
+              }
+              className="grid grid-cols-2 gap-4"
+            >
+              <div>
+                <RadioGroupItem
+                  value="tower"
+                  id="type-tower"
+                  className="peer sr-only"
+                />
+                <Label
+                  htmlFor="type-tower"
+                  className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer transition-all"
+                >
+                  <Building2 className="mb-2 h-6 w-6" />
+                  <div className="text-center">
+                    <div className="font-semibold">Tower</div>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      Standard building tower
+                    </div>
+                  </div>
+                </Label>
+              </div>
+
+              <div>
+                <RadioGroupItem
+                  value="other"
+                  id="type-other"
+                  className="peer sr-only"
+                />
+                <Label
+                  htmlFor="type-other"
+                  className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer transition-all"
+                >
+                  <Network className="mb-2 h-6 w-6" />
+                  <div className="text-center">
+                    <div className="font-semibold">Other</div>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      Manhole, Catch Basin, etc.
+                    </div>
+                  </div>
+                </Label>
+              </div>
+            </RadioGroup>
+          </div>
+        )}
+
+        {/* Type Indicator (only for Floors or non-root) */}
+        {!isCreatingTower && (
+          <div className="flex items-center gap-2 p-2 rounded-md bg-muted/50">
+            <Layers className="h-4 w-4 text-blue-500" />
+            <span className="text-sm font-medium">
+              {isOtherChildContext
+                ? `Adding ${selectedParent?.name ?? "Item"}`
+                : "Adding Floor(s)"}
+            </span>
+          </div>
+        )}
 
         {/* Records Section */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <Label>
-              {isCreatingTower ? "Towers" : "Floors"}{" "}
+              {isCreatingTower
+                ? hierarchyType === "tower"
+                  ? "Towers"
+                  : "Other Items"
+                : isOtherChildContext
+                  ? selectedParent?.name ?? "Items"
+                  : "Floors"}{" "}
               <span className="text-red-500">*</span>
             </Label>
             <Button
@@ -239,7 +371,14 @@ export default function AddHierarchy({ refresh, onClose }: AddHierarchyProps) {
               onClick={addRecord}
             >
               <Plus className="h-3.5 w-3.5 mr-1" />
-              Add {isCreatingTower ? "Tower" : "Floor"}
+              Add{" "}
+              {isCreatingTower
+                ? hierarchyType === "tower"
+                  ? "Tower"
+                  : "Item"
+                : isOtherChildContext
+                  ? selectedParent?.name ?? "Item"
+                  : "Floor"}
             </Button>
           </div>
 
@@ -255,7 +394,14 @@ export default function AddHierarchy({ refresh, onClose }: AddHierarchyProps) {
               >
                 <div className="flex items-center justify-between">
                   <Badge variant="secondary" className="text-xs">
-                    {isCreatingTower ? "Tower" : "Floor"} {index + 1}
+                    {isCreatingTower
+                      ? hierarchyType === "tower"
+                        ? "Tower"
+                        : "Item"
+                        : isOtherChildContext
+                          ? selectedParent?.name ?? "Item"
+                          : "Floor"}{" "}
+                    {index + 1}
                   </Badge>
                   {fields.length > 1 && (
                     <Button
@@ -273,12 +419,23 @@ export default function AddHierarchy({ refresh, onClose }: AddHierarchyProps) {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {/* Name */}
                   <div className="grid w-full items-center gap-1.5">
-                    <Label htmlFor={`records.${index}.name`} className="text-xs">
+                    <Label
+                      htmlFor={`records.${index}.name`}
+                      className="text-xs"
+                    >
                       Name <span className="text-red-500">*</span>
                     </Label>
                     <Input
                       id={`records.${index}.name`}
-                      placeholder={isCreatingTower ? "Tower A" : "Floor 1"}
+                      placeholder={
+                        isCreatingTower
+                          ? hierarchyType === "tower"
+                            ? "Tower A"
+                            : "Other A"
+                          : isOtherChildContext
+                            ? `${selectedParent?.name ?? "Item"} 1`
+                            : "Floor 1"
+                      }
                       {...register(`records.${index}.name`)}
                       aria-invalid={!!errors.records?.[index]?.name}
                       className="h-8 text-sm"
@@ -292,12 +449,21 @@ export default function AddHierarchy({ refresh, onClose }: AddHierarchyProps) {
 
                   {/* Prefix */}
                   <div className="grid w-full items-center gap-1.5">
-                    <Label htmlFor={`records.${index}.prefix`} className="text-xs">
+                    <Label
+                      htmlFor={`records.${index}.prefix`}
+                      className="text-xs"
+                    >
                       Prefix <span className="text-red-500">*</span>
                     </Label>
                     <Input
                       id={`records.${index}.prefix`}
-                      placeholder={isCreatingTower ? "T1" : "F1"}
+                      placeholder={
+                        isCreatingTower
+                          ? hierarchyType === "tower"
+                            ? "T1"
+                            : "O1"
+                          : "F1"
+                      }
                       {...register(`records.${index}.prefix`)}
                       aria-invalid={!!errors.records?.[index]?.prefix}
                       className="h-8 text-sm"
@@ -312,7 +478,10 @@ export default function AddHierarchy({ refresh, onClose }: AddHierarchyProps) {
 
                 {/* Description */}
                 <div className="grid w-full items-center gap-1.5">
-                  <Label htmlFor={`records.${index}.description`} className="text-xs">
+                  <Label
+                    htmlFor={`records.${index}.description`}
+                    className="text-xs"
+                  >
                     Description
                   </Label>
                   <Textarea
@@ -337,7 +506,15 @@ export default function AddHierarchy({ refresh, onClose }: AddHierarchyProps) {
           <Button type="submit" disabled={isSubmitting}>
             {isSubmitting
               ? "Creating..."
-              : `Create ${isCreatingTower ? "Tower(s)" : "Floor(s)"}`}
+              : `Create ${
+                  isCreatingTower
+                    ? hierarchyType === "tower"
+                      ? "Tower(s)"
+                      : "Other Item(s)"
+                    : isOtherChildContext
+                      ? `${selectedParent?.name ?? "Item"}(s)`
+                      : "Floor(s)"
+                }`}
           </Button>
         </div>
       </form>

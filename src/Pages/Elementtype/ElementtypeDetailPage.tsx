@@ -129,7 +129,7 @@ export default function Elementtypedetail() {
 
   const toggleDrawing = (index: number) => {
     setExpandedDrawings((prev) =>
-      prev.includes(index) ? prev.filter((i) => i !== index) : [...prev, index]
+      prev.includes(index) ? prev.filter((i) => i !== index) : [...prev, index],
     );
   };
 
@@ -137,7 +137,7 @@ export default function Elementtypedetail() {
     elementypeData?.BOM?.filter(
       (bom) =>
         bom.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        bom.material_id.toString().includes(searchQuery)
+        bom.material_id.toString().includes(searchQuery),
     ) || [];
 
   return (
@@ -236,7 +236,7 @@ export default function Elementtypedetail() {
             </TableHeader>
             <TableBody>
               {filteredBOM.map((bom, index) => (
-                <TableRow key={index}>
+                <TableRow key={index} className="bg-white">
                   <TableCell>{bom.material_id}</TableCell>
                   <TableCell>{bom.name}</TableCell>
                   <TableCell>{bom.Quantity}</TableCell>
@@ -272,7 +272,7 @@ export default function Elementtypedetail() {
                     <TableCell>
                       <a
                         href={`${apiBaseUrl}/get-file?file=${encodeURIComponent(
-                          drawing.file_path
+                          drawing.file_path,
                         )}`}
                         target="_blank"
                         rel="noopener noreferrer"
@@ -320,7 +320,7 @@ export default function Elementtypedetail() {
                         <TableCell>
                           <a
                             href={`${apiBaseUrl}/get-file?file=${encodeURIComponent(
-                              revision.file_path
+                              revision.file_path,
                             )}`}
                             target="_blank"
                             rel="noopener noreferrer"

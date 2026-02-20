@@ -11,6 +11,13 @@ import {
   type VisibilityState,
 } from "@tanstack/react-table";
 import { ArrowUpDown, ChevronDown, Download } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -191,7 +198,7 @@ export function AttendanceTable() {
 
   //   server side pagination
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(10);
   const [totalPages, setTotalPages] = useState(0);
   const [totalRecords, setTotalRecords] = useState(0);
 
@@ -255,7 +262,7 @@ export function AttendanceTable() {
       try {
         const params: Record<string, number> = {
           page: currentPage,
-          limit: pageSize,
+          page_size: pageSize,
         };
 
         if (filterState.selectedProject > 0)
@@ -279,9 +286,10 @@ export function AttendanceTable() {
         });
 
         if (response.status === 200) {
-          setData(response.data.data);
-          setTotalPages(response.data.pagination.total_pages);
-          setTotalRecords(response.data.pagination.total_count);
+          setData(response.data.data ?? []);
+          const pagination = response.data.pagination ?? {};
+          setTotalPages(pagination.total_pages ?? 0);
+          setTotalRecords(pagination.total ?? 0);
         } else {
           toast.error(
             response.data?.message || "Failed to fetch manpower count"
@@ -493,12 +501,35 @@ export function AttendanceTable() {
           </TableBody>
         </Table>
       </div>
-      <div className="flex items-center justify-end space-x-2 py-4">
+      <div className="flex flex-col gap-4 py-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="text-muted-foreground flex-1 text-sm">
-          Showing page {currentPage} of {totalPages} ({totalRecords} total
-          records)
+          Showing page {currentPage} of {Math.max(1, totalPages)} ({totalRecords}{" "}
+          total records)
         </div>
-        <div className="space-x-2">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:space-x-2">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">
+              Rows per page:
+            </span>
+            <Select
+              value={pageSize.toString()}
+              onValueChange={(value) => {
+                setPageSize(Number(value));
+                setCurrentPage(1);
+              }}
+            >
+              <SelectTrigger className="w-[70px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="10">10</SelectItem>
+                <SelectItem value="25">25</SelectItem>
+                <SelectItem value="50">50</SelectItem>
+                <SelectItem value="100">100</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex space-x-2">
           <Button
             variant="outline"
             size="sm"
@@ -517,6 +548,7 @@ export function AttendanceTable() {
           >
             Next
           </Button>
+          </div>
         </div>
       </div>
     </div>

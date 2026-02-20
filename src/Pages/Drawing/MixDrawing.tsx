@@ -12,6 +12,7 @@ import { useEffect, useMemo, useState } from "react";
 import { DrawingTable } from "./DrawingTable";
 import { DrawingTypeTable } from "./DrawingTypeTable";
 import { useProject } from "@/Provider/ProjectProvider";
+import { ProjectSetupGuide } from "@/components/ProjectSetupGuide";
 
 interface TabLink {
   id: string;
@@ -22,7 +23,7 @@ interface TabLink {
 }
 
 export default function MixDrawing() {
-  const { permissions } = useProject();
+  const { permissions, projectDetails, markSetupStepDone } = useProject();
   const [activeTab, setActiveTab] = useState<string>("");
 
   const tabLinks = useMemo<TabLink[]>(() => {
@@ -81,6 +82,7 @@ export default function MixDrawing() {
       <div className="flex items-center justify-between">
         <PageHeader title="  Drawing" />
       </div>
+
       {/* pills section  */}
       <div className="flex flex-col gap-2">
         {/* FOR DESKTOP and TABLET  */}

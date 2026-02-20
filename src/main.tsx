@@ -103,10 +103,8 @@ import router from "./Routes.tsx";
 import { Toaster } from "./components/ui/sonner.tsx";
 
 createRoot(document.getElementById("root")!).render(
-  <StrictMode>
-    <ThemeProvider defaultTheme="system" defaultAccentColor="blue">
-      <RouterProvider router={router} />
-      <Toaster richColors position="top-right" />
-    </ThemeProvider>
-  </StrictMode>
+  <ThemeProvider defaultTheme="system" defaultAccentColor="blue">
+    <RouterProvider router={router} />
+    <Toaster richColors position="top-right" />
+  </ThemeProvider>,
 );

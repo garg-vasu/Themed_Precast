@@ -1,8 +1,10 @@
 import axios, { AxiosError } from "axios";
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -29,9 +31,29 @@ export interface ProjectDetails {
   client_id: number;
   total_elements: number;
   completed_elements: number;
+  is_member: boolean;
+  is_assign_stockyard: boolean;
+  is_paper: boolean;
+  is_stage_member: boolean;
+  is_hierachy: boolean;
+  is_bom: boolean;
+  is_drawingtype: boolean;
+  is_elementtype: boolean;
   progress: number;
   permissions?: Array<{ permission_name: string }>;
 }
+
+export type SetupStepKey = keyof Pick<
+  ProjectDetails,
+  | "is_member"
+  | "is_assign_stockyard"
+  | "is_paper"
+  | "is_stage_member"
+  | "is_hierachy"
+  | "is_bom"
+  | "is_drawingtype"
+  | "is_elementtype"
+>;
 
 interface ProjectContextType {
   projectId: string;
@@ -40,6 +62,8 @@ interface ProjectContextType {
   loading: boolean;
   error: string | null;
   retry: () => void;
+  refreshProject: () => void;
+  markSetupStepDone: (key: SetupStepKey) => void;
 }
 
 export const ProjectContext = createContext<ProjectContextType>({
@@ -49,6 +73,8 @@ export const ProjectContext = createContext<ProjectContextType>({
   loading: false,
   error: null,
   retry: () => {},
+  refreshProject: () => {},
+  markSetupStepDone: () => {},
 });
 
 interface ProjectProviderProps {
@@ -139,7 +165,7 @@ export const ProjectProvider = ({ children }: ProjectProviderProps) => {
   const { projectId } = useParams<{ projectId: string }>();
   const { user } = useContext(UserContext);
   const [projectDetails, setProjectDetails] = useState<ProjectDetails | null>(
-    null
+    null,
   );
   const [permissions, setPermissions] = useState<string[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -158,31 +184,36 @@ export const ProjectProvider = ({ children }: ProjectProviderProps) => {
     navigate("/login", { replace: true });
   };
 
-  useEffect(() => {
-    if (!projectId) {
-      setLoading(false);
-      setError("Project ID is missing");
-      return;
-    }
+  const cancelSourceRef = useRef<ReturnType<typeof axios.CancelToken.source>>(undefined);
 
-    const source = axios.CancelToken.source();
+  const fetchProjectDetails = useCallback(
+    async (showLoading = true) => {
+      if (!projectId) {
+        setLoading(false);
+        setError("Project ID is missing");
+        return;
+      }
 
-    const fetchProjectDetails = async () => {
+      cancelSourceRef.current?.cancel();
+      const source = axios.CancelToken.source();
+      cancelSourceRef.current = source;
+
       try {
-        setLoading(true);
+        if (showLoading) setLoading(true);
         const response = await apiClient.get(`/project_fetch/${projectId}`, {
           cancelToken: source.token,
         });
 
         if (response.status === 200) {
-          const projectData = response.data as ProjectDetails;
-          setProjectDetails(projectData);
+          const projectData = response.data.project as ProjectDetails;
+          const flags = response.data.flags as any;
+          setProjectDetails({ ...projectData, ...flags });
           setPermissions(
             projectData.permissions
               ? projectData.permissions.map(
-                  (perm: { permission_name: string }) => perm.permission_name
+                  (perm: { permission_name: string }) => perm.permission_name,
                 )
-              : []
+              : [],
           );
           setError(null);
         } else if (response.status === 403) {
@@ -198,14 +229,12 @@ export const ProjectProvider = ({ children }: ProjectProviderProps) => {
           if (axios.isAxiosError(err) && err.response?.status === 403) {
             setError("access_denied");
           } else if (axios.isAxiosError(err) && err.response?.status === 404) {
-            // Project does not exist - show toast and redirect to home
             const errorMessage =
               err.response?.data?.error || "Project not found.";
             toast.error(errorMessage);
             navigate("/", { replace: true });
           } else {
             setError(getErrorMessage(err));
-            // Only navigate to login for 401 errors
             if (axios.isAxiosError(err) && err.response?.status === 401) {
               handleUnauthorized();
             }
@@ -214,72 +243,27 @@ export const ProjectProvider = ({ children }: ProjectProviderProps) => {
       } finally {
         setLoading(false);
       }
-    };
+    },
+    [projectId, navigate],
+  );
 
+  useEffect(() => {
     fetchProjectDetails();
-
     return () => {
-      source.cancel();
+      cancelSourceRef.current?.cancel();
     };
-  }, [projectId, navigate]);
+  }, [fetchProjectDetails]);
 
-  // Retry function
-  const retry = () => {
-    setLoading(true);
-    if (projectId) {
-      const source = axios.CancelToken.source();
-      const fetchProjectDetails = async () => {
-        try {
-          const response = await apiClient.get(`/project_fetch/${projectId}`, {
-            cancelToken: source.token,
-          });
+  const retry = () => fetchProjectDetails(true);
 
-          if (response.status === 200) {
-            const projectData = response.data as ProjectDetails;
-            setProjectDetails(projectData);
-            setPermissions(
-              projectData.permissions
-                ? projectData.permissions.map(
-                    (perm: { permission_name: string }) => perm.permission_name
-                  )
-                : []
-            );
-            setError(null);
-          } else if (response.status === 403) {
-            setError("access_denied");
-          } else {
-            const message =
-              (response.data as any)?.message ||
-              "Failed to fetch project data. Please try again.";
-            setError(message);
-          }
-        } catch (err: unknown) {
-          if (!axios.isCancel(err)) {
-            if (axios.isAxiosError(err) && err.response?.status === 403) {
-              setError("access_denied");
-            } else if (
-              axios.isAxiosError(err) &&
-              err.response?.status === 404
-            ) {
-              // Project does not exist - show toast and redirect to home
-              const errorMessage =
-                err.response?.data?.error || "Project not found.";
-              toast.error(errorMessage);
-              navigate("/", { replace: true });
-            } else {
-              setError(getErrorMessage(err));
-              if (axios.isAxiosError(err) && err.response?.status === 401) {
-                handleUnauthorized();
-              }
-            }
-          }
-        } finally {
-          setLoading(false);
-        }
-      };
-      fetchProjectDetails();
-    }
-  };
+  const refreshProject = useCallback(
+    () => fetchProjectDetails(false),
+    [fetchProjectDetails],
+  );
+
+  const markSetupStepDone = useCallback((key: SetupStepKey) => {
+    setProjectDetails((prev) => (prev ? { ...prev, [key]: true } : prev));
+  }, []);
 
   useEffect(() => {
     if (error && error !== "access_denied") {
@@ -306,6 +290,8 @@ export const ProjectProvider = ({ children }: ProjectProviderProps) => {
         loading,
         error: error === "access_denied" ? null : error,
         retry,
+        refreshProject,
+        markSetupStepDone,
       }}
     >
       {children}

@@ -432,11 +432,9 @@ const TowerFloorEditor: React.FC<TowerFloorEditorProps> = ({ onSave }) => {
   // ----------------------------------------------------------------
   if (loading) {
     return (
-      <Card>
-        <CardContent className="py-10 text-center text-sm text-muted-foreground">
-          Loading available stockyard items...
-        </CardContent>
-      </Card>
+      <div className="flex min-h-[200px] items-center justify-center rounded-lg border bg-muted/30 px-4 py-8 text-xs text-muted-foreground sm:text-sm">
+        Loading available stockyard items...
+      </div>
     );
   }
   if (globalError) {
@@ -448,22 +446,18 @@ const TowerFloorEditor: React.FC<TowerFloorEditorProps> = ({ onSave }) => {
   }
   if (!data) {
     return (
-      <Card>
-        <CardContent className="py-10 text-center text-sm text-muted-foreground">
-          No data available.
-        </CardContent>
-      </Card>
+      <div className="flex min-h-[200px] items-center justify-center rounded-lg border bg-muted/30 px-4 py-8 text-xs text-muted-foreground sm:text-sm">
+        No data available.
+      </div>
     );
   }
 
   return (
-    <div className="w-full space-y-4">
+    <div className="flex w-full flex-col gap-3 ">
       {!data || Object.keys(data).length === 0 ? (
-        <Card>
-          <CardContent className="py-10 text-center text-sm text-muted-foreground">
-            No data available.
-          </CardContent>
-        </Card>
+        <div className="rounded-lg border bg-muted/30 px-4 py-6 text-xs text-muted-foreground sm:text-sm">
+          No data available.
+        </div>
       ) : (
         <>
           {blocks.map((block, blockIndex) => {
@@ -472,22 +466,26 @@ const TowerFloorEditor: React.FC<TowerFloorEditorProps> = ({ onSave }) => {
               row.selectedItems.some((sel) => sel.chosenQuantity > 0)
             );
             return (
-              <Card key={blockIndex} className="relative">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+              <Card
+                key={blockIndex}
+                className="relative border-dashed bg-background/80 shadow-sm"
+              >
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 px-3 py-2 sm:px-4 sm:py-3">
                   <div className="space-y-0.5">
-                    <CardTitle className="text-sm font-medium">
+                    <CardTitle className="text-xs font-semibold sm:text-sm">
                       Block {blockIndex + 1}
                     </CardTitle>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-[11px] text-muted-foreground sm:text-xs">
                       Map elements from stockyard to a specific floor.
                     </p>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5 sm:gap-2">
                     {!isActive && (
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => setActiveIndex(blockIndex)}
+                        className="h-8 px-2 text-xs"
                       >
                         Edit
                       </Button>
@@ -495,7 +493,7 @@ const TowerFloorEditor: React.FC<TowerFloorEditorProps> = ({ onSave }) => {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="text-destructive"
+                      className="h-8 w-8 text-destructive"
                       onClick={() => removeBlock(blockIndex)}
                       aria-label="Remove block"
                     >
@@ -503,7 +501,7 @@ const TowerFloorEditor: React.FC<TowerFloorEditorProps> = ({ onSave }) => {
                     </Button>
                   </div>
                 </CardHeader>
-                <CardContent className="space-y-4 pt-0">
+                <CardContent className="space-y-3 px-3 pb-3 pt-0 sm:space-y-4 sm:px-4 sm:pb-4">
                   {isActive ? (
                     <>
                       <TowerFloorSelector
@@ -515,141 +513,158 @@ const TowerFloorEditor: React.FC<TowerFloorEditorProps> = ({ onSave }) => {
                         showErrors={showBlockErrors}
                       />
                       {block.tower && block.floor && (
-                        <>
-                          <Card className="border-dashed">
-                            <CardHeader className="pb-3">
-                              <CardTitle className="text-sm font-medium">
-                                Step 2 · Choose categories & elements
-                              </CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-4 pt-0">
-                              {block.selections.map((row, rowIndex) => (
-                                <div
-                                  key={row.id}
-                                  className="rounded-md border bg-muted/40 p-3 space-y-3"
-                                >
-                                  <div className="flex flex-wrap items-end gap-3">
-                                    <div className="flex-1 min-w-[180px]">
-                                      <Label className="text-xs font-medium text-muted-foreground">
-                                        Category
-                                      </Label>
-                                      <Select
-                                        value={row.category}
-                                        onValueChange={(value) =>
-                                          handleCategoryChange(row.id, value)
-                                        }
-                                      >
-                                        <SelectTrigger className="w-full h-9">
-                                          <SelectValue placeholder="Select a category" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                          {Object.keys(
-                                            data[block.tower][block.floor]
+                        <div className="space-y-3 rounded-lg border border-dashed bg-muted/40 px-3 py-3 sm:space-y-4 sm:px-4 sm:py-4">
+                          <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                            <p className="text-xs font-semibold sm:text-sm">
+                              Step 2 · Choose categories &amp; elements
+                            </p>
+                            <p className="text-[11px] text-muted-foreground">
+                              Create compact lines so it fits well on small
+                              screens.
+                            </p>
+                          </div>
+                          <div className="space-y-3 sm:space-y-4">
+                            {block.selections.map((row, rowIndex) => (
+                              <div
+                                key={row.id}
+                                className="space-y-3 rounded-md border bg-muted/40 px-3 py-3"
+                              >
+                                <div className="flex flex-wrap items-end gap-3">
+                                  <div className="w-full flex-1">
+                                    <Label className="text-[11px] font-medium text-muted-foreground">
+                                      Category
+                                    </Label>
+                                    <Select
+                                      value={row.category}
+                                      onValueChange={(value) =>
+                                        handleCategoryChange(row.id, value)
+                                      }
+                                    >
+                                      <SelectTrigger className="h-8 w-full text-xs sm:h-9 sm:text-sm">
+                                        <SelectValue placeholder="Select a category" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        {Object.keys(
+                                          data[block.tower][block.floor]
+                                        )
+                                          // Filter out categories already selected in other rows of this block
+                                          .filter(
+                                            (cat) =>
+                                              !block.selections.some(
+                                                (r) =>
+                                                  r.category === cat &&
+                                                  r.id !== row.id
+                                              )
                                           )
-                                            // Filter out categories already selected in other rows of this block
-                                            .filter(
-                                              (cat) =>
-                                                !block.selections.some(
-                                                  (r) =>
-                                                    r.category === cat &&
-                                                    r.id !== row.id
-                                                )
-                                            )
-                                            .map((cat) => {
-                                              let items =
-                                                data[block.tower][block.floor][
-                                                  cat
-                                                ] || [];
-                                              if (!Array.isArray(items)) {
-                                                items = Object.values(items);
-                                              }
-                                              // Calculate total allocated for all items in this category
-                                              let allocated = 0;
-                                              items.forEach((it) => {
-                                                allocated +=
-                                                  getTotalAllocatedForItem(
-                                                    it.element_type_id
-                                                  );
-                                              });
-                                              // Available is balance_elements minus allocated for all items
-                                              const available =
-                                                items[0]?.balance_elements -
-                                                allocated;
-                                              return (
-                                                <SelectItem
-                                                  key={cat}
-                                                  value={cat}
-                                                  disabled={available <= 0}
-                                                >
-                                                  {cat} (
-                                                  {items[0]?.balance_elements}/
-                                                  {items[0]?.total_quantity})
-                                                </SelectItem>
-                                              );
-                                            })}
-                                        </SelectContent>
-                                      </Select>
-                                    </div>
-
-                                    <div className="flex-1 min-w-[180px]">
-                                      {row.category && (
-                                        <div className="space-y-1">
-                                          <Label className="text-xs font-medium text-muted-foreground">
-                                            Elements
-                                          </Label>
-                                          <Popover>
-                                            <PopoverTrigger asChild>
-                                              <Button
-                                                variant="outline"
-                                                className="w-full justify-between h-9"
+                                          .map((cat) => {
+                                            let items =
+                                              data[block.tower][block.floor][
+                                                cat
+                                              ] || [];
+                                            if (!Array.isArray(items)) {
+                                              items = Object.values(items);
+                                            }
+                                            // Calculate total allocated for all items in this category
+                                            let allocated = 0;
+                                            items.forEach((it) => {
+                                              allocated +=
+                                                getTotalAllocatedForItem(
+                                                  it.element_type_id
+                                                );
+                                            });
+                                            // Available is balance_elements minus allocated for all items
+                                            const available =
+                                              items[0]?.balance_elements -
+                                              allocated;
+                                            return (
+                                              <SelectItem
+                                                key={cat}
+                                                value={cat}
+                                                disabled={available <= 0}
+                                                className="text-xs sm:text-sm"
                                               >
-                                                <span className="truncate">
-                                                  {row.selectedItems.length ===
-                                                  0
-                                                    ? "Select elements"
-                                                    : `${row.selectedItems.length} element(s) selected`}
-                                                </span>
-                                              </Button>
-                                            </PopoverTrigger>
-                                            <PopoverContent className="w-72 p-0">
-                                              <ScrollArea className="h-56 p-2">
-                                                <div className="space-y-2">
-                                                  {(() => {
-                                                    let itemsForCategory =
-                                                      data[block.tower][
-                                                        block.floor
-                                                      ][row.category] || [];
-                                                    if (
-                                                      !Array.isArray(
+                                                {cat} (
+                                                {items[0]?.balance_elements}/
+                                                {items[0]?.total_quantity})
+                                              </SelectItem>
+                                            );
+                                          })}
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+
+                                  <div className="min-w-[150px] flex-1">
+                                    {row.category && (
+                                      <div className="space-y-1">
+                                        <Label className="text-[11px] font-medium text-muted-foreground">
+                                          Elements
+                                        </Label>
+                                        <Popover>
+                                          <PopoverTrigger asChild>
+                                            <Button
+                                              variant="outline"
+                                              className="h-8 w-full justify-between px-2 text-xs sm:h-9 sm:px-3 sm:text-sm"
+                                            >
+                                              <span className="truncate">
+                                                {row.selectedItems.length === 0
+                                                  ? "Select elements"
+                                                  : `${row.selectedItems.length} element(s) selected`}
+                                              </span>
+                                            </Button>
+                                          </PopoverTrigger>
+                                          <PopoverContent className="w-72 p-0">
+                                            <ScrollArea className="h-56 p-2">
+                                              <div className="space-y-2">
+                                                {(() => {
+                                                  let itemsForCategory =
+                                                    data[block.tower][
+                                                      block.floor
+                                                    ][row.category] || [];
+                                                  if (
+                                                    !Array.isArray(
+                                                      itemsForCategory
+                                                    )
+                                                  ) {
+                                                    itemsForCategory =
+                                                      Object.values(
                                                         itemsForCategory
-                                                      )
-                                                    ) {
-                                                      itemsForCategory =
-                                                        Object.values(
-                                                          itemsForCategory
+                                                      );
+                                                  }
+                                                  return itemsForCategory.map(
+                                                    (item) => {
+                                                      const globalAvail =
+                                                        item.balance_elements -
+                                                        getTotalAllocatedForItem(
+                                                          item.element_type_id
                                                         );
-                                                    }
-                                                    return itemsForCategory.map(
-                                                      (item) => {
-                                                        const globalAvail =
-                                                          item.balance_elements -
-                                                          getTotalAllocatedForItem(
+                                                      const isChecked =
+                                                        row.selectedItems.some(
+                                                          (sel) =>
+                                                            sel.item
+                                                              .element_type_id ===
                                                             item.element_type_id
-                                                          );
-                                                        const isChecked =
-                                                          row.selectedItems.some(
-                                                            (sel) =>
-                                                              sel.item
-                                                                .element_type_id ===
-                                                              item.element_type_id
-                                                          );
-                                                        return (
-                                                          <button
-                                                            key={
-                                                              item.element_type_id
-                                                            }
-                                                            type="button"
-                                                            onClick={() =>
+                                                        );
+                                                      return (
+                                                        <button
+                                                          key={
+                                                            item.element_type_id
+                                                          }
+                                                          type="button"
+                                                          onClick={() =>
+                                                            toggleItemSelection(
+                                                              row.id,
+                                                              item
+                                                            )
+                                                          }
+                                                          disabled={
+                                                            globalAvail <= 0 &&
+                                                            !isChecked
+                                                          }
+                                                          className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-[11px] hover:bg-muted/80 disabled:opacity-60"
+                                                        >
+                                                          <Checkbox
+                                                            checked={isChecked}
+                                                            onCheckedChange={() =>
                                                               toggleItemSelection(
                                                                 row.id,
                                                                 item
@@ -659,151 +674,132 @@ const TowerFloorEditor: React.FC<TowerFloorEditorProps> = ({ onSave }) => {
                                                               globalAvail <=
                                                                 0 && !isChecked
                                                             }
-                                                            className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs hover:bg-muted/80 disabled:opacity-60"
-                                                          >
-                                                            <Checkbox
-                                                              checked={
-                                                                isChecked
+                                                          />
+                                                          <div className="flex flex-col">
+                                                            <span className="text-xs font-medium">
+                                                              {
+                                                                item.element_type_name
                                                               }
-                                                              onCheckedChange={() =>
-                                                                toggleItemSelection(
-                                                                  row.id,
-                                                                  item
-                                                                )
+                                                            </span>
+                                                            <span className="text-[10px] text-muted-foreground">
+                                                              Available:{" "}
+                                                              {globalAvail}/
+                                                              {
+                                                                item.total_quantity
                                                               }
-                                                              disabled={
-                                                                globalAvail <=
-                                                                  0 &&
-                                                                !isChecked
-                                                              }
-                                                            />
-                                                            <div className="flex flex-col">
-                                                              <span className="font-medium">
-                                                                {
-                                                                  item.element_type_name
-                                                                }
-                                                              </span>
-                                                              <span className="text-[10px] text-muted-foreground">
-                                                                Available:{" "}
-                                                                {globalAvail}/
-                                                                {
-                                                                  item.total_quantity
-                                                                }
-                                                              </span>
-                                                            </div>
-                                                          </button>
-                                                        );
-                                                      }
-                                                    );
-                                                  })()}
-                                                </div>
-                                              </ScrollArea>
-                                            </PopoverContent>
-                                          </Popover>
-                                        </div>
-                                      )}
-                                    </div>
-
-                                    {rowIndex > 0 && (
-                                      <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="text-destructive"
-                                        onClick={() => removeRow(row.id)}
-                                        aria-label="Remove row"
-                                      >
-                                        ×
-                                      </Button>
+                                                            </span>
+                                                          </div>
+                                                        </button>
+                                                      );
+                                                    }
+                                                  );
+                                                })()}
+                                              </div>
+                                            </ScrollArea>
+                                          </PopoverContent>
+                                        </Popover>
+                                      </div>
                                     )}
                                   </div>
 
-                                  {row.selectedItems.length > 0 && (
-                                    <div className="w-full pt-2">
-                                      <div className="flex flex-col w-full gap-2">
-                                        {row.selectedItems.map(
-                                          (sel, itemIndex) => (
-                                            <div
-                                              key={sel.item.element_type_id}
-                                              className="w-full flex flex-wrap lg:flex-nowrap items-center gap-3 rounded-md border bg-background px-3 py-2"
-                                            >
-                                              <div className="flex flex-col w-full lg:w-auto">
-                                                <span className="text-[11px] text-muted-foreground">
-                                                  Element
-                                                </span>
-                                                <span className="text-sm">
-                                                  {sel.item.element_type_name}
-                                                </span>
-                                              </div>
-                                              <div className="flex flex-col w-full lg:w-auto">
-                                                <span className="text-[11px] text-muted-foreground">
-                                                  Total
-                                                </span>
-                                                <span className="text-sm">
-                                                  {sel.item.total_quantity}
-                                                </span>
-                                              </div>
-                                              <div className="flex flex-col w-full lg:w-auto">
-                                                <span className="text-[11px] text-muted-foreground">
-                                                  Available
-                                                </span>
-                                                <span className="text-sm">
-                                                  {sel.item.balance_elements}
-                                                </span>
-                                              </div>
-                                              <div className="flex flex-col w-full lg:w-[160px]">
-                                                <Label className="text-[11px] text-muted-foreground">
-                                                  Quantity
-                                                </Label>
-                                                <Input
-                                                  type="number"
-                                                  value={
-                                                    sel.chosenQuantity === 0
-                                                      ? ""
-                                                      : sel.chosenQuantity
-                                                  }
-                                                  min={0}
-                                                  max={
-                                                    sel.item.balance_elements
-                                                  }
-                                                  onChange={(e) =>
-                                                    handleQuantityChange(
-                                                      row.id,
-                                                      itemIndex,
-                                                      e.target.value
-                                                    )
-                                                  }
-                                                  className="h-9"
-                                                />
-                                                {sel.error && (
-                                                  <p className="text-[11px] text-destructive pt-1">
-                                                    {sel.error}
-                                                  </p>
-                                                )}
-                                              </div>
-                                            </div>
-                                          )
-                                        )}
-                                      </div>
-                                    </div>
+                                  {rowIndex > 0 && (
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-8 w-8 text-destructive"
+                                      onClick={() => removeRow(row.id)}
+                                      aria-label="Remove row"
+                                    >
+                                      ×
+                                    </Button>
                                   )}
                                 </div>
-                              ))}
-                              <div className="flex justify-start">
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={addRow}
-                                >
-                                  + Add category
-                                </Button>
+
+                                {row.selectedItems.length > 0 && (
+                                  <div className="w-full pt-2">
+                                    <div className="flex w-full flex-col gap-2">
+                                      {row.selectedItems.map(
+                                        (sel, itemIndex) => (
+                                          <div
+                                            key={sel.item.element_type_id}
+                                            className="flex w-full flex-wrap items-center gap-2 rounded-md border bg-background px-2 py-2 text-xs sm:gap-3 sm:px-3 sm:text-sm lg:flex-nowrap"
+                                          >
+                                            <div className="flex w-full flex-col lg:w-auto">
+                                              <span className="text-[10px] text-muted-foreground">
+                                                Element
+                                              </span>
+                                              <span className="truncate">
+                                                {sel.item.element_type_name}
+                                              </span>
+                                            </div>
+                                            <div className="flex w-[80px] flex-col">
+                                              <span className="text-[10px] text-muted-foreground">
+                                                Total
+                                              </span>
+                                              <span>
+                                                {sel.item.total_quantity}
+                                              </span>
+                                            </div>
+                                            <div className="flex w-[90px] flex-col">
+                                              <span className="text-[10px] text-muted-foreground">
+                                                Available
+                                              </span>
+                                              <span>
+                                                {sel.item.balance_elements}
+                                              </span>
+                                            </div>
+                                            <div className="flex w-full flex-col sm:w-[140px] lg:w-[160px]">
+                                              <Label className="text-[10px] text-muted-foreground">
+                                                Quantity
+                                              </Label>
+                                              <Input
+                                                type="number"
+                                                value={
+                                                  sel.chosenQuantity === 0
+                                                    ? ""
+                                                    : sel.chosenQuantity
+                                                }
+                                                min={0}
+                                                max={sel.item.balance_elements}
+                                                onChange={(e) =>
+                                                  handleQuantityChange(
+                                                    row.id,
+                                                    itemIndex,
+                                                    e.target.value
+                                                  )
+                                                }
+                                                className="h-8 text-xs sm:h-9 sm:text-sm"
+                                              />
+                                              {sel.error && (
+                                                <p className="pt-1 text-[10px] text-destructive">
+                                                  {sel.error}
+                                                </p>
+                                              )}
+                                            </div>
+                                          </div>
+                                        )
+                                      )}
+                                    </div>
+                                  </div>
+                                )}
                               </div>
-                            </CardContent>
-                          </Card>
-                        </>
+                            ))}
+                            <div className="flex justify-start">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={addRow}
+                                className="h-8 px-3 text-xs sm:h-9 sm:text-sm"
+                              >
+                                + Add category
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
                       )}
                     </>
                   ) : (
-                    <div className="space-y-1 text-xs text-muted-foreground">
+                    <div className="space-y-1 text-[11px] text-muted-foreground sm:text-xs">
                       <div>
                         <span className="font-medium">Tower:</span>{" "}
                         {block.tower || "Not selected"}
@@ -822,55 +818,69 @@ const TowerFloorEditor: React.FC<TowerFloorEditorProps> = ({ onSave }) => {
               </Card>
             );
           })}
-          <Card>
-            <CardContent className="flex flex-col gap-3 pt-4">
-              <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-                <div className="flex items-center gap-2">
-                  <Label className="text-sm font-medium text-muted-foreground">
-                    Add another block
-                  </Label>
-                  <Select
-                    onValueChange={(value) =>
-                      handleAddMoreOption({
-                        target: { value },
-                      } as React.ChangeEvent<HTMLSelectElement>)
-                    }
-                  >
-                    <SelectTrigger className="h-9 w-[210px]">
-                      <SelectValue placeholder="Choose how to duplicate" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="keep-tower-change-floor">
-                        Keep tower, change floor
-                      </SelectItem>
-                      <SelectItem value="change-both">
-                        Change tower & floor
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+          <div className="sticky bottom-0 z-10 mt-2 -mx-3 flex flex-col gap-2  px-3 py-3 text-xs ">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex flex-wrap items-center gap-2">
+                <Label className="text-xs font-medium text-muted-foreground sm:text-sm">
+                  Add another block
+                </Label>
+                <Select
+                  onValueChange={(value) =>
+                    handleAddMoreOption({
+                      target: { value },
+                    } as React.ChangeEvent<HTMLSelectElement>)
+                  }
+                >
+                  <SelectTrigger className="h-8 w-[210px] text-xs sm:h-9 sm:text-sm">
+                    <SelectValue placeholder="Choose how to duplicate" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem
+                      value="keep-tower-change-floor"
+                      className="text-xs sm:text-sm"
+                    >
+                      Keep tower, change floor
+                    </SelectItem>
+                    <SelectItem
+                      value="change-both"
+                      className="text-xs sm:text-sm"
+                    >
+                      Change tower &amp; floor
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
+            </div>
 
-              {showBlockErrors && (
-                <Alert variant="destructive" className="text-xs">
-                  <AlertDescription>
-                    Please select tower & floor for each block, choose at least
-                    one element with a positive quantity, and fix any quantity
-                    errors.
-                  </AlertDescription>
-                </Alert>
-              )}
+            {showBlockErrors && (
+              <Alert variant="destructive" className="text-xs sm:text-sm">
+                <AlertDescription>
+                  Please select tower &amp; floor for each block, choose at
+                  least one element with a positive quantity, and fix any
+                  quantity errors.
+                </AlertDescription>
+              </Alert>
+            )}
 
-              <div className="flex flex-wrap gap-2 justify-end pt-2 border-t mt-2">
-                <Button variant="outline" onClick={handleReset} size="sm">
-                  Reset
-                </Button>
-                <Button variant="default" onClick={handleSubmitAll} size="sm">
-                  Submit request
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+            <div className="mt-1 flex flex-wrap justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={handleReset}
+                size="sm"
+                className="h-8 px-3 text-xs sm:h-9 sm:text-sm"
+              >
+                Reset
+              </Button>
+              <Button
+                variant="default"
+                onClick={handleSubmitAll}
+                size="sm"
+                className="h-8 px-3 text-xs sm:h-9 sm:text-sm"
+              >
+                Submit request
+              </Button>
+            </div>
+          </div>
         </>
       )}
     </div>

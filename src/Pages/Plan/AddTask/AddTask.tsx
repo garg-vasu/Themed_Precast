@@ -11,7 +11,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { useState } from "react";
+import { useContext, useState } from "react";
 import axios, { AxiosError } from "axios";
 import { useNavigate, useParams } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -23,6 +23,8 @@ import { toast } from "sonner";
 import { apiClient } from "@/utils/apiClient";
 import type { SelectedItem as DialogSelectedItem } from "./types";
 import TowerFloorSelectionDialog from "./TowerFloorSelectionDialog";
+import { ProjectContext } from "@/Provider/ProjectProvider";
+import { ProjectSetupGuide } from "@/components/ProjectSetupGuide";
 
 const TaskSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -73,15 +75,27 @@ export default function AddTask() {
   });
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
+  const projectCtx = useContext(ProjectContext);
   const [openStartDate, setOpenStartDate] = useState(false);
   const [openEndDate, setOpenEndDate] = useState(false);
   const [showSelectionDialog, setShowSelectionDialog] = useState(false);
   const [selection, setSelection] = useState<Record<string, SelectedItem[]>>(
-    {}
+    {},
   );
 
+  // check if the project is setup complete
+  const isProjectSetupComplete =
+    projectCtx?.projectDetails?.is_stage_member &&
+    projectCtx?.projectDetails?.is_member &&
+    projectCtx?.projectDetails?.is_assign_stockyard &&
+    projectCtx?.projectDetails?.is_paper &&
+    projectCtx?.projectDetails?.is_hierachy &&
+    projectCtx?.projectDetails?.is_bom &&
+    projectCtx?.projectDetails?.is_drawingtype &&
+    projectCtx?.projectDetails?.is_elementtype;
+
   const handleSelectionSave = (
-    newSelection: Record<string, SelectedItem[]>
+    newSelection: Record<string, SelectedItem[]>,
   ) => {
     setSelection(newSelection);
 
@@ -95,7 +109,7 @@ export default function AddTask() {
           stockyard_id: item.stockyard_id,
           billable: item.billable,
         })),
-      })
+      }),
     );
 
     setValue("towerSelections", formattedSelections);
@@ -119,15 +133,18 @@ export default function AddTask() {
         start_date: formData.start_date,
         end_date: formData.end_date,
         project_id: Number(projectId),
-        Selection: Object.entries(selection).reduce((acc, [floorId, items]) => {
-          acc[String(floorId)] = items.map((item) => ({
-            element_type_id: item.element_type_id,
-            quantity: item.quantity,
-            stockyard_id: item.stockyard_id,
-            billable: item.billable,
-          }));
-          return acc;
-        }, {} as Record<string, any[]>),
+        Selection: Object.entries(selection).reduce(
+          (acc, [floorId, items]) => {
+            acc[String(floorId)] = items.map((item) => ({
+              element_type_id: item.element_type_id,
+              quantity: item.quantity,
+              stockyard_id: item.stockyard_id,
+              billable: item.billable,
+            }));
+            return acc;
+          },
+          {} as Record<string, any[]>,
+        ),
       };
 
       const response = await apiClient.post("/create_task/", result);
@@ -143,6 +160,17 @@ export default function AddTask() {
       toast.error(errorMessage);
     }
   };
+
+  if (!isProjectSetupComplete) {
+    return (
+      <div className="w-full p-4">
+        <div className="flex items-center justify-between">
+          <PageHeader title="Add New Task" />
+        </div>
+        <ProjectSetupGuide currentStep="is_stage_member" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-2 py-4 px-4">
@@ -199,7 +227,7 @@ export default function AddTask() {
                       variant="outline"
                       className={cn(
                         "w-full justify-start text-left font-normal",
-                        !field.value && "text-muted-foreground"
+                        !field.value && "text-muted-foreground",
                       )}
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
@@ -222,6 +250,7 @@ export default function AddTask() {
                       }}
                       initialFocus
                       captionLayout="dropdown"
+                      endMonth={new Date(new Date().getFullYear() + 10, 11)}
                     />
                   </PopoverContent>
                 </Popover>
@@ -247,7 +276,7 @@ export default function AddTask() {
                       variant="outline"
                       className={cn(
                         "w-full justify-start text-left font-normal",
-                        !field.value && "text-muted-foreground"
+                        !field.value && "text-muted-foreground",
                       )}
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
@@ -270,6 +299,7 @@ export default function AddTask() {
                       }}
                       initialFocus
                       captionLayout="dropdown"
+                      endMonth={new Date(new Date().getFullYear() + 10, 11)}
                     />
                   </PopoverContent>
                 </Popover>

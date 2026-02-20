@@ -154,11 +154,11 @@ export const getColumns = (
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem
+            {/* <DropdownMenuItem
               onClick={() => navigate(`/warehouse/${warehouse.id}`)}
             >
               View Stockyards
-            </DropdownMenuItem>
+            </DropdownMenuItem> */}
 
             <DropdownMenuItem onClick={handleEdit}>
               Edit Stockyards
@@ -220,7 +220,7 @@ export function WareHouseTable() {
         });
 
         if (response.status === 200) {
-          setData(response.data);
+          setData(response.data.data);
         } else {
           toast.error(response.data?.message || "Failed to fetch stockyards");
         }

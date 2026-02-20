@@ -49,6 +49,7 @@ import { useNavigate, useParams } from "react-router";
 import { formatDisplayDate } from "@/utils/formatdate";
 import PageHeader from "@/components/ui/PageHeader";
 import { ProjectContext } from "@/Provider/ProjectProvider";
+import { ProjectSetupGuide } from "@/components/ProjectSetupGuide";
 
 export type Retification = {
   id: number;
@@ -69,7 +70,7 @@ export type Retification = {
 
 export const getColumns = (
   permissions: string[],
-  handleAction: (elementId: number, action: "approve" | "reject") => void
+  handleAction: (elementId: number, action: "approve" | "reject") => void,
 ): ColumnDef<Retification>[] => [
   {
     id: "select",
@@ -105,7 +106,7 @@ export const getColumns = (
           onClick={() => {
             if (permissions?.includes("ViewElementDetail")) {
               navigate(
-                `/project/${projectId}/element-detail/${row.original.element_id}`
+                `/project/${projectId}/element-detail/${row.original.element_id}`,
               );
             }
           }}
@@ -213,10 +214,10 @@ export function RetificationTable() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedElement, setSelectedElement] = useState<Retification | null>(
-    null
+    null,
   );
   const [actionType, setActionType] = useState<"approved" | "rejected" | null>(
-    null
+    null,
   );
   const [comment, setComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -224,6 +225,16 @@ export function RetificationTable() {
   const refreshData = () => {
     setRefreshKey((prev) => prev + 1);
   };
+
+  const isProjectSetupComplete =
+    projectCtx?.projectDetails?.is_stage_member &&
+    projectCtx?.projectDetails?.is_member &&
+    projectCtx?.projectDetails?.is_assign_stockyard &&
+    projectCtx?.projectDetails?.is_paper &&
+    projectCtx?.projectDetails?.is_hierachy &&
+    projectCtx?.projectDetails?.is_bom &&
+    projectCtx?.projectDetails?.is_drawingtype &&
+    projectCtx?.projectDetails?.is_elementtype;
 
   useEffect(() => {
     if (!projectId) return;
@@ -289,7 +300,7 @@ export function RetificationTable() {
         toast.success(
           `Element ${
             actionType === "approved" ? "approved" : "rejected"
-          } successfully!`
+          } successfully!`,
         );
         setDialogOpen(false);
         setSelectedElement(null);
@@ -299,7 +310,7 @@ export function RetificationTable() {
       } else {
         toast.error(
           response.data?.message ||
-            "Failed to update rectification status. Please try again."
+            "Failed to update rectification status. Please try again.",
         );
       }
     } catch (error) {
@@ -384,7 +395,7 @@ export function RetificationTable() {
       doc.save(fileName);
 
       toast.success(
-        `PDF downloaded successfully with ${selectedRows.length} retification(s)`
+        `PDF downloaded successfully with ${selectedRows.length} retification(s)`,
       );
     } catch (error) {
       console.error("Error generating PDF:", error);
@@ -397,135 +408,146 @@ export function RetificationTable() {
       <div>
         <PageHeader title="Rectification" />
       </div>
-      {/* top toolbar */}
-      <div className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
-        <Input
-          placeholder="Filter by Element Name..."
-          value={
-            (table.getColumn("element_name")?.getFilterValue() as string) ?? ""
-          }
-          onChange={(event) =>
-            table.getColumn("element_name")?.setFilterValue(event.target.value)
-          }
-          className="w-full max-w-sm sm:max-w-xs"
-        />
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-center">
-          {table.getFilteredSelectedRowModel().rows.length > 0 && (
-            <Button
-              variant="default"
-              className="w-full sm:w-auto"
-              onClick={handleDownloadPDF}
-            >
-              <Download className="mr-2 h-4 w-4" />
-              Download PDF ({table.getFilteredSelectedRowModel().rows.length})
-            </Button>
-          )}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="w-full sm:w-auto">
-                Columns <ChevronDown className="ml-1 h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {table
-                .getAllColumns()
-                .filter((column) => column.getCanHide())
-                .map((column) => {
-                  return (
-                    <DropdownMenuCheckboxItem
-                      key={column.id}
-                      className="capitalize"
-                      checked={column.getIsVisible()}
-                      onCheckedChange={(value) =>
-                        column.toggleVisibility(!!value)
-                      }
-                    >
-                      {column.id}
-                    </DropdownMenuCheckboxItem>
-                  );
-                })}
-            </DropdownMenuContent>
-          </DropdownMenu>
+      {!isProjectSetupComplete ? (
+        <div className="w-full">
+          <ProjectSetupGuide currentStep="is_stage_member" />
         </div>
-      </div>
-
-      <div className="overflow-hidden rounded-md border">
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => {
-                  return (
-                    <TableHead key={header.id}>
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
-                    </TableHead>
-                  );
-                })}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => {
-                return (
-                  <TableRow
-                    key={row.id}
-                    data-state={row.getIsSelected() && "selected"}
-                  >
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id}>
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext()
-                        )}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                );
-              })
-            ) : (
-              <TableRow>
-                <TableCell
-                  colSpan={getColumns(permissions, handleAction).length}
-                  className="h-24 text-center"
+      ) : (
+        <>
+          {/* top toolbar */}
+          <div className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
+            <Input
+              placeholder="Filter by Element Name..."
+              value={
+                (table.getColumn("element_name")?.getFilterValue() as string) ??
+                ""
+              }
+              onChange={(event) =>
+                table
+                  .getColumn("element_name")
+                  ?.setFilterValue(event.target.value)
+              }
+              className="w-full max-w-sm sm:max-w-xs"
+            />
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-center">
+              {table.getFilteredSelectedRowModel().rows.length > 0 && (
+                <Button
+                  variant="default"
+                  className="w-full sm:w-auto"
+                  onClick={handleDownloadPDF}
                 >
-                  No results.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
-      <div className="flex items-center justify-end space-x-2 py-4">
-        <div className="text-muted-foreground flex-1 text-sm">
-          {table.getFilteredSelectedRowModel().rows.length} of{" "}
-          {table.getFilteredRowModel().rows.length} row(s) selected.
-        </div>
-        <div className="space-x-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-          >
-            Previous
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-          >
-            Next
-          </Button>
-        </div>
-      </div>
+                  <Download className="mr-2 h-4 w-4" />
+                  Download PDF (
+                  {table.getFilteredSelectedRowModel().rows.length})
+                </Button>
+              )}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="w-full sm:w-auto">
+                    Columns <ChevronDown className="ml-1 h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {table
+                    .getAllColumns()
+                    .filter((column) => column.getCanHide())
+                    .map((column) => {
+                      return (
+                        <DropdownMenuCheckboxItem
+                          key={column.id}
+                          className="capitalize"
+                          checked={column.getIsVisible()}
+                          onCheckedChange={(value) =>
+                            column.toggleVisibility(!!value)
+                          }
+                        >
+                          {column.id}
+                        </DropdownMenuCheckboxItem>
+                      );
+                    })}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
 
+          <div className="overflow-hidden rounded-md border">
+            <Table>
+              <TableHeader>
+                {table.getHeaderGroups().map((headerGroup) => (
+                  <TableRow key={headerGroup.id}>
+                    {headerGroup.headers.map((header) => {
+                      return (
+                        <TableHead key={header.id}>
+                          {header.isPlaceholder
+                            ? null
+                            : flexRender(
+                                header.column.columnDef.header,
+                                header.getContext(),
+                              )}
+                        </TableHead>
+                      );
+                    })}
+                  </TableRow>
+                ))}
+              </TableHeader>
+              <TableBody>
+                {table.getRowModel().rows?.length ? (
+                  table.getRowModel().rows.map((row) => {
+                    return (
+                      <TableRow
+                        key={row.id}
+                        data-state={row.getIsSelected() && "selected"}
+                      >
+                        {row.getVisibleCells().map((cell) => (
+                          <TableCell key={cell.id}>
+                            {flexRender(
+                              cell.column.columnDef.cell,
+                              cell.getContext(),
+                            )}
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    );
+                  })
+                ) : (
+                  <TableRow>
+                    <TableCell
+                      colSpan={getColumns(permissions, handleAction).length}
+                      className="h-24 text-center"
+                    >
+                      No results.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+          <div className="flex items-center justify-end space-x-2 py-4">
+            <div className="text-muted-foreground flex-1 text-sm">
+              {table.getFilteredSelectedRowModel().rows.length} of{" "}
+              {table.getFilteredRowModel().rows.length} row(s) selected.
+            </div>
+            <div className="space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => table.previousPage()}
+                disabled={!table.getCanPreviousPage()}
+              >
+                Previous
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => table.nextPage()}
+                disabled={!table.getCanNextPage()}
+              >
+                Next
+              </Button>
+            </div>
+          </div>
+        </>
+      )}
       <Dialog
         open={dialogOpen}
         onOpenChange={(open) => {
@@ -543,8 +565,8 @@ export function RetificationTable() {
               {actionType === "approved"
                 ? "Approve Rectification"
                 : actionType === "rejected"
-                ? "Reject Rectification"
-                : "Update Rectification"}
+                  ? "Reject Rectification"
+                  : "Update Rectification"}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
@@ -590,10 +612,10 @@ export function RetificationTable() {
               {submitting
                 ? "Submitting..."
                 : actionType === "approved"
-                ? "Approve"
-                : actionType === "rejected"
-                ? "Reject"
-                : "Submit"}
+                  ? "Approve"
+                  : actionType === "rejected"
+                    ? "Reject"
+                    : "Submit"}
             </Button>
           </div>
         </DialogContent>

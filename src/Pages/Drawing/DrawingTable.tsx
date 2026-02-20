@@ -57,6 +57,8 @@ import { formatDisplayDate } from "@/utils/formatdate";
 import { useParams } from "react-router-dom";
 import { DrawingFileModal } from "./DrawingFileModal";
 import { generatePDFFromTable } from "@/utils/pdfGenerator";
+import { useProject } from "@/Provider/ProjectProvider";
+import { ProjectSetupGuide } from "@/components/ProjectSetupGuide";
 
 export type DrawingRevision = {
   version: string;
@@ -87,7 +89,7 @@ type PaginationInfo = {
 };
 export const getColumns = (
   refreshData: () => void,
-  onEdit?: (drawing: Drawing) => void
+  onEdit?: (drawing: Drawing) => void,
 ): ColumnDef<Drawing>[] => [
   {
     id: "select",
@@ -161,9 +163,9 @@ export const getColumns = (
           onClick={() =>
             window.open(
               `${baseUrl}/get-file?file=${encodeURIComponent(
-                row.original.file
+                row.original.file,
               )}`,
-              "_blank"
+              "_blank",
             )
           }
         >
@@ -198,11 +200,13 @@ const getErrorMessage = (error: AxiosError | unknown, data: string): string => {
 export function DrawingTable({ refresh }: { refresh: () => void }) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const { projectId } = useParams();
+  const projectCtx = useProject();
   const [refreshKey, setRefreshKey] = useState<number>(0);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState({});
   const [data, setData] = useState<Drawing[]>([]);
+  const [dataLoading, setDataLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [limit, setLimit] = useState<number>(10);
   const [pagination, setPagination] = useState<PaginationInfo | null>(null);
@@ -228,7 +232,7 @@ export function DrawingTable({ refresh }: { refresh: () => void }) {
         });
 
         if (response.status === 200) {
-          setData(response.data.data);
+          setData(response.data.data ?? []);
           if (response.data.pagination) {
             setPagination(response.data.pagination);
           }
@@ -239,6 +243,8 @@ export function DrawingTable({ refresh }: { refresh: () => void }) {
         if (!axios.isCancel(err)) {
           toast.error(getErrorMessage(err, "drawings data"));
         }
+      } finally {
+        setDataLoading(false);
       }
     };
 
@@ -275,7 +281,13 @@ export function DrawingTable({ refresh }: { refresh: () => void }) {
     generatePDFFromTable({
       selectedRows,
       title: "Drawing Report",
-      headers: ["Drawing ID", "Current Version", "Drawing Type Name", "Comments", "Drawing Revision Count"],
+      headers: [
+        "Drawing ID",
+        "Current Version",
+        "Drawing Type Name",
+        "Comments",
+        "Drawing Revision Count",
+      ],
       dataMapper: (row): string[] => {
         const drawing = row.original as Drawing;
         return [
@@ -295,6 +307,17 @@ export function DrawingTable({ refresh }: { refresh: () => void }) {
       bodyFontSize: 9,
     });
   };
+
+  const showSetupGuide =
+    !dataLoading && data.length === 0 && projectCtx?.projectDetails;
+
+  if (showSetupGuide) {
+    return (
+      <div className="w-full">
+        <ProjectSetupGuide currentStep="is_drawingtype" />
+      </div>
+    );
+  }
 
   return (
     <div className="w-full">
@@ -361,7 +384,7 @@ export function DrawingTable({ refresh }: { refresh: () => void }) {
                           ? null
                           : flexRender(
                               header.column.columnDef.header,
-                              header.getContext()
+                              header.getContext(),
                             )}
                       </TableHead>
                     );
@@ -381,7 +404,7 @@ export function DrawingTable({ refresh }: { refresh: () => void }) {
                       <TableCell key={cell.id} className="py-2">
                         {flexRender(
                           cell.column.columnDef.cell,
-                          cell.getContext()
+                          cell.getContext(),
                         )}
                       </TableCell>
                     ))}
@@ -457,7 +480,7 @@ export function DrawingTable({ refresh }: { refresh: () => void }) {
                 setCurrentPage((prev) =>
                   pagination
                     ? Math.min(pagination.total_pages, prev + 1)
-                    : prev + 1
+                    : prev + 1,
                 )
               }
               disabled={!pagination?.has_next}

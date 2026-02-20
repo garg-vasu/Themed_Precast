@@ -47,6 +47,22 @@ const getErrorMessage = (error: AxiosError | unknown, data: string): string => {
   return "An unexpected error occurred. Please try again later.";
 };
 
+export type EndClient = {
+  id: number;
+  email: string;
+  contact_person: string;
+  address: string;
+  attachment: string[];
+  organization: string;
+  cin: string;
+  gst_number: string;
+  phone_no: string;
+  profile_picture: string;
+  created_at: string;
+  updated_at: string;
+  created_by: number;
+};
+
 interface AdvanceFilterProps {
   onFilterChange: (filter: FilterStateProject) => void;
   onClose: () => void;
@@ -57,7 +73,7 @@ export default function AdvanceProjectFilter({
   onClose,
   currentFilter,
 }: AdvanceFilterProps) {
-  const [clientData, setClientData] = useState<Tenant[]>([]);
+  const [clientData, setClientData] = useState<EndClient[]>([]);
 
   // Filter state
   const [name, setName] = useState<string>(currentFilter?.name || "");
@@ -92,7 +108,7 @@ export default function AdvanceProjectFilter({
     const fetchTenants = async () => {
       setClientLoading(true);
       try {
-        const response = await apiClient.get("/client", {
+        const response = await apiClient.get("/end_clients", {
           cancelToken: source.token,
         });
 
@@ -100,12 +116,12 @@ export default function AdvanceProjectFilter({
           setClientData(response.data.data);
           setClientLoading(false);
         } else {
-          toast.error(response.data?.message || "Failed to fetch tenants");
+          toast.error(response.data?.message || "Failed to fetch end clients");
           setClientLoading(false);
         }
       } catch (err: unknown) {
         if (!axios.isCancel(err)) {
-          toast.error(getErrorMessage(err, "tenants data"));
+          toast.error(getErrorMessage(err, "end clients data"));
         }
       } finally {
         setClientLoading(false);
@@ -198,11 +214,10 @@ export default function AdvanceProjectFilter({
             <SelectContent>
               {clientData?.map((client) => (
                 <SelectItem
-                  key={client.client_id}
-                  value={client.client_id.toString()}
+                  key={client.id}
+                  value={client.id.toString()}
                 >
-                  {client.user.first_name} {client.user.last_name} (
-                  {client.organization})
+                  {client.organization} ({client.contact_person})
                 </SelectItem>
               ))}
             </SelectContent>

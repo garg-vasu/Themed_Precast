@@ -177,7 +177,7 @@ export function ReceiveTable() {
               if (isDisabled) return;
               if (permissions?.includes("ViewElementDetail")) {
                 navigate(
-                  `/project/${projectId}/element-detail/${row.original.element_id}`
+                  `/project/${projectId}/element-detail/${row.original.element_id}`,
                 );
               }
             }}
@@ -312,6 +312,7 @@ export function ReceiveTable() {
     {
       id: "actions",
       enableHiding: false,
+      header: "Actions",
       cell: ({ row }) => {
         const element = row.original;
         const isDisabled = element.disable;
@@ -348,17 +349,17 @@ export function ReceiveTable() {
           `${projectId}/received_stockyards`,
           {
             cancelToken: source.token,
-          }
+          },
         );
 
         if (response.status === 200) {
           const responseElements = Object.values(
-            response.data
+            response.data,
           ).flat() as Element[];
           setData(responseElements);
         } else {
           toast.error(
-            response.data?.message || "Failed to fetch received stockyards"
+            response.data?.message || "Failed to fetch received stockyards",
           );
         }
       } catch (err: unknown) {
@@ -387,7 +388,7 @@ export function ReceiveTable() {
           `/projects/${projectId}/my-stockyards`,
           {
             cancelToken: source.token,
-          }
+          },
         );
 
         if (response.status === 200) {
@@ -409,7 +410,7 @@ export function ReceiveTable() {
           }
         } else {
           toast.error(
-            response.data?.message || "Failed to fetch user stockyards"
+            response.data?.message || "Failed to fetch user stockyards",
           );
           setUserStockyards([]);
         }
@@ -503,7 +504,7 @@ export function ReceiveTable() {
         `/projects/${projectId}/assign-stockyard/${selectedElement.element_id}`,
         {
           stockyard_id: Number(selectedStockyardId),
-        }
+        },
       );
 
       if (response.status === 200 || response.status === 201) {
@@ -588,7 +589,7 @@ export function ReceiveTable() {
                         ? null
                         : flexRender(
                             header.column.columnDef.header,
-                            header.getContext()
+                            header.getContext(),
                           )}
                     </TableHead>
                   );
@@ -617,7 +618,7 @@ export function ReceiveTable() {
                       >
                         {flexRender(
                           cell.column.columnDef.cell,
-                          cell.getContext()
+                          cell.getContext(),
                         )}
                       </TableCell>
                     ))}

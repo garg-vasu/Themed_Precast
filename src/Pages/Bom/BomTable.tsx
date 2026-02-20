@@ -62,7 +62,8 @@ import { Label } from "@/components/ui/label";
 import UploadDialog from "./Upload";
 import { generatePDFFromTable } from "@/utils/pdfGenerator";
 import { UserContext } from "@/Provider/UserProvider";
-import { ProjectContext } from "@/Provider/ProjectProvider";
+import { useProject } from "@/Provider/ProjectProvider";
+import { ProjectSetupGuide } from "@/components/ProjectSetupGuide";
 
 export type Bom = {
   bom_id: number;
@@ -79,7 +80,7 @@ export type Bom = {
 export const getColumns = (
   refreshData: () => void,
   onEdit?: (bom: Bom) => void,
-  permissions: string[] = []
+  permissions: string[] = [],
 ): ColumnDef<Bom>[] => [
   {
     id: "select",
@@ -219,7 +220,8 @@ const getErrorMessage = (error: AxiosError | unknown, data: string): string => {
 export function BomTable({ refresh }: { refresh: () => void }) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const navigate = useNavigate();
-  const projectCtx = useContext(ProjectContext);
+  // project provider context
+  const projectCtx = useProject();
   const permissions = (projectCtx?.permissions as string[]) || [];
   const { projectId } = useParams();
   const [refreshKey, setRefreshKey] = useState<number>(0);
@@ -227,6 +229,7 @@ export function BomTable({ refresh }: { refresh: () => void }) {
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState({});
   const [data, setData] = useState<Bom[]>([]);
+  const [dataLoading, setDataLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingBom, setEditingBom] = useState<Bom | null>(null);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
@@ -257,7 +260,7 @@ export function BomTable({ refresh }: { refresh: () => void }) {
           `/fetch_bom_products/${projectId}`,
           {
             cancelToken: source.token,
-          }
+          },
         );
 
         if (response.status === 200) {
@@ -269,6 +272,8 @@ export function BomTable({ refresh }: { refresh: () => void }) {
         if (!axios.isCancel(err)) {
           toast.error(getErrorMessage(err, "boms data"));
         }
+      } finally {
+        setDataLoading(false);
       }
     };
 
@@ -331,180 +336,199 @@ export function BomTable({ refresh }: { refresh: () => void }) {
     });
   };
 
+  const showSetupGuide =
+    !dataLoading && data.length === 0 && projectCtx?.projectDetails;
+
   return (
     <div className="flex flex-col gap-2 py-4 px-4">
       <div className="flex item-center justify-between">
         <PageHeader title="BOM" />
-        <div className="flex gap-2 items-center justify-center">
-          {permissions?.includes("AddBom") && (
-            <Button
-              variant="outline"
-              className="w-full sm:w-auto"
-              onClick={() => navigate(`/project/${projectId}/large-import`)}
-            >
-              Add Bom
-            </Button>
-          )}
-          {permissions?.includes("ImportBom") && (
-            <Dialog
-              open={isImportDialogOpen}
-              onOpenChange={setIsImportDialogOpen}
-            >
-              <DialogTrigger asChild>
-                <Button
-                  variant="outline"
-                  onClick={() => setIsImportDialogOpen(true)}
-                >
-                  Import Bom
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-[480px]">
-                <DialogHeader>
-                  <DialogTitle>Import BOM</DialogTitle>
-                  <DialogDescription>
-                    Upload your BOM file in CSV or .xlsx format.
-                  </DialogDescription>
-                </DialogHeader>
-                <UploadDialog
-                  api={`/import_bom/${projectId}`}
-                  projectId={projectId ? Number(projectId) : undefined}
-                  close={() => setIsImportDialogOpen(false)}
-                  onSuccess={refreshData}
-                />
-              </DialogContent>
-            </Dialog>
-          )}
-        </div>
-      </div>
-      {/* top toolbar */}
-      <div className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
-        <Input
-          placeholder="Filter by material name..."
-          value={
-            (table.getColumn("bom_name")?.getFilterValue() as string) ?? ""
-          }
-          onChange={(event) =>
-            table.getColumn("bom_name")?.setFilterValue(event.target.value)
-          }
-          className="w-full max-w-sm sm:max-w-xs"
-        />
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-center">
-          {table.getFilteredSelectedRowModel().rows.length > 0 && (
-            <Button
-              variant="default"
-              className="w-full sm:w-auto"
-              onClick={handleDownloadPDF}
-            >
-              <Download className="mr-2 h-4 w-4" />
-              Download PDF ({table.getFilteredSelectedRowModel().rows.length})
-            </Button>
-          )}
-
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="w-full sm:w-auto">
-                Columns <ChevronDown className="ml-1 h-4 w-4" />
+        {!showSetupGuide && (
+          <div className="flex gap-2 items-center justify-center">
+            {permissions?.includes("AddBom") && (
+              <Button
+                variant="outline"
+                className="w-full sm:w-auto"
+                onClick={() => navigate(`/project/${projectId}/large-import`)}
+              >
+                Add BOM
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {table
-                .getAllColumns()
-                .filter((column) => column.getCanHide())
-                .map((column) => {
-                  return (
-                    <DropdownMenuCheckboxItem
-                      key={column.id}
-                      className="capitalize"
-                      checked={column.getIsVisible()}
-                      onCheckedChange={(value) =>
-                        column.toggleVisibility(!!value)
-                      }
-                    >
-                      {column.id}
-                    </DropdownMenuCheckboxItem>
-                  );
-                })}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+            )}
+            {permissions?.includes("ImportBom") && (
+              <Dialog
+                open={isImportDialogOpen}
+                onOpenChange={setIsImportDialogOpen}
+              >
+                <DialogTrigger asChild>
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsImportDialogOpen(true)}
+                  >
+                    Import BOM
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[480px]">
+                  <DialogHeader>
+                    <DialogTitle>Import BOM</DialogTitle>
+                    <DialogDescription>
+                      Upload your BOM file in CSV or .xlsx format.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <UploadDialog
+                    api={`/import_bom/${projectId}`}
+                    projectId={projectId ? Number(projectId) : undefined}
+                    close={() => setIsImportDialogOpen(false)}
+                    onSuccess={refreshData}
+                  />
+                </DialogContent>
+              </Dialog>
+            )}
+          </div>
+        )}
       </div>
-      <div className="overflow-hidden rounded-md border">
-        <div className="hide-x-scrollbar">
-          <Table>
-            <TableHeader>
-              {table.getHeaderGroups().map((headerGroup) => (
-                <TableRow key={headerGroup.id} className="h-12">
-                  {headerGroup.headers.map((header) => {
-                    return (
-                      <TableHead key={header.id} className="py-2">
-                        {header.isPlaceholder
-                          ? null
-                          : flexRender(
-                              header.column.columnDef.header,
-                              header.getContext()
-                            )}
-                      </TableHead>
-                    );
-                  })}
-                </TableRow>
-              ))}
-            </TableHeader>
-            <TableBody>
-              {table.getRowModel().rows?.length ? (
-                table.getRowModel().rows.map((row) => (
-                  <TableRow
-                    key={row.id}
-                    data-state={row.getIsSelected() && "selected"}
-                    className="h-8"
-                  >
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id} className="py-2">
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext()
-                        )}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow className="h-12">
-                  <TableCell
-                    colSpan={table.getAllColumns().length}
-                    className="h-24 text-center py-2"
-                  >
-                    No results.
-                  </TableCell>
-                </TableRow>
+
+      {showSetupGuide ? (
+        <ProjectSetupGuide
+          currentStep="is_bom"
+          onCurrentStepAction={() =>
+            navigate(`/project/${projectId}/large-import`)
+          }
+        />
+      ) : (
+        <>
+          {/* top toolbar */}
+          <div className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
+            <Input
+              placeholder="Filter by material name..."
+              value={
+                (table.getColumn("bom_name")?.getFilterValue() as string) ?? ""
+              }
+              onChange={(event) =>
+                table.getColumn("bom_name")?.setFilterValue(event.target.value)
+              }
+              className="w-full max-w-sm sm:max-w-xs"
+            />
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-center">
+              {table.getFilteredSelectedRowModel().rows.length > 0 && (
+                <Button
+                  variant="default"
+                  className="w-full sm:w-auto"
+                  onClick={handleDownloadPDF}
+                >
+                  <Download className="mr-2 h-4 w-4" />
+                  Download PDF (
+                  {table.getFilteredSelectedRowModel().rows.length})
+                </Button>
               )}
-            </TableBody>
-          </Table>
-        </div>
-      </div>
-      <div className="flex items-center justify-end space-x-2 py-4">
-        <div className="text-muted-foreground flex-1 text-sm">
-          {table.getFilteredSelectedRowModel().rows.length} of{" "}
-          {table.getFilteredRowModel().rows.length} row(s) selected.
-        </div>
-        <div className="space-x-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-          >
-            Previous
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-          >
-            Next
-          </Button>
-        </div>
-      </div>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="w-full sm:w-auto">
+                    Columns <ChevronDown className="ml-1 h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {table
+                    .getAllColumns()
+                    .filter((column) => column.getCanHide())
+                    .map((column) => {
+                      return (
+                        <DropdownMenuCheckboxItem
+                          key={column.id}
+                          className="capitalize"
+                          checked={column.getIsVisible()}
+                          onCheckedChange={(value) =>
+                            column.toggleVisibility(!!value)
+                          }
+                        >
+                          {column.id}
+                        </DropdownMenuCheckboxItem>
+                      );
+                    })}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
+          <div className="overflow-hidden rounded-md border">
+            <div className="hide-x-scrollbar">
+              <Table>
+                <TableHeader>
+                  {table.getHeaderGroups().map((headerGroup) => (
+                    <TableRow key={headerGroup.id} className="h-12">
+                      {headerGroup.headers.map((header) => {
+                        return (
+                          <TableHead key={header.id} className="py-2">
+                            {header.isPlaceholder
+                              ? null
+                              : flexRender(
+                                  header.column.columnDef.header,
+                                  header.getContext(),
+                                )}
+                          </TableHead>
+                        );
+                      })}
+                    </TableRow>
+                  ))}
+                </TableHeader>
+                <TableBody>
+                  {table.getRowModel().rows?.length ? (
+                    table.getRowModel().rows.map((row) => (
+                      <TableRow
+                        key={row.id}
+                        data-state={row.getIsSelected() && "selected"}
+                        className="h-8"
+                      >
+                        {row.getVisibleCells().map((cell) => (
+                          <TableCell key={cell.id} className="py-2">
+                            {flexRender(
+                              cell.column.columnDef.cell,
+                              cell.getContext(),
+                            )}
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow className="h-12">
+                      <TableCell
+                        colSpan={table.getAllColumns().length}
+                        className="h-24 text-center py-2"
+                      >
+                        No results.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
+          <div className="flex items-center justify-end space-x-2 py-4">
+            <div className="text-muted-foreground flex-1 text-sm">
+              {table.getFilteredSelectedRowModel().rows.length} of{" "}
+              {table.getFilteredRowModel().rows.length} row(s) selected.
+            </div>
+            <div className="space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => table.previousPage()}
+                disabled={!table.getCanPreviousPage()}
+              >
+                Previous
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => table.nextPage()}
+                disabled={!table.getCanNextPage()}
+              >
+                Next
+              </Button>
+            </div>
+          </div>
+        </>
+      )}
+
       {(permissions?.includes("EditBom") ||
         permissions?.includes("AddBom")) && (
         <Dialog

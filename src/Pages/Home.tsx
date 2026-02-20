@@ -3,19 +3,8 @@ import { apiClient } from "@/utils/apiClient";
 import axios, { AxiosError } from "axios";
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import {
-  Cell,
-  Pie,
-  PieChart,
-} from "recharts";
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-  ChartLegend,
-  ChartLegendContent,
-  type ChartConfig,
-} from "@/components/ui/chart";
+import { Cell, Pie, PieChart, Tooltip, type TooltipProps } from "recharts";
+import { ChartContainer, type ChartConfig } from "@/components/ui/chart";
 import {
   Card,
   CardContent,
@@ -63,6 +52,48 @@ export type Project = {
 
 export type AverageErectedElements = {
   average_erected_elements: number;
+};
+
+const formatTooltipName = (name: string, maxWords: number = 4): string => {
+  const nameWithoutUnderscores = String(name).replace(/_/g, " ");
+  const words = nameWithoutUnderscores.trim().split(/\s+/);
+
+  if (words.length > maxWords) {
+    return words.slice(0, maxWords).join(" ") + "...";
+  }
+
+  return nameWithoutUnderscores;
+};
+
+const ElementStatusTooltip = ({
+  active,
+  payload,
+}: TooltipProps<number, string>) => {
+  if (!active || !payload || payload.length === 0) return null;
+
+  return (
+    <div className="rounded-md border bg-background px-3 py-2 shadow-md text-xs md:text-sm">
+      <div className="grid grid-cols-1 gap-x-4 gap-y-1">
+        {payload.map((item) => {
+          const formattedName = formatTooltipName(String(item.name || ""), 4);
+          const numberValue = item.value;
+
+          return (
+            <div key={String(item.dataKey)} className="flex items-center gap-1">
+              <span
+                className="h-2 w-2 rounded-full flex-shrink-0"
+                style={{ backgroundColor: item.color || "#22C55E" }}
+              />
+              <span className="flex items-center gap-1 min-w-0">
+                <span className="truncate">{formattedName}</span>
+                <span className="whitespace-nowrap">: {numberValue}</span>
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
 };
 
 export interface HumanResouce {
@@ -139,7 +170,7 @@ export default function Home() {
           label: "In Stock",
           color: "#6366F1",
         },
-      }) satisfies ChartConfig,
+      } satisfies ChartConfig),
     []
   );
 
@@ -227,7 +258,9 @@ export default function Home() {
 
         const response = result.value;
         if (response.status !== 200) {
-          toast.error(response.data?.message || "Failed to fetch dashboard data");
+          toast.error(
+            response.data?.message || "Failed to fetch dashboard data"
+          );
           return;
         }
 
@@ -418,29 +451,44 @@ export default function Home() {
                 config={chartConfig}
                 className="h-[260px] sm:h-[300px] lg:h-[340px] w-full"
               >
-                <PieChart>
-                  <Pie
-                    data={pieData}
-                    dataKey="value"
-                    nameKey="name"
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={70}
-                    outerRadius={110}
-                    paddingAngle={2}
-                    labelLine={false}
-                  >
-                    {pieData.map((entry, index) => (
-                      <Cell key={`cell-pie-${index}`} fill={entry.fill} />
-                    ))}
-                  </Pie>
-                  <ChartTooltip content={<ChartTooltipContent />} />
-                  <ChartLegend
-                    content={<ChartLegendContent nameKey="name" />}
-                    verticalAlign="bottom"
-                    height={36}
-                  />
-                </PieChart>
+                <div className="flex h-full w-full flex-col">
+                  {pieData.length > 0 && (
+                    <div className="mb-4 w-full flex flex-wrap justify-center gap-3">
+                      {pieData.map((item) => (
+                        <div
+                          key={item.name}
+                          className="flex items-center gap-2 text-xs md:text-sm text-muted-foreground"
+                        >
+                          <span
+                            className="h-2 w-2 rounded-full flex-shrink-0"
+                            style={{ backgroundColor: item.fill }}
+                          />
+                          <span className="whitespace-normal break-words">
+                            {item.name}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <PieChart>
+                    <Pie
+                      data={pieData}
+                      dataKey="value"
+                      nameKey="name"
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={70}
+                      outerRadius={110}
+                      paddingAngle={2}
+                      labelLine={false}
+                    >
+                      {pieData.map((entry, index) => (
+                        <Cell key={`cell-pie-${index}`} fill={entry.fill} />
+                      ))}
+                    </Pie>
+                    <Tooltip content={<ElementStatusTooltip />} />
+                  </PieChart>
+                </div>
               </ChartContainer>
             ) : (
               <p className="text-sm text-muted-foreground mt-4">

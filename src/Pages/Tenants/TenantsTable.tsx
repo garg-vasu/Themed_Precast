@@ -326,7 +326,7 @@ export function TenantsTable() {
         setCurrentPage(1); // Reset to first page when filters change
       }
     },
-    [filterState]
+    [filterState],
   );
 
   const handleFilterClose = useCallback(() => {
@@ -421,9 +421,18 @@ export function TenantsTable() {
         });
 
         if (response.status === 200) {
-          setData(response.data.data);
-          if (response.data.pagination) {
-            setPagination(response.data.pagination);
+          // Always use array - API may return null when no results (e.g. after filter)
+          setData(response.data.data ?? []);
+          const pag = response.data.pagination;
+          if (pag) {
+            setPagination({
+              current_page: pag.current_page ?? pag.page ?? 1,
+              per_page: pag.per_page ?? pag.limit ?? limit,
+              total: pag.total ?? 0,
+              total_pages: pag.total_pages ?? 0,
+            });
+          } else {
+            setPagination(null);
           }
         } else {
           toast.error(response.data?.message || "Failed to fetch tenants");
@@ -540,7 +549,7 @@ export function TenantsTable() {
             className="w-full sm:w-auto"
             onClick={() => navigate("/add-tenant")}
           >
-            Add Tenant
+            Add Client
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -589,7 +598,7 @@ export function TenantsTable() {
                         ? null
                         : flexRender(
                             header.column.columnDef.header,
-                            header.getContext()
+                            header.getContext(),
                           )}
                     </TableHead>
                   );
@@ -608,7 +617,7 @@ export function TenantsTable() {
                     <TableCell key={cell.id}>
                       {flexRender(
                         cell.column.columnDef.cell,
-                        cell.getContext()
+                        cell.getContext(),
                       )}
                     </TableCell>
                   ))}
@@ -632,9 +641,7 @@ export function TenantsTable() {
           {table.getFilteredSelectedRowModel().rows.length} of{" "}
           {table.getRowModel().rows.length} row(s) selected on this page.
           {pagination && (
-            <span className="ml-2">
-              (Total: {pagination.total} work orders)
-            </span>
+            <span className="ml-2">(Total: {pagination.total} tenants)</span>
           )}
         </div>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:space-x-2">
@@ -653,6 +660,7 @@ export function TenantsTable() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="2">2</SelectItem>
                 <SelectItem value="10">10</SelectItem>
                 <SelectItem value="25">25</SelectItem>
                 <SelectItem value="50">50</SelectItem>
@@ -663,7 +671,8 @@ export function TenantsTable() {
           {pagination && (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <span>
-                Page {pagination.current_page} of {pagination.total_pages}
+                Page {pagination.current_page} of{" "}
+                {Math.max(1, pagination.total_pages)}
               </span>
             </div>
           )}
@@ -683,7 +692,7 @@ export function TenantsTable() {
                 setCurrentPage((prev) =>
                   pagination
                     ? Math.min(pagination.total_pages, prev + 1)
-                    : prev + 1
+                    : prev + 1,
                 )
               }
               disabled={

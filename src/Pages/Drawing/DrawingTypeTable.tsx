@@ -10,7 +10,14 @@ import {
   type SortingState,
   type VisibilityState,
 } from "@tanstack/react-table";
-import { ChevronDown, MoreHorizontal, Download } from "lucide-react";
+import {
+  ChevronDown,
+  MoreHorizontal,
+  Download,
+  Loader2,
+  FileText,
+  Plus,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -57,7 +64,7 @@ export type DrawingType = {
 export const getColumns = (
   refreshData: () => void,
   permissions: string[],
-  onEdit?: (drawingType: DrawingType) => void
+  onEdit?: (drawingType: DrawingType) => void,
 ): ColumnDef<DrawingType>[] => [
   {
     id: "select",
@@ -171,6 +178,7 @@ export function DrawingTypeTable({ refresh }: { refresh: () => void }) {
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState({});
   const [data, setData] = useState<DrawingType[]>([]);
+  const [dataLoading, setDataLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingDrawingType, setEditingDrawingType] =
     useState<DrawingType | null>(null);
@@ -197,21 +205,24 @@ export function DrawingTypeTable({ refresh }: { refresh: () => void }) {
 
     const fetchDrawingTypes = async () => {
       try {
+        setDataLoading(true);
         const response = await apiClient.get(`/drawingtype/${projectId}`, {
           cancelToken: source.token,
         });
 
         if (response.status === 200) {
-          setData(response.data);
+          setData(response.data ?? []);
         } else {
           toast.error(
-            response.data?.message || "Failed to fetch drawing types"
+            response.data?.message || "Failed to fetch drawing types",
           );
         }
       } catch (err: unknown) {
         if (!axios.isCancel(err)) {
           toast.error(getErrorMessage(err, "drawing types data"));
         }
+      } finally {
+        setDataLoading(false);
       }
     };
 
@@ -268,6 +279,37 @@ export function DrawingTypeTable({ refresh }: { refresh: () => void }) {
       bodyFontSize: 9,
     });
   };
+
+  if (!dataLoading && data.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
+        <div className="w-full max-w-md space-y-6">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10">
+            <FileText className="w-8 h-8 text-primary" />
+          </div>
+          <div className="space-y-2">
+            <h2 className="text-xl font-semibold tracking-tight">
+              No Drawing Types Yet
+            </h2>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Drawing types are the types of drawings that are used in the
+              project.
+            </p>
+          </div>
+          <div className="rounded-lg border bg-muted/40 p-4 text-left space-y-2">
+            <h3 className="text-sm font-medium">Getting started</h3>
+            <ul className="text-xs text-muted-foreground space-y-1 list-disc list-inside">
+              <li>Create a drawing type with a descriptive name</li>
+            </ul>
+          </div>
+          <Button onClick={openCreateDialog} className="gap-2">
+            <Plus className="w-4 h-4" />
+            Create Drawing Type
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full">
@@ -349,7 +391,7 @@ export function DrawingTypeTable({ refresh }: { refresh: () => void }) {
                           ? null
                           : flexRender(
                               header.column.columnDef.header,
-                              header.getContext()
+                              header.getContext(),
                             )}
                       </TableHead>
                     );
@@ -369,7 +411,7 @@ export function DrawingTypeTable({ refresh }: { refresh: () => void }) {
                       <TableCell key={cell.id} className="py-2">
                         {flexRender(
                           cell.column.columnDef.cell,
-                          cell.getContext()
+                          cell.getContext(),
                         )}
                       </TableCell>
                     ))}

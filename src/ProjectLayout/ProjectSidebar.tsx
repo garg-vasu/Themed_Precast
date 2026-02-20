@@ -81,7 +81,7 @@ export interface NavigationItem {
  */
 const hasAnyPermission = (
   requiredPermissions: string[] | undefined,
-  userPermissions: Set<string> | undefined
+  userPermissions: Set<string> | undefined,
 ): boolean => {
   // No permissions required = visible to all
   if (!requiredPermissions || requiredPermissions.length === 0) return true;
@@ -97,7 +97,7 @@ const hasAnyPermission = (
  */
 const filterNavigationItems = (
   items: NavigationItem[],
-  userPermissions: Set<string> | undefined
+  userPermissions: Set<string> | undefined,
 ): NavigationItem[] => {
   return items.reduce<NavigationItem[]>((acc, item) => {
     // First check if user has permission for this item
@@ -109,7 +109,7 @@ const filterNavigationItems = (
     if (item.children && item.children.length > 0) {
       const filteredChildren = filterNavigationItems(
         item.children,
-        userPermissions
+        userPermissions,
       );
       // Only include parent if it has visible children
       if (filteredChildren.length > 0) {
@@ -158,7 +158,7 @@ function NavigationItemComponent({
           onClick={() => !isCollapsed && setIsOpen(!isOpen)}
           className={`flex items-center w-full ${
             isCollapsed ? "justify-center" : "justify-between"
-          } px-3 py-2 rounded-md text-sm font-normal transition-colors duration-150 hover:bg-sidebar-accent ${
+          } px-3 py-2 rounded-md text-sm  transition-colors duration-150 hover:bg-sidebar-accent ${
             hasActiveChild ? "text-sidebar-primary" : "text-sidebar-foreground"
           }`}
           style={{
@@ -220,7 +220,7 @@ function NavigationItemComponent({
       to={item.href!}
       className={`flex items-center ${
         isCollapsed ? "justify-center" : "justify-start"
-      } space-x-3 px-3 py-2 rounded-md text-sm font-normal transition-colors duration-150 ${
+      } space-x-3 px-3 py-2 rounded-md text-sm  transition-colors duration-150 ${
         isActive
           ? "text-sidebar-primary"
           : "hover:bg-sidebar-accent text-sidebar-foreground"
@@ -358,7 +358,7 @@ export default function ProjectSidebar({
           permissions: ["ViewElement", "ViewElementType"],
         },
         {
-          name: "Bom",
+          name: "BOM",
           href: `/project/${projectId}/bom`,
           icon: ClipboardList,
           permissions: ["ViewBom"],
@@ -395,7 +395,7 @@ export default function ProjectSidebar({
   // Filter navigation items based on user permissions
   const filteredNavItems = useMemo(
     () => filterNavigationItems(navigationItems, permissionSet),
-    [projectId, permissionSet] // projectId affects hrefs in navigationItems
+    [projectId, permissionSet], // projectId affects hrefs in navigationItems
   );
 
   useEffect(() => {
@@ -499,7 +499,7 @@ export default function ProjectSidebar({
                   <span className="truncate font-normal">
                     {currentProject?.name || "Select Project"}
                   </span>
-                  <span className="truncate text-xs text-sidebar-foreground/70">
+                  <span className="truncate text-sm text-sidebar-foreground/70">
                     {currentProject?.suspend ? "Suspended" : "Active"}
                   </span>
                 </div>
@@ -511,7 +511,7 @@ export default function ProjectSidebar({
               align="start"
               sideOffset={4}
             >
-              <DropdownMenuLabel className="text-muted-foreground text-xs">
+              <DropdownMenuLabel className="text-muted-foreground text-sm">
                 Projects
               </DropdownMenuLabel>
               {projectData.length === 0 ? (
@@ -538,7 +538,7 @@ export default function ProjectSidebar({
                           {project.name}
                         </div>
                         {project.suspend && (
-                          <div className="text-xs text-muted-foreground">
+                          <div className="text-sm text-muted-foreground">
                             Suspended
                           </div>
                         )}

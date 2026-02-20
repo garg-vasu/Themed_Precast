@@ -15,6 +15,8 @@ import {
   ChevronDown,
   MoreHorizontal,
   Download,
+  Plus,
+  Users,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -45,6 +47,8 @@ import { toast } from "sonner";
 import { useNavigate, useParams } from "react-router";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { useProject } from "@/Provider/ProjectProvider";
+import { ProjectSetupGuide } from "@/components/ProjectSetupGuide";
 
 export type Member = {
   id: number;
@@ -280,10 +284,14 @@ export function MemberTable() {
   const [sorting, setSorting] = useState<SortingState>([]);
   const navigate = useNavigate();
   const { projectId } = useParams<{ projectId: string }>();
+  const projectCtx = useProject();
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState({});
   const [data, setData] = useState<Member[]>([]);
+  const [dataLoading, setDataLoading] = useState(true);
+
+  const isProjectSetupComplete = projectCtx?.projectDetails?.is_member;
 
   useEffect(() => {
     if (!projectId) return;
@@ -297,7 +305,12 @@ export function MemberTable() {
         });
 
         if (response.status === 200) {
-          setData(response.data);
+          if (response.data.message) {
+            setData([]);
+            toast.error(response.data.message);
+          } else {
+            setData(response.data);
+          }
         } else {
           toast.error(response.data?.message || "Failed to fetch members");
         }
@@ -305,6 +318,8 @@ export function MemberTable() {
         if (!axios.isCancel(err)) {
           toast.error(getErrorMessage(err, "members data"));
         }
+      } finally {
+        setDataLoading(false);
       }
     };
 
@@ -400,141 +415,184 @@ export function MemberTable() {
     }
   };
 
+  const showSetupGuide =
+    !dataLoading && data.length === 0 && !isProjectSetupComplete;
+
   return (
     <div className="w-full">
-      {/* top toolbar */}
-      <div className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
-        <Input
-          placeholder="Filter by name, email, or role..."
-          value={(table.getColumn("member")?.getFilterValue() as string) ?? ""}
-          onChange={(event) =>
-            table.getColumn("member")?.setFilterValue(event.target.value)
-          }
-          className="w-full max-w-sm sm:max-w-xs"
-        />
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-center">
-          {table.getFilteredSelectedRowModel().rows.length > 0 && (
+      {showSetupGuide ? (
+        <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
+          <div className="w-full max-w-md space-y-6">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10">
+              <Users className="w-8 h-8 text-primary" />
+            </div>
+            <div className="space-y-2">
+              <h2 className="text-xl font-semibold tracking-tight">
+                No Members Yet
+              </h2>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Members are the users who have access to the project. They can
+                be added, edited, or removed from the project.
+              </p>
+            </div>
+            <div className="rounded-lg border bg-muted/40 p-4 text-left space-y-2">
+              <h3 className="text-sm font-medium">Getting started</h3>
+              <ul className="text-xs text-muted-foreground space-y-1 list-disc list-inside">
+                <li>Add a member to the project</li>
+                <li>Edit a member's details</li>
+                <li>Remove a member from the project</li>
+              </ul>
+            </div>
             <Button
-              variant="default"
-              className="w-full sm:w-auto"
-              onClick={handleDownloadPDF}
+              onClick={() =>
+                navigate(`/project/${projectId}/add-project-member`)
+              }
+              className="gap-2"
             >
-              <Download className="mr-2 h-4 w-4" />
-              Download PDF ({table.getFilteredSelectedRowModel().rows.length})
+              <Plus className="w-4 h-4" />
+              Create Your First Member
             </Button>
-          )}
-          <Button
-            variant="outline"
-            className="w-full sm:w-auto"
-            onClick={() => {
-              // TODO: Implement add member functionality
-              navigate(`/project/${projectId}/add-project-member`);
-            }}
-          >
-            Add Member
-          </Button>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="w-full sm:w-auto">
-                Columns <ChevronDown className="ml-1 h-4 w-4" />
+          </div>
+        </div>
+      ) : (
+        <>
+          <div className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
+            <Input
+              placeholder="Filter by name, email, or role..."
+              value={
+                (table.getColumn("member")?.getFilterValue() as string) ?? ""
+              }
+              onChange={(event) =>
+                table.getColumn("member")?.setFilterValue(event.target.value)
+              }
+              className="w-full max-w-sm sm:max-w-xs"
+            />
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-center">
+              {table.getFilteredSelectedRowModel().rows.length > 0 && (
+                <Button
+                  variant="default"
+                  className="w-full sm:w-auto"
+                  onClick={handleDownloadPDF}
+                >
+                  <Download className="mr-2 h-4 w-4" />
+                  Download PDF (
+                  {table.getFilteredSelectedRowModel().rows.length})
+                </Button>
+              )}
+              <Button
+                variant="outline"
+                className="w-full sm:w-auto"
+                onClick={() => {
+                  navigate(`/project/${projectId}/add-project-member`);
+                }}
+              >
+                Add Member
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {table
-                .getAllColumns()
-                .filter((column) => column.getCanHide())
-                .map((column) => {
-                  return (
-                    <DropdownMenuCheckboxItem
-                      key={column.id}
-                      className="capitalize"
-                      checked={column.getIsVisible()}
-                      onCheckedChange={(value) =>
-                        column.toggleVisibility(!!value)
-                      }
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="w-full sm:w-auto">
+                    Columns <ChevronDown className="ml-1 h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {table
+                    .getAllColumns()
+                    .filter((column) => column.getCanHide())
+                    .map((column) => {
+                      return (
+                        <DropdownMenuCheckboxItem
+                          key={column.id}
+                          className="capitalize"
+                          checked={column.getIsVisible()}
+                          onCheckedChange={(value) =>
+                            column.toggleVisibility(!!value)
+                          }
+                        >
+                          {column.id}
+                        </DropdownMenuCheckboxItem>
+                      );
+                    })}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
+          <div className="overflow-hidden rounded-md border">
+            <Table>
+              <TableHeader>
+                {table.getHeaderGroups().map((headerGroup) => (
+                  <TableRow key={headerGroup.id}>
+                    {headerGroup.headers.map((header) => {
+                      return (
+                        <TableHead key={header.id}>
+                          {header.isPlaceholder
+                            ? null
+                            : flexRender(
+                                header.column.columnDef.header,
+                                header.getContext(),
+                              )}
+                        </TableHead>
+                      );
+                    })}
+                  </TableRow>
+                ))}
+              </TableHeader>
+              <TableBody>
+                {table.getRowModel().rows?.length ? (
+                  table.getRowModel().rows.map((row) => (
+                    <TableRow
+                      key={row.id}
+                      data-state={row.getIsSelected() && "selected"}
                     >
-                      {column.id}
-                    </DropdownMenuCheckboxItem>
-                  );
-                })}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </div>
-      <div className="overflow-hidden rounded-md border">
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => {
-                  return (
-                    <TableHead key={header.id}>
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext(),
+                      {row.getVisibleCells().map((cell) => (
+                        <TableCell key={cell.id}>
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext(),
                           )}
-                    </TableHead>
-                  );
-                })}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext(),
-                      )}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell
+                      colSpan={columns.length}
+                      className="h-24 text-center py-2"
+                    >
+                      No results.
                     </TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-center py-2"
-                >
-                  No results.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
-      <div className="flex items-center justify-end space-x-2 py-4">
-        <div className="text-muted-foreground flex-1 text-sm">
-          {table.getFilteredSelectedRowModel().rows.length} of{" "}
-          {table.getFilteredRowModel().rows.length} row(s) selected.
-        </div>
-        <div className="space-x-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-          >
-            Previous
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-          >
-            Next
-          </Button>
-        </div>
-      </div>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+          <div className="flex items-center justify-end space-x-2 py-4">
+            <div className="text-muted-foreground flex-1 text-sm">
+              {table.getFilteredSelectedRowModel().rows.length} of{" "}
+              {table.getFilteredRowModel().rows.length} row(s) selected.
+            </div>
+            <div className="space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => table.previousPage()}
+                disabled={!table.getCanPreviousPage()}
+              >
+                Previous
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => table.nextPage()}
+                disabled={!table.getCanNextPage()}
+              >
+                Next
+              </Button>
+            </div>
+          </div>
+        </>
+      )}
+      {/* top toolbar */}
     </div>
   );
 }

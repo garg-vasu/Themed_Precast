@@ -52,6 +52,8 @@ import { useParams } from "react-router";
 import PageHeader from "@/components/ui/PageHeader";
 import { formatDisplayDate } from "@/utils/formatdate";
 import AddAssignMember from "./AddAssignMember";
+import { useProject } from "@/Provider/ProjectProvider";
+import { ProjectSetupGuide } from "@/components/ProjectSetupGuide";
 
 export type Stockyard = {
   id: number;
@@ -66,7 +68,7 @@ export type Stockyard = {
 };
 export const getColumns = (
   refreshData: () => void,
-  onEdit?: (stockyard: Stockyard) => void
+  onEdit?: (stockyard: Stockyard) => void,
 ): ColumnDef<Stockyard>[] => [
   {
     id: "select",
@@ -108,9 +110,25 @@ export const getColumns = (
   {
     accessorKey: "user_name",
     header: "User Name",
-    cell: ({ row }) => (
-      <div className="capitalize">{row.original.user_name ?? "—"}</div>
-    ),
+    cell: ({ row }) => {
+      const stockyard = row.original;
+      const handleEdit = () => {
+        if (onEdit) {
+          onEdit(stockyard);
+        }
+      };
+      return (
+        <div className="capitalize">
+          {stockyard.user_name ? (
+            stockyard.user_name
+          ) : (
+            <Button variant="link" className="p-0" onClick={handleEdit}>
+              Assign Member
+            </Button>
+          )}
+        </div>
+      );
+    },
   },
   {
     accessorKey: "created_at",
@@ -184,11 +202,13 @@ const getErrorMessage = (error: AxiosError | unknown, data: string): string => {
 export function StockyardAssigntable({ refresh }: { refresh: () => void }) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const { projectId } = useParams();
+  const projectCtx = useProject();
   const [refreshKey, setRefreshKey] = useState<number>(0);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState({});
   const [data, setData] = useState<Stockyard[]>([]);
+  const [dataLoading, setDataLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingAssignMember, setEditingAssignMember] =
     useState<Stockyard | null>(null);
@@ -219,7 +239,7 @@ export function StockyardAssigntable({ refresh }: { refresh: () => void }) {
           `/projects/${projectId}/stockyards`,
           {
             cancelToken: source.token,
-          }
+          },
         );
 
         if (response.status === 200) {
@@ -231,6 +251,8 @@ export function StockyardAssigntable({ refresh }: { refresh: () => void }) {
         if (!axios.isCancel(err)) {
           toast.error(getErrorMessage(err, "stockyards data"));
         }
+      } finally {
+        setDataLoading(false);
       }
     };
 
@@ -315,7 +337,7 @@ export function StockyardAssigntable({ refresh }: { refresh: () => void }) {
       doc.save(fileName);
 
       toast.success(
-        `PDF downloaded successfully with ${selectedRows.length} stockyard assign(s)`
+        `PDF downloaded successfully with ${selectedRows.length} stockyard assign(s)`,
       );
     } catch (error) {
       console.error("Error generating PDF:", error);
@@ -323,140 +345,150 @@ export function StockyardAssigntable({ refresh }: { refresh: () => void }) {
     }
   };
 
+  const showSetupGuide =
+    !dataLoading && data.length === 0 && projectCtx?.projectDetails;
+
   return (
     <div className="flex flex-col gap-2 py-4 px-4">
       <div className="flex item-center justify-between">
         <PageHeader title="Stockyard Assign" />
       </div>
-      {/* top toolbar */}
-      <div className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
-        <Input
-          placeholder="Filter by stockyard name..."
-          value={
-            (table.getColumn("yard_name")?.getFilterValue() as string) ?? ""
-          }
-          onChange={(event) =>
-            table.getColumn("yard_name")?.setFilterValue(event.target.value)
-          }
-          className="w-full max-w-sm sm:max-w-xs"
-        />
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-center">
-          {table.getFilteredSelectedRowModel().rows.length > 0 && (
-            <Button
-              variant="default"
-              className="w-full sm:w-auto"
-              onClick={handleDownloadPDF}
-            >
-              <Download className="mr-2 h-4 w-4" />
-              Download PDF ({table.getFilteredSelectedRowModel().rows.length})
-            </Button>
-          )}
-
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="w-full sm:w-auto">
-                Columns <ChevronDown className="ml-1 h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {table
-                .getAllColumns()
-                .filter((column) => column.getCanHide())
-                .map((column) => {
-                  return (
-                    <DropdownMenuCheckboxItem
-                      key={column.id}
-                      className="capitalize"
-                      checked={column.getIsVisible()}
-                      onCheckedChange={(value) =>
-                        column.toggleVisibility(!!value)
-                      }
-                    >
-                      {column.id}
-                    </DropdownMenuCheckboxItem>
-                  );
-                })}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </div>
-      <div className="overflow-hidden rounded-md border">
-        <div className="hide-x-scrollbar">
-          <Table>
-            <TableHeader>
-              {table.getHeaderGroups().map((headerGroup) => (
-                <TableRow key={headerGroup.id} className="h-12">
-                  {headerGroup.headers.map((header) => {
-                    return (
-                      <TableHead key={header.id} className="py-2">
-                        {header.isPlaceholder
-                          ? null
-                          : flexRender(
-                              header.column.columnDef.header,
-                              header.getContext()
-                            )}
-                      </TableHead>
-                    );
-                  })}
-                </TableRow>
-              ))}
-            </TableHeader>
-            <TableBody>
-              {table.getRowModel().rows?.length ? (
-                table.getRowModel().rows.map((row) => (
-                  <TableRow
-                    key={row.id}
-                    data-state={row.getIsSelected() && "selected"}
-                    className="h-8"
-                  >
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id} className="py-2">
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext()
-                        )}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow className="h-12">
-                  <TableCell
-                    colSpan={table.getAllColumns().length}
-                    className="h-24 text-center py-2"
-                  >
-                    No results.
-                  </TableCell>
-                </TableRow>
+      {showSetupGuide ? (
+        <ProjectSetupGuide currentStep="is_assign_stockyard" />
+      ) : (
+        <>
+          {/* top toolbar */}
+          <div className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
+            <Input
+              placeholder="Filter by stockyard name..."
+              value={
+                (table.getColumn("yard_name")?.getFilterValue() as string) ?? ""
+              }
+              onChange={(event) =>
+                table.getColumn("yard_name")?.setFilterValue(event.target.value)
+              }
+              className="w-full max-w-sm sm:max-w-xs"
+            />
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-center">
+              {table.getFilteredSelectedRowModel().rows.length > 0 && (
+                <Button
+                  variant="default"
+                  className="w-full sm:w-auto"
+                  onClick={handleDownloadPDF}
+                >
+                  <Download className="mr-2 h-4 w-4" />
+                  Download PDF (
+                  {table.getFilteredSelectedRowModel().rows.length})
+                </Button>
               )}
-            </TableBody>
-          </Table>
-        </div>
-      </div>
-      <div className="flex items-center justify-end space-x-2 py-4">
-        <div className="text-muted-foreground flex-1 text-sm">
-          {table.getFilteredSelectedRowModel().rows.length} of{" "}
-          {table.getFilteredRowModel().rows.length} row(s) selected.
-        </div>
-        <div className="space-x-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-          >
-            Previous
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-          >
-            Next
-          </Button>
-        </div>
-      </div>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="w-full sm:w-auto">
+                    Columns <ChevronDown className="ml-1 h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {table
+                    .getAllColumns()
+                    .filter((column) => column.getCanHide())
+                    .map((column) => {
+                      return (
+                        <DropdownMenuCheckboxItem
+                          key={column.id}
+                          className="capitalize"
+                          checked={column.getIsVisible()}
+                          onCheckedChange={(value) =>
+                            column.toggleVisibility(!!value)
+                          }
+                        >
+                          {column.id}
+                        </DropdownMenuCheckboxItem>
+                      );
+                    })}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
+          <div className="overflow-hidden rounded-md border">
+            <div className="hide-x-scrollbar">
+              <Table>
+                <TableHeader>
+                  {table.getHeaderGroups().map((headerGroup) => (
+                    <TableRow key={headerGroup.id} className="h-12">
+                      {headerGroup.headers.map((header) => {
+                        return (
+                          <TableHead key={header.id} className="py-2">
+                            {header.isPlaceholder
+                              ? null
+                              : flexRender(
+                                  header.column.columnDef.header,
+                                  header.getContext(),
+                                )}
+                          </TableHead>
+                        );
+                      })}
+                    </TableRow>
+                  ))}
+                </TableHeader>
+                <TableBody>
+                  {table.getRowModel().rows?.length ? (
+                    table.getRowModel().rows.map((row) => (
+                      <TableRow
+                        key={row.id}
+                        data-state={row.getIsSelected() && "selected"}
+                        className="h-8"
+                      >
+                        {row.getVisibleCells().map((cell) => (
+                          <TableCell key={cell.id} className="py-2">
+                            {flexRender(
+                              cell.column.columnDef.cell,
+                              cell.getContext(),
+                            )}
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow className="h-12">
+                      <TableCell
+                        colSpan={table.getAllColumns().length}
+                        className="h-24 text-center py-2"
+                      >
+                        No results.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
+          <div className="flex items-center justify-end space-x-2 py-4">
+            <div className="text-muted-foreground flex-1 text-sm">
+              {table.getFilteredSelectedRowModel().rows.length} of{" "}
+              {table.getFilteredRowModel().rows.length} row(s) selected.
+            </div>
+            <div className="space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => table.previousPage()}
+                disabled={!table.getCanPreviousPage()}
+              >
+                Previous
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => table.nextPage()}
+                disabled={!table.getCanNextPage()}
+              >
+                Next
+              </Button>
+            </div>
+          </div>
+        </>
+      )}
       <Dialog
         open={isDialogOpen}
         onOpenChange={(open) => {

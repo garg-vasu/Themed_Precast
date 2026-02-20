@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useNavigate, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { useProject } from "@/Provider/ProjectProvider";
 import { toast } from "sonner";
 import PageHeader from "@/components/ui/PageHeader";
 import { Separator } from "@/components/ui/separator";
@@ -100,6 +101,7 @@ export default function AddMember({ user }: MemberFormProps) {
   const navigate = useNavigate();
   const isEditMode = !!user;
   const { projectId } = useParams<{ projectId: string }>();
+  const { markSetupStepDone } = useProject();
   const [phonecodes, setPhonecodes] = useState<Phonecode[]>([]);
   const [roles, setRoles] = useState<Role[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -321,6 +323,7 @@ export default function AddMember({ user }: MemberFormProps) {
     try {
       const payload: any = {
         ...data,
+        project_id: Number(projectId),
         emailsend: data.emailsend ?? false,
       };
 
@@ -367,6 +370,7 @@ export default function AddMember({ user }: MemberFormProps) {
         );
         if (response.status === 200 || response.status === 201) {
           toast.success("Project member created successfully!");
+          markSetupStepDone("is_member");
           navigate(`/project/${projectId}/member`);
         }
       }

@@ -10,7 +10,14 @@ import {
   type SortingState,
   type VisibilityState,
 } from "@tanstack/react-table";
-import { ChevronDown, MoreHorizontal, Download } from "lucide-react";
+import {
+  ChevronDown,
+  MoreHorizontal,
+  Download,
+  Plus,
+  FileText,
+  Users,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -43,10 +50,12 @@ import { apiClient } from "@/utils/apiClient";
 import { toast } from "sonner";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import { useParams } from "react-router";
+import { useNavigate, useParams } from "react-router";
 
 import PageHeader from "@/components/ui/PageHeader";
 import EditStage from "./EditStage";
+import { useProject } from "@/Provider/ProjectProvider";
+import { ProjectSetupGuide } from "@/components/ProjectSetupGuide";
 
 export type Stages = {
   name: string;
@@ -63,7 +72,7 @@ export type Stages = {
 };
 export const getColumns = (
   _refreshData: () => void,
-  onEdit?: (stages: Stages) => void
+  onEdit?: (stages: Stages) => void,
 ): ColumnDef<Stages>[] => [
   {
     id: "select",
@@ -96,16 +105,53 @@ export const getColumns = (
   {
     accessorKey: "assignee_name",
     header: "StageAssignee",
-    cell: ({ row }) => (
-      <div className="capitalize">{row.original.assignee_name ?? "—"}</div>
-    ),
+    cell: ({ row }) => {
+      const stage = row.original;
+
+      const handleEdit = () => {
+        if (onEdit) {
+          onEdit(stage);
+        }
+      };
+      return (
+        <div className="capitalize">
+          {stage.assignee_name ? (
+            stage.assignee_name
+          ) : (
+            <Button variant="link" className="p-0" onClick={handleEdit}>
+              Assign Stage Member
+            </Button>
+          )}
+        </div>
+      );
+    },
   },
   {
     accessorKey: "qc_name",
     header: "QC Name",
-    cell: ({ row }) => (
-      <div className="capitalize">{row.original.qc_name ?? "—"}</div>
-    ),
+    cell: ({ row }) => {
+      const stage = row.original;
+
+      const handleEdit = () => {
+        if (onEdit) {
+          onEdit(stage);
+        }
+      };
+      return (
+        <div className="capitalize">
+          {stage.qc_name ? (
+            stage.qc_name
+          ) : // show the button if the qc_assign is true
+          stage.qc_assign ? (
+            <Button variant="link" className="p-0" onClick={handleEdit}>
+              Assign QC
+            </Button>
+          ) : (
+            "—"
+          )}
+        </div>
+      );
+    },
   },
   //   now we need to show the radio button for the completion_stage and qc_assign
   {
@@ -187,13 +233,20 @@ const getErrorMessage = (error: AxiosError | unknown, data: string): string => {
 export function StagesTable({ refresh }: { refresh: () => void }) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const { projectId } = useParams();
+  const navigate = useNavigate();
+  const projectCtx = useProject();
   const [refreshKey, setRefreshKey] = useState<number>(0);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState({});
   const [data, setData] = useState<Stages[]>([]);
+  const [dataLoading, setDataLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingStage, setEditingStage] = useState<Stages | null>(null);
+
+  const isProjectSetupComplete =
+    projectCtx?.projectDetails?.is_member &&
+    projectCtx?.projectDetails?.is_paper;
 
   const refreshData = () => {
     setRefreshKey((prev) => prev + 1);
@@ -230,6 +283,8 @@ export function StagesTable({ refresh }: { refresh: () => void }) {
         if (!axios.isCancel(err)) {
           toast.error(getErrorMessage(err, "stages data"));
         }
+      } finally {
+        setDataLoading(false);
       }
     };
 
@@ -320,7 +375,7 @@ export function StagesTable({ refresh }: { refresh: () => void }) {
       doc.save(fileName);
 
       toast.success(
-        `PDF downloaded successfully with ${selectedRows.length} stage(s)`
+        `PDF downloaded successfully with ${selectedRows.length} stage(s)`,
       );
     } catch (error) {
       console.error("Error generating PDF:", error);
@@ -328,15 +383,66 @@ export function StagesTable({ refresh }: { refresh: () => void }) {
     }
   };
 
+  if (!isProjectSetupComplete) {
+    return (
+      <div className="w-full p-4">
+        <PageHeader title="Stages" />
+        <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
+          <div className="w-full max-w-md space-y-6">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10">
+              <Users className="w-8 h-8 text-primary" />
+            </div>
+            <div className="space-y-2">
+              <h2 className="text-xl font-semibold tracking-tight">
+                No Paper and Member Created Yet
+              </h2>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Before you can create stages, you need to create a paper and add
+                members to the project.
+              </p>
+            </div>
+            <div className="rounded-lg border bg-muted/40 p-4 text-left space-y-2">
+              <h3 className="text-sm font-medium">Getting started</h3>
+              <ul className="text-xs text-muted-foreground space-y-1 list-disc list-inside">
+                <li>Create a paper with a descriptive name</li>
+                <li>Add members to the project</li>
+              </ul>
+            </div>
+            {!projectCtx?.projectDetails?.is_member && (
+              <Button
+                onClick={() =>
+                  navigate(`/project/${projectId}/add-project-member`)
+                }
+                className="gap-2"
+              >
+                <Users className="w-4 h-4" />
+                Add Members
+              </Button>
+            )}
+            {!projectCtx?.projectDetails?.is_paper && (
+              <Button
+                onClick={() => navigate(`/project/${projectId}/papers`)}
+                className="gap-2"
+              >
+                <FileText className="w-4 h-4" />
+                Create Paper
+              </Button>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="w-full py-4 px-4">
       <div className="flex items-center justify-between">
         <PageHeader title="Stages" />
       </div>
+
       {/* top toolbar */}
       <div className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
         <Input
-          placeholder="Filter by tag name..."
+          placeholder="Filter by tag stage name..."
           value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
           onChange={(event) =>
             table.getColumn("name")?.setFilterValue(event.target.value)
@@ -359,7 +465,7 @@ export function StagesTable({ refresh }: { refresh: () => void }) {
             className="w-full sm:w-auto"
             onClick={openCreateDialog}
           >
-            Add Tag
+            Add Stage
           </Button>
 
           <DropdownMenu>
@@ -403,7 +509,7 @@ export function StagesTable({ refresh }: { refresh: () => void }) {
                           ? null
                           : flexRender(
                               header.column.columnDef.header,
-                              header.getContext()
+                              header.getContext(),
                             )}
                       </TableHead>
                     );
@@ -423,7 +529,7 @@ export function StagesTable({ refresh }: { refresh: () => void }) {
                       <TableCell key={cell.id} className="py-2">
                         {flexRender(
                           cell.column.columnDef.cell,
-                          cell.getContext()
+                          cell.getContext(),
                         )}
                       </TableCell>
                     ))}
@@ -467,6 +573,7 @@ export function StagesTable({ refresh }: { refresh: () => void }) {
           </Button>
         </div>
       </div>
+
       <Dialog
         open={isDialogOpen}
         onOpenChange={(open) => {

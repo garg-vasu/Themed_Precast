@@ -2,7 +2,6 @@ import {
   flexRender,
   getCoreRowModel,
   getFilteredRowModel,
-  getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
   type ColumnDef,
@@ -481,9 +480,17 @@ export function InvoiceTable() {
         });
 
         if (response.status === 200) {
-          setData(response.data.data);
-          if (response.data.pagination) {
-            setPagination(response.data.pagination);
+          setData(response.data.data ?? []);
+          const pag = response.data.pagination;
+          if (pag) {
+            setPagination({
+              current_page: pag.current_page ?? pag.page ?? 1,
+              per_page: pag.per_page ?? pag.limit ?? limit,
+              total: pag.total ?? 0,
+              total_pages: pag.total_pages ?? 0,
+            });
+          } else {
+            setPagination(null);
           }
         } else {
           toast.error(response.data?.message || "Failed to fetch invoices");
@@ -508,7 +515,8 @@ export function InvoiceTable() {
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
+    manualPagination: true,
+    pageCount: pagination?.total_pages ?? 0,
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
@@ -742,7 +750,7 @@ export function InvoiceTable() {
           {table.getRowModel().rows.length} row(s) selected on this page.
           {pagination && (
             <span className="ml-2">
-              (Total: {pagination.total} work orders)
+              (Total: {pagination.total} invoices)
             </span>
           )}
         </div>
@@ -772,7 +780,8 @@ export function InvoiceTable() {
           {pagination && (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <span>
-                Page {pagination.current_page} of {pagination.total_pages}
+                Page {pagination.current_page} of{" "}
+                {Math.max(1, pagination.total_pages)}
               </span>
             </div>
           )}

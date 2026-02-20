@@ -5,6 +5,7 @@ import { z } from "zod";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { apiClient } from "@/utils/apiClient";
+import { useProject } from "@/Provider/ProjectProvider";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -178,6 +179,7 @@ export default function AddPaper({ onClose, paper }: PaperDialogProps) {
   const isEditMode = !!paper;
   const navigate = useNavigate();
   const { projectId } = useParams<{ projectId: string }>();
+  const { markSetupStepDone } = useProject();
 
   const getDefaultValues = (): FormData => ({
     paper_name: paper?.paper_name || "",
@@ -259,6 +261,7 @@ export default function AddPaper({ onClose, paper }: PaperDialogProps) {
         const response = await apiClient.post("/questions", payload);
         if (response.status === 200 || response.status === 201) {
           toast.success("Paper created successfully!");
+          markSetupStepDone("is_paper");
           if (onClose) {
             onClose();
           } else {

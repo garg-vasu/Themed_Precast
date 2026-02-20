@@ -39,7 +39,7 @@ import { useState, useEffect, useContext } from "react";
 import { apiClient } from "@/utils/apiClient";
 import axios, { AxiosError } from "axios";
 import { toast } from "sonner";
-import { UserContext } from "@/Provider/UserProvider";
+import { UserContext, type Capabilities } from "@/Provider/UserProvider";
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -195,20 +195,76 @@ const menuItemsByRole: Record<string, NavigationItem[]> = {
   ],
 };
 
+// Helper function to filter navigation items based on capabilities
+const filterNavigationItems = (
+  items: NavigationItem[],
+  capabilities: Capabilities,
+): NavigationItem[] => {
+  return items.reduce((acc, item) => {
+    let shouldInclude = true;
+
+    if (item.name === "Attendance" && !capabilities.hra) shouldInclude = false;
+    if (item.name === "Attendance Report" && !capabilities.hra)
+      shouldInclude = false;
+    if (item.name === "Work Order" && !capabilities.work_order)
+      shouldInclude = false;
+    if (item.name === "All Invoices" && !capabilities.invoice)
+      shouldInclude = false;
+    if (item.name === "Calculator" && !capabilities.calculator)
+      shouldInclude = false;
+
+    if (!shouldInclude) return acc;
+
+    const newItem = { ...item };
+    if (newItem.children) {
+      newItem.children = filterNavigationItems(newItem.children, capabilities);
+      // Optional: If a section becomes empty after filtering children, should we hide it?
+      // For now, keeping the section parent even if empty unless requested otherwise,
+      // but usually "Human Resource" without children is useless.
+      // Let's check if children is empty after filter.
+      if (
+        newItem.children.length === 0 &&
+        item.children &&
+        item.children.length > 0
+      ) {
+        // If it had children but they are all filtered out, do we hide the parent?
+        // "Human Resource" has "Skills", "Departments", "People" which are not filtered by these rules.
+        // So passing strict checks on "Attendance" won't empty "Human Resource".
+        // "Reports" has "Labour Summary" and "Attendance Report". If "Attendance Report" is hidden, "Labour Summary" remains.
+        // So we don't need to aggressively clean up parents yet.
+      }
+    }
+    acc.push(newItem);
+    return acc;
+  }, [] as NavigationItem[]);
+};
+
 // Helper function to get navigation items based on role
-const getNavigationItems = (role: string | undefined): NavigationItem[] => {
-  if (!role) return menuItemsByRole.other;
+const getNavigationItems = (
+  role: string | undefined,
+  capabilities: Capabilities | null,
+): NavigationItem[] => {
+  let items: NavigationItem[] = [];
 
-  const normalizedRole = role.toLowerCase();
+  if (!role) {
+    items = menuItemsByRole.other;
+  } else {
+    const normalizedRole = role.toLowerCase();
 
-  if (normalizedRole === "superadmin" || normalizedRole === "super_admin") {
-    return menuItemsByRole.superadmin;
+    if (normalizedRole === "superadmin" || normalizedRole === "super_admin") {
+      items = menuItemsByRole.superadmin;
+    } else if (normalizedRole === "admin") {
+      items = menuItemsByRole.admin;
+    } else {
+      items = menuItemsByRole.other;
+    }
   }
-  if (normalizedRole === "admin") {
-    return menuItemsByRole.admin;
+
+  if (capabilities) {
+    return filterNavigationItems(items, capabilities);
   }
 
-  return menuItemsByRole.other;
+  return items;
 };
 
 function NavigationItemComponent({
@@ -223,6 +279,7 @@ function NavigationItemComponent({
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   const Icon = item.icon;
+  // add user context
 
   const hasChildren = item.children && item.children.length > 0;
   const isActive = item.href ? location.pathname === item.href : false;
@@ -245,7 +302,7 @@ function NavigationItemComponent({
           onClick={() => !isCollapsed && setIsOpen(!isOpen)}
           className={`flex items-center w-full ${
             isCollapsed ? "justify-center" : "justify-between"
-          } px-3 py-2 rounded-md text-sm font-medium transition-colors duration-150 hover:bg-sidebar-accent ${
+          } px-3 py-2 rounded-md text-sm  transition-colors duration-150 hover:bg-sidebar-accent ${
             hasActiveChild ? "text-sidebar-primary" : "text-sidebar-foreground"
           }`}
           style={{
@@ -307,7 +364,7 @@ function NavigationItemComponent({
       to={item.href!}
       className={`flex items-center ${
         isCollapsed ? "justify-center" : "justify-start"
-      } space-x-3 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-150 ${
+      } space-x-3 px-3 py-2 rounded-md text-sm  transition-colors duration-150 ${
         isActive
           ? "text-sidebar-primary"
           : "hover:bg-sidebar-accent text-sidebar-foreground"
@@ -329,11 +386,11 @@ function NavigationItemComponent({
 
 export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
   const navigate = useNavigate();
-  const { user } = useContext(UserContext);
+  const { user, capabilities } = useContext(UserContext);
   const [projectData, setProjectData] = useState<ProjectView[]>([]);
 
   // Get navigation items based on user role
-  const navigationItems = getNavigationItems(user?.role_name);
+  const navigationItems = getNavigationItems(user?.role_name, capabilities);
 
   useEffect(() => {
     const source = axios.CancelToken.source();

@@ -132,7 +132,7 @@ export default function TowerFloorSelectionDialog({
       if (data) {
         const towerKeys = Object.keys(data);
         const emptyTowerIndex = towerKeys.findIndex(
-          (tower) => tower.trim() === ""
+          (tower) => tower.trim() === "",
         );
         return emptyTowerIndex >= 0
           ? `tower_${emptyTowerIndex + 2}`
@@ -211,25 +211,26 @@ export default function TowerFloorSelectionDialog({
     item: ElementType,
     quantity: number,
     stockyardId: number | null,
-    billable: boolean = true
+    billable: boolean = true,
   ) => {
     setSelectedItems((prev) => {
       const floorId = item.floor_id.toString();
       const compositeKey: CompositeKey = `${item.element_type_id}-${item.floor_id}`;
       const items = prev[floorId] ? [...prev[floorId]] : [];
       const existingIndex = items.findIndex(
-        (i) => i.compositeKey === compositeKey
+        (i) => i.compositeKey === compositeKey,
       );
 
       const existingItem = existingIndex >= 0 ? items[existingIndex] : null;
       const finalStockyardId =
-        stockyardId !== null ? stockyardId : existingItem?.stockyard_id ?? null;
+        stockyardId !== null
+          ? stockyardId
+          : (existingItem?.stockyard_id ?? null);
       const finalStockyardName =
         finalStockyardId !== null
           ? stockyards.find((s) => s.id === finalStockyardId)?.yard_name || null
           : null;
-      const finalBillable =
-        existingItem !== null ? existingItem.billable : billable;
+      const finalBillable = billable;
       const floorNameDisplay = getFloorNameById(floorId);
 
       const newItem: SelectedItem = {
@@ -257,7 +258,7 @@ export default function TowerFloorSelectionDialog({
     const filtered: Record<string, SelectedItem[]> = {};
     Object.entries(selectedItems).forEach(([floorId, items]) => {
       const valid = items.filter(
-        (item) => item.quantity > 0 && item.stockyard_id !== null
+        (item) => item.quantity > 0 && item.stockyard_id !== null,
       );
       if (valid.length > 0) {
         filtered[floorId] = valid.map(
@@ -285,7 +286,7 @@ export default function TowerFloorSelectionDialog({
             floor_id,
             compositeKey,
             billable,
-          })
+          }),
         );
       }
     });
@@ -318,7 +319,7 @@ export default function TowerFloorSelectionDialog({
         if (Array.isArray(raw)) categoryData = raw;
       }
       return categoryData.some(
-        (catItem) => catItem.element_type_id === item.element_type_id
+        (catItem) => catItem.element_type_id === item.element_type_id,
       );
     }) ?? [];
 
@@ -356,9 +357,9 @@ export default function TowerFloorSelectionDialog({
 
         <div className="flex-1 overflow-hidden flex flex-col gap-4">
           {/* Selectors */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 ">
             {/* Tower Selector */}
-            <div className="grid w-full items-center gap-1.5">
+            <div className="grid w-full items-center gap-1.5 ">
               <Label>Select Tower</Label>
               <Select
                 value={getSelectedTowerFallbackValue(selectedTower)}
@@ -369,7 +370,7 @@ export default function TowerFloorSelectionDialog({
                   setSelectedCategory(null);
                 }}
               >
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select tower">
                     {selectedTower
                       ? getTowerDisplayName(selectedTower)
@@ -403,7 +404,7 @@ export default function TowerFloorSelectionDialog({
                 }}
                 disabled={!selectedTower}
               >
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select floor" />
                 </SelectTrigger>
                 <SelectContent>
@@ -415,7 +416,7 @@ export default function TowerFloorSelectionDialog({
                   )
                     .filter(
                       ({ floor_id, floorName }) =>
-                        floor_id && floorName && floorName.trim() !== ""
+                        floor_id && floorName && floorName.trim() !== "",
                     )
                     .map(({ floor_id, floorName }) => (
                       <SelectItem key={floor_id} value={floor_id}>
@@ -436,7 +437,7 @@ export default function TowerFloorSelectionDialog({
                 }}
                 disabled={!selectedFloor}
               >
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select category" />
                 </SelectTrigger>
                 <SelectContent>
@@ -446,7 +447,7 @@ export default function TowerFloorSelectionDialog({
                     floorName &&
                     Object.entries(data[selectedTower][floorName] || {})
                       .filter(
-                        ([category]) => category && category.trim() !== ""
+                        ([category]) => category && category.trim() !== "",
                       )
                       .map(([category, elements]) => {
                         const totals = (elements as ElementType[]).reduce(
@@ -454,7 +455,7 @@ export default function TowerFloorSelectionDialog({
                             balance: acc.balance + element.Balance_quantity,
                             total: acc.total + element.total_quantity,
                           }),
-                          { balance: 0, total: 0 }
+                          { balance: 0, total: 0 },
                         );
                         return (
                           <SelectItem key={category} value={category}>
@@ -497,7 +498,7 @@ export default function TowerFloorSelectionDialog({
                         return (
                           <div
                             key={compositeKey}
-                            className="flex items-center gap-2 p-2 border rounded hover:bg-accent/50 transition-colors"
+                            className="flex items-center gap-2 p-1 border rounded hover:bg-accent/50 transition-colors"
                           >
                             <Checkbox
                               id={`element-${item.element_type_id}-${item.floor_id}`}
@@ -511,7 +512,8 @@ export default function TowerFloorSelectionDialog({
                                   if (checked) {
                                     if (
                                       !prevItems.some(
-                                        (el) => el.compositeKey === compositeKey
+                                        (el) =>
+                                          el.compositeKey === compositeKey,
                                       )
                                     ) {
                                       prevItems.push({
@@ -529,7 +531,8 @@ export default function TowerFloorSelectionDialog({
                                     return {
                                       ...prev,
                                       [floorId]: prevItems.filter(
-                                        (el) => el.compositeKey !== compositeKey
+                                        (el) =>
+                                          el.compositeKey !== compositeKey,
                                       ),
                                     };
                                   }
@@ -539,7 +542,7 @@ export default function TowerFloorSelectionDialog({
                             />
                             <label
                               htmlFor={`element-${item.element_type_id}-${item.floor_id}`}
-                              className="font-medium truncate flex-1 cursor-pointer"
+                              className="font-medium text-wrap flex-1 cursor-pointer"
                             >
                               {item.element_type_name}
                             </label>
@@ -580,7 +583,7 @@ export default function TowerFloorSelectionDialog({
                             const elementType = categoryData.find(
                               (el) =>
                                 el.element_type_id === item.element_type_id &&
-                                el.floor_id === item.floor_id
+                                el.floor_id === item.floor_id,
                             );
                             const selectedItem = (
                               selectedItems[selectedFloor ?? ""] || []
@@ -591,9 +594,9 @@ export default function TowerFloorSelectionDialog({
                             return (
                               <div
                                 key={compositeKey}
-                                className="flex flex-row items-center gap-2 border rounded p-2 bg-muted/50"
+                                className="flex flex-row items-center gap-2 border rounded p-2 bg-muted/50 overflow-x-auto"
                               >
-                                <span className="font-medium truncate min-w-[100px]">
+                                <span className="font-medium whitespace-nowrap flex-shrink-0">
                                   {item.element_type_name}
                                 </span>
                                 <div className="flex flex-row items-center gap-2">
@@ -613,7 +616,7 @@ export default function TowerFloorSelectionDialog({
                                             ? selectedItem.quantity
                                             : 0,
                                           stockyardId,
-                                          selectedItem?.billable ?? true
+                                          selectedItem?.billable ?? true,
                                         );
                                       }
                                     }}
@@ -626,7 +629,7 @@ export default function TowerFloorSelectionDialog({
                                         .filter(
                                           (yard) =>
                                             yard.yard_name &&
-                                            yard.yard_name.trim() !== ""
+                                            yard.yard_name.trim() !== "",
                                         )
                                         .map((yard) => (
                                           <SelectItem
@@ -665,7 +668,7 @@ export default function TowerFloorSelectionDialog({
                                         elementType?.Balance_quantity ?? 0;
                                       const clamped = Math.min(
                                         Math.max(0, parsed),
-                                        maxQty
+                                        maxQty,
                                       );
 
                                       setInputValues((prev) => ({
@@ -676,14 +679,14 @@ export default function TowerFloorSelectionDialog({
                                       const existingItem = (
                                         selectedItems[selectedFloor ?? ""] || []
                                       ).find(
-                                        (i) => i.compositeKey === compositeKey
+                                        (i) => i.compositeKey === compositeKey,
                                       );
                                       if (elementType) {
                                         handleItemSelect(
                                           elementType,
                                           clamped,
                                           existingItem?.stockyard_id ?? null,
-                                          existingItem?.billable ?? true
+                                          existingItem?.billable ?? true,
                                         );
                                       }
                                     }}
@@ -712,7 +715,7 @@ export default function TowerFloorSelectionDialog({
                                             ? selectedItem.quantity
                                             : 0,
                                           selectedItem?.stockyard_id ?? null,
-                                          billableValue
+                                          billableValue,
                                         );
                                       }
                                     }}
@@ -754,7 +757,7 @@ export default function TowerFloorSelectionDialog({
                                       const items = (
                                         prev[selectedFloor] || []
                                       ).filter(
-                                        (i) => i.compositeKey !== compositeKey
+                                        (i) => i.compositeKey !== compositeKey,
                                       );
                                       return {
                                         ...prev,
@@ -815,7 +818,8 @@ export default function TowerFloorSelectionDialog({
                   Object.values(selectedItems)
                     .flat()
                     .some(
-                      (item) => item.quantity <= 0 || item.stockyard_id === null
+                      (item) =>
+                        item.quantity <= 0 || item.stockyard_id === null,
                     )
                 }
                 className="flex-1 sm:flex-none"
