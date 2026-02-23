@@ -1,6 +1,13 @@
 import { apiClient } from "@/utils/apiClient";
 import axios, { AxiosError } from "axios";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { toast } from "sonner";
 import PageHeader from "@/components/ui/PageHeader";
 import {
@@ -27,6 +34,8 @@ import {
 import type { TooltipProps } from "recharts";
 import { useParams } from "react-router-dom";
 import * as d3 from "d3";
+import { ProjectContext } from "@/Provider/ProjectProvider";
+import { ProjectSetupGuide } from "@/components/ProjectSetupGuide";
 
 export interface FirstLine {
   total_manpower: number;
@@ -193,6 +202,18 @@ const getErrorMessage = (error: AxiosError | unknown, data: string): string => {
 };
 
 export default function ProjectSummary() {
+  const projectCtx = useContext(ProjectContext);
+
+  const isProjectSetupComplete =
+    projectCtx?.projectDetails?.is_stage_member &&
+    projectCtx?.projectDetails?.is_member &&
+    projectCtx?.projectDetails?.is_assign_stockyard &&
+    projectCtx?.projectDetails?.is_paper &&
+    projectCtx?.projectDetails?.is_hierachy &&
+    projectCtx?.projectDetails?.is_bom &&
+    projectCtx?.projectDetails?.is_drawingtype &&
+    projectCtx?.projectDetails?.is_elementtype;
+
   const { projectId } = useParams();
   const [productionOverviewDate, setProductionOverviewDate] = useState<
     ProductionOverviewDate[]
@@ -215,7 +236,7 @@ export default function ProjectSummary() {
   // QC radial chart state
   const qcChartHostRef = useRef<HTMLDivElement | null>(null);
   const [qcRadialRows, setQcRadialRows] = useState<QcRadialDatum[] | null>(
-    null
+    null,
   );
   const [qcRadialLoading, setQcRadialLoading] = useState(false);
   const [qcRadialError, setQcRadialError] = useState<string | null>(null);
@@ -426,7 +447,7 @@ export default function ProjectSummary() {
     return [...qcRadialRows].sort((a, b) =>
       a.stage === b.stage
         ? a.status.localeCompare(b.status)
-        : a.stage.localeCompare(b.stage)
+        : a.stage.localeCompare(b.stage),
     );
   }, [qcRadialRows]);
 
@@ -469,7 +490,7 @@ export default function ProjectSummary() {
     });
 
     return Array.from(stageMap.values()).sort((a, b) =>
-      a.stage.localeCompare(b.stage)
+      a.stage.localeCompare(b.stage),
     );
   }, [qcRadialRows]);
 
@@ -636,13 +657,13 @@ export default function ProjectSummary() {
           setQcRadialRows([]);
           toast.error(
             // @ts-expect-error backend shape
-            response.data?.message || "Failed to fetch qc stagewise data"
+            response.data?.message || "Failed to fetch qc stagewise data",
           );
         }
       } catch (err: unknown) {
         if (!axios.isCancel(err)) {
           setQcRadialError(
-            getErrorMessage(err as AxiosError, "qc stagewise data")
+            getErrorMessage(err as AxiosError, "qc stagewise data"),
           );
         }
       } finally {
@@ -676,7 +697,7 @@ export default function ProjectSummary() {
 
     const stages = Array.from(new Set(qcRadialNormalized.map((d) => d.stage)));
     const statuses = Array.from(
-      new Set(qcRadialNormalized.map((d) => d.status))
+      new Set(qcRadialNormalized.map((d) => d.status)),
     );
 
     type StageStatusIndex = d3.InternMap<
@@ -694,8 +715,8 @@ export default function ProjectSummary() {
       d3.index(
         qcRadialNormalized,
         (d) => d.stage,
-        (d) => d.status
-      ) as StageStatusIndex
+        (d) => d.status,
+      ) as StageStatusIndex,
     );
 
     const x = d3
@@ -752,7 +773,7 @@ export default function ProjectSummary() {
       .attr("viewBox", [-width / 2, -height / 2, width, height].join(" "))
       .attr(
         "style",
-        "width: 100%; height: auto; max-width: 600px; font: 9px Lexend, sans-serif; overflow: visible;"
+        "width: 100%; height: auto; max-width: 600px; font: 9px Lexend, sans-serif; overflow: visible;",
       );
 
     svg
@@ -784,14 +805,14 @@ export default function ProjectSummary() {
         (d) => `
           rotate(${(((x(d) ?? 0) + x.bandwidth() / 2) * 180) / Math.PI - 90})
           translate(${innerRadius},0)
-        `
+        `,
       )
       .call((g) =>
         g
           .append("line")
           .attr("x2", -5)
           .attr("stroke", "currentColor")
-          .attr("opacity", 0.7)
+          .attr("opacity", 0.7),
       )
       .call((g) =>
         g
@@ -801,9 +822,9 @@ export default function ProjectSummary() {
             ((x(d) ?? 0) + x.bandwidth() / 2 + Math.PI / 2) % (2 * Math.PI) <
             Math.PI
               ? "rotate(90)translate(0,16)"
-              : "rotate(-90)translate(0,-9)"
+              : "rotate(-90)translate(0,-9)",
           )
-          .text((d) => d)
+          .text((d) => d),
       );
 
     svg
@@ -816,7 +837,7 @@ export default function ProjectSummary() {
           .attr("dy", "-1em")
           .attr("font-weight", 600)
           .attr("fill", "currentColor")
-          .text("Count")
+          .text("Count"),
       )
       .call((g) => {
         const ticks = y.ticks(5);
@@ -832,7 +853,7 @@ export default function ProjectSummary() {
               .attr("stroke", "currentColor")
               .attr("stroke-opacity", 0.3)
               .attr("stroke-width", 1)
-              .attr("r", y)
+              .attr("r", y),
           )
           .call((gg) =>
             gg
@@ -845,7 +866,7 @@ export default function ProjectSummary() {
               .text(y.tickFormat(5, "s"))
               .clone(true)
               .attr("fill", "currentColor")
-              .attr("stroke", "none")
+              .attr("stroke", "none"),
           );
 
         // Explicitly render the outermost circle at max value to ensure visibility
@@ -865,14 +886,14 @@ export default function ProjectSummary() {
       .attr(
         "transform",
         (_d, i, nodes) =>
-          `translate(-40,${((nodes.length ?? 0) / 2 - i - 1) * 20})`
+          `translate(-40,${((nodes.length ?? 0) / 2 - i - 1) * 20})`,
       )
       .call((g) =>
         g
           .append("rect")
           .attr("width", 18)
           .attr("height", 18)
-          .attr("fill", color)
+          .attr("fill", color),
       )
       .call((g) =>
         g
@@ -881,7 +902,7 @@ export default function ProjectSummary() {
           .attr("y", 9)
           .attr("dy", "0.35em")
           .attr("fill", "currentColor")
-          .text((d) => d)
+          .text((d) => d),
       );
 
     host.appendChild(svg.node() as SVGSVGElement);
@@ -897,14 +918,15 @@ export default function ProjectSummary() {
           `/production_reports/${projectId}?${buildQueryParams()}`,
           {
             cancelToken: source.token,
-          }
+          },
         );
 
         if (response.status === 200) {
           setProductionOverviewDate(response.data);
         } else {
           toast.error(
-            response.data?.message || "Failed to fetch production overview date"
+            response.data?.message ||
+              "Failed to fetch production overview date",
           );
         }
       } catch (err: unknown) {
@@ -931,14 +953,14 @@ export default function ProjectSummary() {
           `/planned_casted?project_id=${projectId}&${buildQueryParams()}`,
           {
             cancelToken: source.token,
-          }
+          },
         );
 
         if (response.status === 200) {
           setElementOverviewData(response.data);
         } else {
           toast.error(
-            response.data?.message || "Failed to fetch element overview data"
+            response.data?.message || "Failed to fetch element overview data",
           );
         }
       } catch (err: unknown) {
@@ -965,14 +987,14 @@ export default function ProjectSummary() {
           `/material_usage_reports_concrete/${projectId}?${buildQueryParams()}`,
           {
             cancelToken: source.token,
-          }
+          },
         );
 
         if (response.status === 200) {
           setConcreteOverviewData(response.data);
         } else {
           toast.error(
-            response.data?.message || "Failed to fetch concrete overview data"
+            response.data?.message || "Failed to fetch concrete overview data",
           );
         }
       } catch (err: unknown) {
@@ -999,14 +1021,14 @@ export default function ProjectSummary() {
           `/manpower-count/dashboard?project_id=${projectId}&${buildQueryParams()}`,
           {
             cancelToken: source.token,
-          }
+          },
         );
 
         if (response.status === 200) {
           setHumanOverviewData(response.data);
         } else {
           toast.error(
-            response.data?.message || "Failed to fetch human overview data"
+            response.data?.message || "Failed to fetch human overview data",
           );
         }
       } catch (err: unknown) {
@@ -1032,14 +1054,14 @@ export default function ProjectSummary() {
           `/material_usage_reports_steel/${projectId}?${buildQueryParams()}`,
           {
             cancelToken: source.token,
-          }
+          },
         );
 
         if (response.status === 200) {
           setSteelUsageData(response.data);
         } else {
           toast.error(
-            response.data?.message || "Failed to fetch steel usage data"
+            response.data?.message || "Failed to fetch steel usage data",
           );
         }
       } catch (err: unknown) {
@@ -1064,6 +1086,15 @@ export default function ProjectSummary() {
   }) => {
     setDateFilter(filter);
   };
+
+  if (!isProjectSetupComplete) {
+    return (
+      <div className="w-full p-4">
+        <PageHeader title="Project Summary" />
+        <ProjectSetupGuide currentStep="is_stage_member" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-2 py-4 px-4">
@@ -1123,8 +1154,8 @@ export default function ProjectSummary() {
               {dateFilter.type === "yearly"
                 ? "Monthly production distribution by role. X-axis shows month names."
                 : dateFilter.type === "weekly"
-                ? "Daily production distribution by role. X-axis shows dates."
-                : "Date range production distribution by role. X-axis shows date ranges."}
+                  ? "Daily production distribution by role. X-axis shows dates."
+                  : "Date range production distribution by role. X-axis shows date ranges."}
             </CardDescription>
           </CardHeader>
 
@@ -1402,8 +1433,8 @@ export default function ProjectSummary() {
               {dateFilter.type === "yearly"
                 ? "Monthly element distribution by role. X-axis shows month names."
                 : dateFilter.type === "weekly"
-                ? "Daily element distribution by role. X-axis shows dates."
-                : "Date range element distribution by role. X-axis shows date ranges."}
+                  ? "Daily element distribution by role. X-axis shows dates."
+                  : "Date range element distribution by role. X-axis shows date ranges."}
             </CardDescription>
           </CardHeader>
 
@@ -1498,8 +1529,8 @@ export default function ProjectSummary() {
               {dateFilter.type === "yearly"
                 ? "Monthly concrete distribution by role. X-axis shows month names."
                 : dateFilter.type === "weekly"
-                ? "Daily concrete distribution by role. X-axis shows dates."
-                : "Date range concrete distribution by role. X-axis shows date ranges."}
+                  ? "Daily concrete distribution by role. X-axis shows dates."
+                  : "Date range concrete distribution by role. X-axis shows date ranges."}
             </CardDescription>
           </CardHeader>
 
@@ -1688,8 +1719,8 @@ export default function ProjectSummary() {
               {dateFilter.type === "yearly"
                 ? "Monthly steel usage distribution by role. X-axis shows month names."
                 : dateFilter.type === "weekly"
-                ? "Daily steel usage distribution by role. X-axis shows dates."
-                : "Date range steel usage distribution by role. X-axis shows date ranges."}
+                  ? "Daily steel usage distribution by role. X-axis shows dates."
+                  : "Date range steel usage distribution by role. X-axis shows date ranges."}
             </CardDescription>
           </CardHeader>
 

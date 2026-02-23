@@ -105,7 +105,7 @@ export default function AddDrawingtype({
         }
         const response = await apiClient.put(
           `/drawingtype_update/${drawingTypeId}`,
-          payload
+          payload,
         );
         if (response.status === 200 || response.status === 201) {
           toast.success("Drawing type updated successfully!");
@@ -130,7 +130,7 @@ export default function AddDrawingtype({
     } catch (error: unknown) {
       const errorMessage = getErrorMessage(
         error,
-        isEditMode ? "update drawing type" : "create drawing type"
+        isEditMode ? "update drawing type" : "create drawing type",
       );
       toast.error(errorMessage);
     } finally {
@@ -138,12 +138,12 @@ export default function AddDrawingtype({
     }
   };
   return (
-    <div className="flex flex-col gap-2 py-4 px-4">
+    <div className="flex flex-col ">
       <form onSubmit={handleSubmit(onSubmit)}>
         {/* 2 row layout  */}
         <div>
           {/* two grid layout */}
-          <div className="grid grid-cols-1 gap-4 mt-4">
+          <div className="grid grid-cols-1 gap-4 mt-2">
             {/* name */}
             <div className="grid w-full items-center gap-1.5">
               <Label htmlFor="drawing_type_name">
@@ -163,7 +163,7 @@ export default function AddDrawingtype({
         </div>
 
         {/* Submit Button */}
-        <div className="flex justify-end gap-3 mt-6 pt-4 border-t">
+        <div className="flex justify-end gap-3">
           <Button
             type="button"
             variant="outline"
@@ -181,8 +181,8 @@ export default function AddDrawingtype({
             {isSubmitting
               ? "Saving..."
               : isEditMode
-              ? "Update Drawing Type"
-              : "Create Drawing Type"}
+                ? "Update Drawing Type"
+                : "Create Drawing Type"}
           </Button>
         </div>
       </form>

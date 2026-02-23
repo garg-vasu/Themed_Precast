@@ -405,10 +405,10 @@ export function DrawingTypeTable({ refresh }: { refresh: () => void }) {
                   <TableRow
                     key={row.id}
                     data-state={row.getIsSelected() && "selected"}
-                    className="h-8"
+                    className="h-6"
                   >
                     {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id} className="py-2">
+                      <TableCell key={cell.id} className="py-0.5">
                         {flexRender(
                           cell.column.columnDef.cell,
                           cell.getContext(),

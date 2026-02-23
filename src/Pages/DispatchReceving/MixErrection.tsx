@@ -8,11 +8,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { List, MoreHorizontal } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useContext, useEffect, useMemo, useState } from "react";
 
-import { useProject } from "@/Provider/ProjectProvider";
+import { ProjectContext, useProject } from "@/Provider/ProjectProvider";
 import { DeliveredTable } from "./DeliveredTable";
 import { InTransitTable } from "./InTransitTable";
+import { ProjectSetupGuide } from "@/components/ProjectSetupGuide";
 
 interface TabLink {
   id: string;
@@ -25,6 +26,17 @@ interface TabLink {
 export default function MixErrection() {
   const { permissions } = useProject();
   const [activeTab, setActiveTab] = useState<string>("");
+  const projectCtx = useContext(ProjectContext);
+
+  const isProjectSetupComplete =
+    projectCtx?.projectDetails?.is_stage_member &&
+    projectCtx?.projectDetails?.is_member &&
+    projectCtx?.projectDetails?.is_assign_stockyard &&
+    projectCtx?.projectDetails?.is_paper &&
+    projectCtx?.projectDetails?.is_hierachy &&
+    projectCtx?.projectDetails?.is_bom &&
+    projectCtx?.projectDetails?.is_drawingtype &&
+    projectCtx?.projectDetails?.is_elementtype;
 
   const tabLinks = useMemo<TabLink[]>(() => {
     const tabs: TabLink[] = [];
@@ -74,6 +86,15 @@ export default function MixErrection() {
           You do not have permission to view any errection receving log
           sections.
         </div>
+      </div>
+    );
+  }
+
+  if (!isProjectSetupComplete) {
+    return (
+      <div className="w-full p-4">
+        <PageHeader title="Errection Receving Log" />
+        <ProjectSetupGuide currentStep="is_stage_member" />
       </div>
     );
   }

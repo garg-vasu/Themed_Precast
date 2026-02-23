@@ -32,11 +32,12 @@ import {
   X,
   ChevronRight,
   ArrowRight,
+  Plus,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { useEffect, useMemo, useState } from "react";
+import { useContext, useEffect, useMemo, useState } from "react";
 
-import { useProject } from "@/Provider/ProjectProvider";
+import { ProjectContext, useProject } from "@/Provider/ProjectProvider";
 import { ElementtypeTable } from "./ElementtypeTable";
 import { ElementTable } from "../Element/ElementTable";
 import { apiClient } from "@/utils/apiClient";
@@ -99,6 +100,7 @@ const getErrorMessage = (error: AxiosError | unknown, data: string): string => {
 export default function MixElement() {
   const { permissions } = useProject();
   const { projectId } = useParams();
+  const projectCtx = useContext(ProjectContext);
   const [bomData, setBomData] = useState<Bom[]>([]);
   const [floorData, setFloorData] = useState<Floor[]>([]);
   const [towerData, setTowerData] = useState<Tower[]>([]);
@@ -120,7 +122,7 @@ export default function MixElement() {
   const [towerSearch, setTowerSearch] = useState("");
   const [selectedTowerIds, setSelectedTowerIds] = useState<number[]>([]);
   const [floorsByTower, setFloorsByTower] = useState<Record<number, Floor[]>>(
-    {}
+    {},
   );
   const [loadingFloorsByTower, setLoadingFloorsByTower] = useState<
     Record<number, boolean>
@@ -130,6 +132,12 @@ export default function MixElement() {
   const [selectedFloorIdsByTower, setSelectedFloorIdsByTower] = useState<
     Record<number, number[]>
   >({});
+
+  const isProjectSetupComplete =
+    projectCtx?.projectDetails?.is_hierachy &&
+    projectCtx?.projectDetails?.is_bom &&
+    projectCtx?.projectDetails?.is_drawingtype &&
+    projectCtx?.projectDetails?.is_elementtype;
 
   const tabLinks = useMemo<TabLink[]>(() => {
     const tabs: TabLink[] = [];
@@ -172,7 +180,7 @@ export default function MixElement() {
           `/fetch_bom_products/${projectId}`,
           {
             cancelToken: source.token,
-          }
+          },
         );
 
         if (response.status === 200) {
@@ -248,7 +256,7 @@ export default function MixElement() {
           `/precast/floors/${projectId}/${towerId}`,
           {
             cancelToken: source.token,
-          }
+          },
         );
 
         if (response.status === 200) {
@@ -328,7 +336,7 @@ export default function MixElement() {
     setLoadingFloorsByTower((prev) => ({ ...prev, [towerId]: true }));
     try {
       const response = await apiClient.get(
-        `/precast/floors/${projectId}/${towerId}`
+        `/precast/floors/${projectId}/${towerId}`,
       );
       if (response.status === 200) {
         const data = response.data;
@@ -370,7 +378,7 @@ export default function MixElement() {
     const allSelectedFloorIds = Object.values(selectedFloorIdsByTower).flat();
     if (selectedTowerIds.length === 0 || allSelectedFloorIds.length === 0) {
       toast.error(
-        "Please select at least one tower and one floor before downloading."
+        "Please select at least one tower and one floor before downloading.",
       );
       return;
     }
@@ -392,13 +400,13 @@ export default function MixElement() {
     // Build hierarchy as an array of full objects for selected towers and floors
     const towersArray = Array.isArray(towers) ? towers : [];
     const selectedTowerObjects = towersArray.filter((t) =>
-      selectedTowerIds.includes(t.id)
+      selectedTowerIds.includes(t.id),
     );
     const selectedFloorObjects = selectedTowerIds.flatMap((towerId) => {
       const selectedFloorIds = selectedFloorIdsByTower[towerId] || [];
       const floors = floorsByTower[towerId] || [];
       return (Array.isArray(floors) ? floors : []).filter((f) =>
-        selectedFloorIds.includes(f.hierarchy_id)
+        selectedFloorIds.includes(f.hierarchy_id),
       );
     });
     const hierarchy = [...selectedTowerObjects, ...selectedFloorObjects];
@@ -413,7 +421,7 @@ export default function MixElement() {
         },
         {
           responseType: "blob",
-        }
+        },
       );
 
       const blob = new Blob([response.data]);
@@ -453,16 +461,16 @@ export default function MixElement() {
   // Handle BOM deselection (move back to first column)
   const handleBomDeselect = (bom: Bom) => {
     setSelectedBoms((prev) =>
-      prev.filter((item) => item.bom_id !== bom.bom_id)
+      prev.filter((item) => item.bom_id !== bom.bom_id),
     );
     setBomList((prev) =>
-      [...prev, bom].sort((a, b) => a.bom_name.localeCompare(b.bom_name))
+      [...prev, bom].sort((a, b) => a.bom_name.localeCompare(b.bom_name)),
     );
   };
 
   // Filter available BOMs based on search term
   const filteredBomList = (Array.isArray(bomList) ? bomList : []).filter(
-    (bom) => bom.bom_name.toLowerCase().includes(searchTerm.toLowerCase())
+    (bom) => bom.bom_name.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   // If no tabs are available, show a message
@@ -474,6 +482,72 @@ export default function MixElement() {
         </div>
         <div className="text-center py-8 text-muted-foreground">
           You do not have permission to view any element type sections.
+        </div>
+      </div>
+    );
+  }
+
+  if (!isProjectSetupComplete) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
+        <div className="w-full max-w-md space-y-6">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10">
+            <FileText className="w-8 h-8 text-primary" />
+          </div>
+          <div className="space-y-2">
+            <h2 className="text-xl font-semibold tracking-tight">
+              No Element Types Yet
+            </h2>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Element types are the different types of elements that can be
+              created in the project.
+            </p>
+          </div>
+          <div className="rounded-lg border bg-muted/40 p-4 text-left space-y-2">
+            <h3 className="text-sm font-medium">Getting started</h3>
+            <ul className="text-xs text-muted-foreground space-y-1 list-disc list-inside">
+              <li>Create a element type with a descriptive name</li>
+              <li>Add element types to the project</li>
+            </ul>
+          </div>
+          {projectCtx?.projectDetails?.is_hierachy &&
+            projectCtx?.projectDetails?.is_bom &&
+            projectCtx?.projectDetails?.is_drawingtype && (
+              <Button className="gap-2 mr-2">
+                <Plus className="w-4 h-4" />
+                Create Your First Element Type
+              </Button>
+            )}
+          {/* show the hierachy add button  */}
+          {!projectCtx?.projectDetails?.is_hierachy && (
+            <Button
+              className="gap-2 mr-2"
+              onClick={() => navigate(`/project/${projectId}/hierarchy`)}
+            >
+              <Plus className="w-4 h-4" />
+              Add Hierachy
+            </Button>
+          )}
+          {/* show the bom add button  */}
+          {!projectCtx?.projectDetails?.is_bom && (
+            <Button
+              className="gap-2 mr-2"
+              onClick={() => navigate(`/project/${projectId}/large-import`)}
+            >
+              <Plus className="w-4 h-4" />
+              Add BOM
+            </Button>
+          )}
+          {/* show the drawing type add button  */}
+          {!projectCtx?.projectDetails?.is_drawingtype && (
+            <Button
+              className="gap-2 mr-2"
+              onClick={() => navigate(`/project/${projectId}/drawing`)}
+            >
+              <Plus className="w-4 h-4" />
+              Add Drawing Type
+            </Button>
+          )}
         </div>
       </div>
     );
@@ -635,8 +709,8 @@ export default function MixElement() {
                               onClick={() => {
                                 setBomList((prev) =>
                                   [...prev, ...selectedBoms].sort((a, b) =>
-                                    a.bom_name.localeCompare(b.bom_name)
-                                  )
+                                    a.bom_name.localeCompare(b.bom_name),
+                                  ),
                                 );
                                 setSelectedBoms([]);
                               }}
@@ -737,7 +811,7 @@ export default function MixElement() {
                               .filter((t) =>
                                 t.name
                                   .toLowerCase()
-                                  .includes(towerSearch.toLowerCase())
+                                  .includes(towerSearch.toLowerCase()),
                               )
                               .map((t) => {
                                 const isTowerSelected =
@@ -768,7 +842,7 @@ export default function MixElement() {
                                           selectedTowerIds.includes(t.id);
                                         const next = already
                                           ? selectedTowerIds.filter(
-                                              (x) => x !== t.id
+                                              (x) => x !== t.id,
                                             )
                                           : [...selectedTowerIds, t.id];
                                         setSelectedTowerIds(next);
@@ -832,16 +906,16 @@ export default function MixElement() {
                                                       (prev) => ({
                                                         ...prev,
                                                         [t.id]: [],
-                                                      })
+                                                      }),
                                                     );
                                                   } else {
                                                     setSelectedFloorIdsByTower(
                                                       (prev) => ({
                                                         ...prev,
                                                         [t.id]: towerFloors.map(
-                                                          (f) => f.hierarchy_id
+                                                          (f) => f.hierarchy_id,
                                                         ),
-                                                      })
+                                                      }),
                                                     );
                                                   }
                                                 }}
@@ -855,7 +929,7 @@ export default function MixElement() {
                                               {towerFloors.map((f) => {
                                                 const checked =
                                                   selectedFloorsForTower.includes(
-                                                    f.hierarchy_id
+                                                    f.hierarchy_id,
                                                   );
                                                 return (
                                                   <div
@@ -875,7 +949,7 @@ export default function MixElement() {
                                                             ? current.filter(
                                                                 (x) =>
                                                                   x !==
-                                                                  f.hierarchy_id
+                                                                  f.hierarchy_id,
                                                               )
                                                             : [
                                                                 ...current,
@@ -885,7 +959,7 @@ export default function MixElement() {
                                                             ...prev,
                                                             [t.id]: next,
                                                           };
-                                                        }
+                                                        },
                                                       );
                                                     }}
                                                   >
@@ -944,8 +1018,8 @@ export default function MixElement() {
                             {selectedBoms.length === 0
                               ? "Select at least one BOM to continue"
                               : selectedTowerIds.length === 0
-                              ? "Select at least one tower to continue"
-                              : "Select at least one floor to continue"}
+                                ? "Select at least one tower to continue"
+                                : "Select at least one floor to continue"}
                           </p>
                         </div>
                       ) : (
@@ -1032,7 +1106,9 @@ export default function MixElement() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => navigate(`/project/${projectId}/upload-elementtype`)}
+              onClick={() =>
+                navigate(`/project/${projectId}/upload-elementtype`)
+              }
               className="flex gap-2 items-center text-xs sm:text-sm"
             >
               Upload Element Type

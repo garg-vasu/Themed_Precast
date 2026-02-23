@@ -47,10 +47,12 @@ export default function ProjectRoleRoute({
 
   // If context is unavailable, redirect to home
   if (!projectCtx) {
+    console.log("[ProjectRoleRoute] No ProjectContext! Redirecting to /");
     return <Navigate to="/" replace />;
   }
 
   const { permissions, loading, error } = projectCtx;
+  console.log("[ProjectRoleRoute] State:", { loading, error, permissions, allowedPermissions });
 
   const isAllowed = useMemo(() => {
     if (!permissions || permissions.length === 0) {
@@ -94,6 +96,7 @@ export default function ProjectRoleRoute({
 
   // Error state - redirect to home for any errors
   if (error) {
+    console.log("[ProjectRoleRoute] Error detected, redirecting to /. error:", error);
     return <Navigate to="/" replace />;
   }
 

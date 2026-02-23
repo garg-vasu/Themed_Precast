@@ -1,6 +1,6 @@
 import { apiClient } from "@/utils/apiClient";
 import axios, { AxiosError } from "axios";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import PageHeader from "@/components/ui/PageHeader";
 import {
@@ -27,6 +27,8 @@ import {
 } from "recharts";
 import type { TooltipProps } from "recharts";
 import { useParams } from "react-router-dom";
+import { ProjectContext } from "@/Provider/ProjectProvider";
+import { ProjectSetupGuide } from "@/components/ProjectSetupGuide";
 
 type StockyardSummaryDate = {
   [key: string]: number | string;
@@ -167,12 +169,23 @@ const getErrorMessage = (error: AxiosError | unknown, data: string): string => {
 
 export default function StockyardSummary() {
   const { projectId } = useParams();
+  const projectCtx = useContext(ProjectContext);
+
+  const isProjectSetupComplete =
+    projectCtx?.projectDetails?.is_stage_member &&
+    projectCtx?.projectDetails?.is_member &&
+    projectCtx?.projectDetails?.is_assign_stockyard &&
+    projectCtx?.projectDetails?.is_paper &&
+    projectCtx?.projectDetails?.is_hierachy &&
+    projectCtx?.projectDetails?.is_bom &&
+    projectCtx?.projectDetails?.is_drawingtype &&
+    projectCtx?.projectDetails?.is_elementtype;
 
   const [stockyardSummaryDate, setStockyardSummaryDate] = useState<
     StockyardSummaryDate[]
   >([]);
   const [elementTypeData, setElementTypeData] = useState<ElementTypeReport[]>(
-    []
+    [],
   );
 
   // Date Filter State
@@ -298,14 +311,14 @@ export default function StockyardSummary() {
           `/stockyard_reports/${projectId}?${buildQueryParams()}`,
           {
             cancelToken: source.token,
-          }
+          },
         );
 
         if (response.status === 200) {
           setStockyardSummaryDate(response.data);
         } else {
           toast.error(
-            response.data?.message || "Failed to fetch stockyard summary date"
+            response.data?.message || "Failed to fetch stockyard summary date",
           );
         }
       } catch (err: unknown) {
@@ -332,14 +345,14 @@ export default function StockyardSummary() {
           `/element_type_reports/${projectId}?${buildQueryParams()}`,
           {
             cancelToken: source.token,
-          }
+          },
         );
 
         if (response.status === 200) {
           setElementTypeData(response.data);
         } else {
           toast.error(
-            response.data?.message || "Failed to fetch element type reports"
+            response.data?.message || "Failed to fetch element type reports",
           );
         }
       } catch (err: unknown) {
@@ -365,6 +378,15 @@ export default function StockyardSummary() {
     setDateFilter(filter);
   };
 
+  if (!isProjectSetupComplete) {
+    return (
+      <div className="w-full p-4">
+        <PageHeader title="Stockyard Summary" />
+        <ProjectSetupGuide currentStep="is_stage_member" />
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-2 py-4 px-4">
       <div className="flex item-bottom justify-between">
@@ -385,8 +407,8 @@ export default function StockyardSummary() {
               {dateFilter.type === "yearly"
                 ? "Monthly stockyard summary distribution by role. X-axis shows month names."
                 : dateFilter.type === "weekly"
-                ? "Daily stockyard summary distribution by role. X-axis shows dates."
-                : "Date range stockyard summary distribution by role. X-axis shows date ranges."}
+                  ? "Daily stockyard summary distribution by role. X-axis shows dates."
+                  : "Date range stockyard summary distribution by role. X-axis shows date ranges."}
             </CardDescription>
           </CardHeader>
 
@@ -528,7 +550,7 @@ export default function StockyardSummary() {
                       height={36}
                       formatter={(value) => {
                         const item = elementTypeChartData.find(
-                          (d) => d.name === value
+                          (d) => d.name === value,
                         );
                         return `${value} (${item?.value || 0})`;
                       }}

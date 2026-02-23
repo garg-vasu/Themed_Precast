@@ -205,8 +205,10 @@ export const ProjectProvider = ({ children }: ProjectProviderProps) => {
         });
 
         if (response.status === 200) {
+          console.log("[ProjectProvider] Raw API response.data:", JSON.stringify(response.data, null, 2));
           const projectData = response.data.project as ProjectDetails;
           const flags = response.data.flags as any;
+          console.log("[ProjectProvider] Fetch SUCCESS. projectId:", projectId, "projectData:", projectData, "flags:", flags);
           setProjectDetails({ ...projectData, ...flags });
           setPermissions(
             projectData.permissions
@@ -217,23 +219,28 @@ export const ProjectProvider = ({ children }: ProjectProviderProps) => {
           );
           setError(null);
         } else if (response.status === 403) {
+          console.log("[ProjectProvider] 403 response (non-throw). projectId:", projectId);
           setError("access_denied");
         } else {
           const message =
             (response.data as any)?.message ||
             "Failed to fetch project data. Please try again.";
+          console.log("[ProjectProvider] Unexpected status:", response.status, "message:", message, "projectId:", projectId);
           setError(message);
         }
       } catch (err: unknown) {
         if (!axios.isCancel(err)) {
           if (axios.isAxiosError(err) && err.response?.status === 403) {
+            console.log("[ProjectProvider] 403 - Access denied for project:", projectId, err.response?.data);
             setError("access_denied");
           } else if (axios.isAxiosError(err) && err.response?.status === 404) {
             const errorMessage =
               err.response?.data?.error || "Project not found.";
+            console.log("[ProjectProvider] 404 - Redirecting to /. Error:", errorMessage, "projectId:", projectId);
             toast.error(errorMessage);
             navigate("/", { replace: true });
           } else {
+            console.log("[ProjectProvider] Other error - Redirecting to /. Status:", axios.isAxiosError(err) ? err.response?.status : "non-axios", "Error:", getErrorMessage(err), "projectId:", projectId, "Full error:", err);
             setError(getErrorMessage(err));
             if (axios.isAxiosError(err) && err.response?.status === 401) {
               handleUnauthorized();
@@ -267,6 +274,7 @@ export const ProjectProvider = ({ children }: ProjectProviderProps) => {
 
   useEffect(() => {
     if (error && error !== "access_denied") {
+      console.log("[ProjectProvider] Error toast triggered. error:", error);
       toast.error(error);
     }
   }, [error]);

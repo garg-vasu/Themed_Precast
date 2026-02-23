@@ -8,10 +8,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { List, MoreHorizontal } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
-import { useProject } from "@/Provider/ProjectProvider";
+import { useContext, useEffect, useMemo, useState } from "react";
+import { ProjectContext, useProject } from "@/Provider/ProjectProvider";
 import { AlreadyErrectedElementTable } from "./AlreadyErrectedElement";
 import { NotErrectedElementTable } from "./NotErrectedElement";
+import { ProjectSetupGuide } from "@/components/ProjectSetupGuide";
 
 interface TabLink {
   id: string;
@@ -24,6 +25,17 @@ interface TabLink {
 export default function MixErrectedElement() {
   const { permissions } = useProject();
   const [activeTab, setActiveTab] = useState<string>("");
+  const projectCtx = useContext(ProjectContext);
+
+  const isProjectSetupComplete =
+    projectCtx?.projectDetails?.is_stage_member &&
+    projectCtx?.projectDetails?.is_member &&
+    projectCtx?.projectDetails?.is_assign_stockyard &&
+    projectCtx?.projectDetails?.is_paper &&
+    projectCtx?.projectDetails?.is_hierachy &&
+    projectCtx?.projectDetails?.is_bom &&
+    projectCtx?.projectDetails?.is_drawingtype &&
+    projectCtx?.projectDetails?.is_elementtype;
 
   const tabLinks = useMemo<TabLink[]>(() => {
     const tabs: TabLink[] = [];
@@ -71,6 +83,15 @@ export default function MixErrectedElement() {
         <div className="text-center py-8 text-muted-foreground">
           You do not have permission to view any errected element sections.
         </div>
+      </div>
+    );
+  }
+
+  if (!isProjectSetupComplete) {
+    return (
+      <div className="w-full p-4">
+        <PageHeader title="Erection Element" />
+        <ProjectSetupGuide currentStep="is_elementtype" />
       </div>
     );
   }
