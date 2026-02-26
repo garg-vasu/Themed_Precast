@@ -177,7 +177,7 @@ export default function AddAssignMember({
           toast.error("Stockyard ID is required");
           return;
         }
-        const response = await apiClient.post(
+        const response = await apiClient.put(
           `/project-stockyards/${initialData.id}/manager`,
           payload,
         );

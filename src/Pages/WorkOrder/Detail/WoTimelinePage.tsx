@@ -1,10 +1,14 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { CalendarIcon, ChevronDown, ChevronUp, Filter } from "lucide-react";
+import axios, { AxiosError } from "axios";
+import { apiClient } from "@/utils/apiClient";
+import { toast } from "sonner";
+import { useParams } from "react-router-dom";
 
 type Payment = {
   id: string;
@@ -43,85 +47,27 @@ type Amendment = {
   changes?: string[];
 };
 
-// Mock data (replace with real data later)
-const MOCK_WORK_ORDER: WorkOrder = {
-  id: "wo_1001",
-  code: "WO-1001",
-  title: "Fabrication of Steel Frames",
-  createdAt: "2025-09-01T10:15:00Z",
-  customer: "Acme Construction Ltd",
-  amendments: [
-    {
-      id: "amd_001",
-      amendedAt: "2025-09-12T10:00:00Z",
-      version: 2,
-      description: "Scope increased by 10% for Frame B",
-      reason: "Client request",
-      changes: [
-        "Added 12 beams to section B",
-        "Revised finishing from primer to epoxy",
-      ],
-    },
-    {
-      id: "amd_002",
-      amendedAt: "2025-09-28T09:30:00Z",
-      version: 3,
-      description: "Payment terms updated: split into 3 milestones",
-      reason: "Contract alignment",
-      changes: ["Advance reduced to 40%", "Second milestone due on dispatch"],
-    },
-  ],
-  invoices: [
-    {
-      id: "inv_001",
-      number: "INV-001",
-      issuedAt: "2025-09-05T09:00:00Z",
-      dueAt: "2025-09-20T23:59:59Z",
-      total: 120000,
-      status: "paid",
-      payments: [
-        {
-          id: "pay_001a",
-          amount: 60000,
-          receivedAt: "2025-09-10T12:30:00Z",
-          method: "bank_transfer",
-          notes: "Advance",
-        },
-        {
-          id: "pay_001b",
-          amount: 60000,
-          receivedAt: "2025-09-15T16:45:00Z",
-          method: "upi",
-        },
-      ],
-    },
-    {
-      id: "inv_002",
-      number: "INV-002",
-      issuedAt: "2025-09-18T11:20:00Z",
-      dueAt: "2025-10-05T23:59:59Z",
-      total: 95000,
-      status: "partial",
-      payments: [
-        {
-          id: "pay_002a",
-          amount: 40000,
-          receivedAt: "2025-09-25T14:10:00Z",
-          method: "bank_transfer",
-        },
-      ],
-    },
-    {
-      id: "inv_003",
-      number: "INV-003",
-      issuedAt: "2025-10-01T08:05:00Z",
-      dueAt: "2025-10-15T23:59:59Z",
-      total: 78000,
-      status: "unpaid",
-      payments: [],
-    },
-  ],
+const getErrorMessage = (error: AxiosError | unknown, data: string): string => {
+  if (axios.isAxiosError(error)) {
+    if (error.response?.status === 401) {
+      return "Unauthorized. Please log in.";
+    }
+    if (error.response?.status === 403) {
+      return "Access denied. Please contact your administrator.";
+    }
+    if (error.code === "ECONNABORTED") {
+      return "Request timed out. Please try again later.";
+    }
+    // Check both 'error' and 'message' fields in the response
+    const errorMessage =
+      error.response?.data?.error ||
+      error.response?.data?.message ||
+      `Failed to ${data}.`;
+    return errorMessage;
+  }
+  return "An unexpected error occurred. Please try again later.";
 };
+
 
 function formatCurrency(amount: number): string {
   return new Intl.NumberFormat("en-IN", {
@@ -152,6 +98,8 @@ type TimelineFilter = {
 };
 
 export default function WoTimelinePage() {
+  const [workOrder, setworkOrder] = useState<WorkOrder>();
+  const { workOrderId } = useParams<{ workOrderId: string }>();
   const [filters, setFilters] = useState<TimelineFilter>({
     showPayments: true,
     showAmendments: true,
@@ -161,19 +109,51 @@ export default function WoTimelinePage() {
     sortDirection: "asc",
   });
   const [expandedInvoiceIds, setExpandedInvoiceIds] = useState<Set<string>>(
-    new Set()
+    new Set(),
   );
 
-  const workOrder = MOCK_WORK_ORDER;
+  useEffect(() => {
+    const source = axios.CancelToken.source();
+
+    const fetchTenants = async () => {
+      try {
+        const response = await apiClient.get(
+          `/work_order_timeline/${Number(workOrderId)}`,
+          {
+            cancelToken: source.token,
+          },
+        );
+
+        if (response.status === 200) {
+          // Always use array - API may return null when no results (e.g. after filter)
+          setworkOrder(response.data ?? undefined);
+        } else {
+          toast.error(response.data?.message || "Failed to fetch timeline");
+        }
+      } catch (err: unknown) {
+        if (!axios.isCancel(err)) {
+          toast.error(getErrorMessage(err, "timeline data"));
+        }
+      }
+    };
+
+    fetchTenants();
+
+    return () => {
+      source.cancel();
+    };
+  }, [workOrderId]);
 
   const filteredSortedInvoices = useMemo(() => {
+    if (!workOrder) return [];
+
     const statusAllowed = new Set<string>();
     if (filters.showPaid) statusAllowed.add("paid");
     if (filters.showPartial) statusAllowed.add("partial");
     if (filters.showUnpaid) statusAllowed.add("unpaid");
 
     const list = workOrder.invoices.filter((inv) =>
-      statusAllowed.has(inv.status)
+      statusAllowed.has(inv.status),
     );
     list.sort((a, b) => {
       const aTime = new Date(a.issuedAt).getTime();
@@ -181,13 +161,15 @@ export default function WoTimelinePage() {
       return filters.sortDirection === "asc" ? aTime - bTime : bTime - aTime;
     });
     return list;
-  }, [filters, workOrder.invoices]);
+  }, [filters, workOrder]);
 
   type TimelineItem =
     | { type: "amendment"; data: Amendment; at: string }
     | { type: "invoice"; data: Invoice; at: string };
 
   const timelineItems = useMemo<TimelineItem[]>(() => {
+    if (!workOrder) return [];
+
     const items: TimelineItem[] = [];
 
     if (filters.showAmendments) {
@@ -210,7 +192,7 @@ export default function WoTimelinePage() {
     filteredSortedInvoices,
     filters.showAmendments,
     filters.sortDirection,
-    workOrder.amendments,
+    workOrder,
   ]);
 
   function toggleInvoiceExpand(id: string) {
@@ -220,6 +202,20 @@ export default function WoTimelinePage() {
       else next.add(id);
       return next;
     });
+  }
+
+  if (!workOrder) {
+    return (
+      <div className="flex flex-col gap-3 w-full">
+        <Card>
+          <CardContent className="py-8">
+            <p className="text-sm text-muted-foreground text-center">
+              Loading timeline...
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   return (
@@ -405,7 +401,7 @@ export default function WoTimelinePage() {
                   const isExpanded = expandedInvoiceIds.has(invoice.id);
                   const paidAmount = invoice.payments.reduce(
                     (sum, p) => sum + p.amount,
-                    0
+                    0,
                   );
                   const remaining = Math.max(invoice.total - paidAmount, 0);
                   return (
@@ -478,7 +474,7 @@ export default function WoTimelinePage() {
                               .sort(
                                 (a, b) =>
                                   new Date(a.receivedAt).getTime() -
-                                  new Date(b.receivedAt).getTime()
+                                  new Date(b.receivedAt).getTime(),
                               )
                               .map((payment, idx) => (
                                 <div key={payment.id} className="relative pl-7">
@@ -531,8 +527,8 @@ function StatusBadge({ status }: { status: Invoice["status"] }) {
         status === "paid"
           ? "outline"
           : status === "partial"
-          ? "secondary"
-          : "destructive"
+            ? "secondary"
+            : "destructive"
       }
       className="text-[11px] rounded-full px-2.5 py-0.5"
     >

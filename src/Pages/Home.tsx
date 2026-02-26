@@ -125,13 +125,13 @@ const getErrorMessage = (error: AxiosError | unknown): string => {
 const LabourChart = lazy(() =>
   import("./HomeCharts").then((module) => ({
     default: module.LabourChart,
-  }))
+  })),
 );
 
 const ProjectChart = lazy(() =>
   import("./HomeCharts").then((module) => ({
     default: module.ProjectChart,
-  }))
+  })),
 );
 
 export default function Home() {
@@ -170,8 +170,8 @@ export default function Home() {
           label: "In Stock",
           color: "#6366F1",
         },
-      } satisfies ChartConfig),
-    []
+      }) satisfies ChartConfig,
+    [],
   );
 
   const labourColors = useMemo(
@@ -187,7 +187,7 @@ export default function Home() {
       "#F97373",
       "#10B981",
     ],
-    []
+    [],
   );
 
   // project id query parameter
@@ -207,7 +207,7 @@ export default function Home() {
           observer.disconnect();
         }
       },
-      { rootMargin: "200px" }
+      { rootMargin: "200px" },
     );
 
     observer.observe(chartsRef.current);
@@ -259,7 +259,7 @@ export default function Home() {
         const response = result.value;
         if (response.status !== 200) {
           toast.error(
-            response.data?.message || "Failed to fetch dashboard data"
+            response.data?.message || "Failed to fetch dashboard data",
           );
           return;
         }
@@ -272,12 +272,12 @@ export default function Home() {
             if (Array.isArray(response.data) && response.data.length > 0) {
               const validateData = response.data.filter(
                 (item: HumanResouce) =>
-                  item && typeof item === "object" && "name" in item
+                  item && typeof item === "object" && "name" in item,
               );
               setHumanResources(validateData);
             } else {
               toast.error(
-                response.data?.message || "Failed to fetch human resources"
+                response.data?.message || "Failed to fetch human resources",
               );
             }
             break;
@@ -285,12 +285,12 @@ export default function Home() {
             if (Array.isArray(response.data) && response.data.length > 0) {
               const validateData = response.data.filter(
                 (item: ProjectData) =>
-                  item && typeof item === "object" && "day" in item
+                  item && typeof item === "object" && "day" in item,
               );
               setProjectData(validateData);
             } else {
               toast.error(
-                response.data?.message || "Failed to fetch project data"
+                response.data?.message || "Failed to fetch project data",
               );
             }
             break;
@@ -345,7 +345,7 @@ export default function Home() {
             },
           ]
         : [],
-    [projectStats]
+    [projectStats],
   );
 
   const pieData = useMemo(
@@ -374,7 +374,7 @@ export default function Home() {
             },
           ]
         : [],
-    [elementStatus]
+    [elementStatus],
   );
 
   const labourMetricKeys = useMemo(() => {
@@ -392,7 +392,7 @@ export default function Home() {
             index: index + 1, // 1, 2, 3, ... for X-axis
           }))
         : [],
-    [humanResources]
+    [humanResources],
   );
 
   const projectMetricKeys = useMemo(() => {
@@ -410,22 +410,22 @@ export default function Home() {
             index: index + 1, // 1, 2, 3, ... for X-axis
           }))
         : [],
-    [projectData]
+    [projectData],
   );
 
   const averageCastedText = useMemo(
     () => average?.average_casted_elements.toFixed(2) ?? "--",
-    [average]
+    [average],
   );
 
   const averageErectedText = useMemo(
     () => averageErectedElements?.average_erected_elements.toFixed(2) ?? "--",
-    [averageErectedElements]
+    [averageErectedElements],
   );
 
   const totalRejectionsText = useMemo(
     () => totalRejections?.total_rejections.toFixed(2) ?? "--",
-    [totalRejections]
+    [totalRejections],
   );
 
   const monthlyForecastText = useMemo(() => {
@@ -442,34 +442,34 @@ export default function Home() {
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
         {/* Pie Chart Card */}
         <Card className="flex flex-col lg:col-span-7">
-          <CardHeader className="pb-2">
+          <CardHeader className="">
             <CardTitle className="text-lg md:text-xl">Element Status</CardTitle>
           </CardHeader>
           <CardContent className="flex-1">
             {elementStatus ? (
-              <ChartContainer
-                config={chartConfig}
-                className="h-[260px] sm:h-[300px] lg:h-[340px] w-full"
-              >
-                <div className="flex h-full w-full flex-col">
-                  {pieData.length > 0 && (
-                    <div className="mb-4 w-full flex flex-wrap justify-center gap-3">
-                      {pieData.map((item) => (
-                        <div
-                          key={item.name}
-                          className="flex items-center gap-2 text-xs md:text-sm text-muted-foreground"
-                        >
-                          <span
-                            className="h-2 w-2 rounded-full flex-shrink-0"
-                            style={{ backgroundColor: item.fill }}
-                          />
-                          <span className="whitespace-normal break-words">
-                            {item.name}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+              <>
+                {pieData.length > 0 && (
+                  <div className=" w-full flex flex-wrap justify-center gap-3">
+                    {pieData.map((item) => (
+                      <div
+                        key={item.name}
+                        className="flex items-center gap-2 text-xs md:text-sm text-muted-foreground"
+                      >
+                        <span
+                          className="h-2 w-2 rounded-full flex-shrink-0"
+                          style={{ backgroundColor: item.fill }}
+                        />
+                        <span className="whitespace-normal break-words">
+                          {item.name}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <ChartContainer
+                  config={chartConfig}
+                  className="h-[250px] w-full"
+                >
                   <PieChart>
                     <Pie
                       data={pieData}
@@ -488,8 +488,8 @@ export default function Home() {
                     </Pie>
                     <Tooltip content={<ElementStatusTooltip />} />
                   </PieChart>
-                </div>
-              </ChartContainer>
+                </ChartContainer>
+              </>
             ) : (
               <p className="text-sm text-muted-foreground mt-4">
                 Loading element status...
@@ -502,7 +502,7 @@ export default function Home() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* first card  */}
             <Card>
-              <CardContent className="p-4 md:p-6">
+              <CardContent>
                 {/* two block in the card content */}
                 {/* two row   */}
                 <div className="flex flex-col gap-1.5 items-center justify-center text-center">
@@ -517,7 +517,7 @@ export default function Home() {
               </CardContent>
             </Card>
             <Card>
-              <CardContent className="p-4 md:p-6">
+              <CardContent className="">
                 <div className="flex flex-col gap-1.5 items-center justify-center text-center">
                   <div className="text-lg md:text-2xl font-semibold tabular-nums">
                     {averageErectedText}
@@ -529,7 +529,7 @@ export default function Home() {
               </CardContent>
             </Card>
             <Card>
-              <CardContent className="p-4 md:p-6">
+              <CardContent className="">
                 <div className="flex flex-col gap-1.5 items-center justify-center text-center">
                   <div className="text-lg md:text-2xl font-semibold tabular-nums">
                     {totalRejectionsText}
@@ -541,7 +541,7 @@ export default function Home() {
               </CardContent>
             </Card>
             <Card>
-              <CardContent className="p-4 md:p-6">
+              <CardContent className="">
                 <div className="flex flex-col gap-1.5 items-center justify-center text-center">
                   <div className="text-lg md:text-2xl font-semibold tabular-nums">
                     {monthlyForecastText}
@@ -565,7 +565,7 @@ export default function Home() {
                 on the average number of elements erected daily.
               </CardDescription>
             </CardHeader>
-            <CardContent className="p-4 md:p-6">
+            <CardContent className="">
               {/* body has 3 metric blocks; keep them aligned across breakpoints */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="flex flex-col gap-1 text-center sm:text-left">
@@ -600,7 +600,7 @@ export default function Home() {
       </div>
       {/* second row   */}
 
-      <div ref={chartsRef} className="grid grid-cols-1 gap-4 mt-4">
+      <div ref={chartsRef} className="grid grid-cols-1 gap-2 mt-4">
         <Suspense
           fallback={
             <Card>

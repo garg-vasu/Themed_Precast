@@ -486,7 +486,7 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
                 <div className="grid flex-1 text-left text-sm leading-tight min-w-0">
                   <span className="truncate font-medium">Select Project</span>
                   <span className="truncate text-xs text-sidebar-foreground/70">
-                    Choose a project
+                    Select a project
                   </span>
                 </div>
                 <ChevronsUpDown className="ml-auto size-4 flex-shrink-0" />

@@ -1,12 +1,12 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useContext } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate, useParams } from "react-router-dom";
-import { Check, FileText, Info, Loader2, Upload, X } from "lucide-react";
+import { Check, FileText, Info, Loader2, Plus, Upload, X } from "lucide-react";
 import PageHeader from "@/components/ui/PageHeader";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { apiClient } from "@/utils/apiClient";
-import { useProject } from "@/Provider/ProjectProvider";
+import { ProjectContext, useProject } from "@/Provider/ProjectProvider";
 
 // UI Components
 import { Input } from "@/components/ui/input";
@@ -126,7 +126,7 @@ export default function AddElementType() {
   // State management
   const [loading, setLoading] = useState(true);
   const [uploadingFiles, setUploadingFiles] = useState<Record<number, boolean>>(
-    {}
+    {},
   );
   const [drawingPreviews, setDrawingPreviews] = useState<
     Record<number, string>
@@ -212,7 +212,7 @@ export default function AddElementType() {
       clearErrors("hierarchy_quantity");
 
       const qtyFields = selectedStructures.map(
-        (_, index) => `hierarchy_quantity.${index}.quantity` as const
+        (_, index) => `hierarchy_quantity.${index}.quantity` as const,
       );
       const ok = await trigger(qtyFields as any);
       return ok;
@@ -229,7 +229,7 @@ export default function AddElementType() {
       clearErrors("products");
 
       const qtyFields = selectedBom.map(
-        (_, index) => `products.${index}.quantity` as const
+        (_, index) => `products.${index}.quantity` as const,
       );
       const ok = await trigger(qtyFields as any);
       return ok;
@@ -239,7 +239,7 @@ export default function AddElementType() {
     let ok = true;
     const values = getValues();
     const hasValidDrawing = values.drawings?.some(
-      (d) => d?.current_version && d?.file
+      (d) => d?.current_version && d?.file,
     );
     if (selectedStages.length === 0) {
       ok = false;
@@ -249,7 +249,7 @@ export default function AddElementType() {
     }
     // Validate conditional rules inside drawings (e.g. version when file is present)
     const drawingFields = allDrawingTypes.map(
-      (_, index) => `drawings.${index}.current_version` as const
+      (_, index) => `drawings.${index}.current_version` as const,
     );
     const triggerOk = await trigger(drawingFields as any);
     return ok && triggerOk;
@@ -299,7 +299,7 @@ export default function AddElementType() {
     try {
       setLoading(true);
       const response = await apiClient.get<ApiResponse<ColumnLayout[]>>(
-        `/get_allstages/${pid}`
+        `/get_allstages/${pid}`,
       );
       if (Array.isArray(response.data?.data)) {
         setColumn(response.data.data);
@@ -317,7 +317,7 @@ export default function AddElementType() {
   const fetchStructureData = async (pid: number) => {
     try {
       const res = await apiClient.get<ApiResponse<Structure[]>>(
-        `/get_precast_project/${pid}`
+        `/get_precast_project/${pid}`,
       );
       const payload = (res.data as any)?.data ?? res.data;
       if (Array.isArray(payload)) {
@@ -333,7 +333,7 @@ export default function AddElementType() {
   const fetchBomData = async (pid: number) => {
     try {
       const res = await apiClient.get<ApiResponse<Product[]>>(
-        `/fetch_bom_products/${pid}`
+        `/fetch_bom_products/${pid}`,
       );
       const payload = (res.data as any)?.data ?? res.data;
       setBomData(Array.isArray(payload) ? payload : []);
@@ -345,7 +345,7 @@ export default function AddElementType() {
   const fetchAllDrawingTypes = async (pid: number) => {
     try {
       const res = await apiClient.get<ApiResponse<DrawingType[]>>(
-        `/drawingtype/${pid}`
+        `/drawingtype/${pid}`,
       );
       const payload = (res.data as any)?.data ?? res.data;
       setAllDrawingTypes(Array.isArray(payload) ? payload : []);
@@ -369,7 +369,7 @@ export default function AddElementType() {
         );
       });
     },
-    [column]
+    [column],
   );
 
   const handleStageToggle = useCallback(
@@ -384,7 +384,7 @@ export default function AddElementType() {
         });
       }
     },
-    [column, sortStagesByOrder]
+    [column, sortStagesByOrder],
   );
 
   useEffect(() => {
@@ -456,7 +456,7 @@ export default function AddElementType() {
     setSelectedBom((prev) => prev.filter((p) => p.bom_id !== id));
     const currentProducts = getValues("products") || [];
     const updatedProducts = currentProducts.filter(
-      (prod: any) => prod.product_id !== id
+      (prod: any) => prod.product_id !== id,
     );
     setValue("products", updatedProducts);
   };
@@ -469,7 +469,7 @@ export default function AddElementType() {
     const currentProducts = getValues("products") || [];
     const mergedProducts = selectedBom.map((product) => {
       const existing = currentProducts.find(
-        (p: any) => p.product_id === product.bom_id
+        (p: any) => p.product_id === product.bom_id,
       );
       return {
         product_id: product.bom_id,
@@ -489,7 +489,7 @@ export default function AddElementType() {
 
     // Validate structure quantities
     const invalidQuantities = data.hierarchy_quantity?.some(
-      (item: any) => !item?.quantity || item.quantity < 1
+      (item: any) => !item?.quantity || item.quantity < 1,
     );
 
     if (invalidQuantities) {
@@ -503,7 +503,7 @@ export default function AddElementType() {
 
     // Validate BOM quantities
     const invalidBomQuantities = data.products?.some(
-      (item: any) => !item?.quantity || item.quantity < 1
+      (item: any) => !item?.quantity || item.quantity < 1,
     );
 
     if (invalidBomQuantities) {
@@ -517,7 +517,7 @@ export default function AddElementType() {
 
     // Validate that at least one drawing type has all required fields
     const hasValidDrawing = data.drawings.some(
-      (drawing) => drawing.current_version && drawing.file
+      (drawing) => drawing.current_version && drawing.file,
     );
 
     if (!hasValidDrawing) {
@@ -629,6 +629,7 @@ export default function AddElementType() {
     return Math.round((completed / totalSteps) * 100);
   };
 
+  const projectCtx = useContext(ProjectContext);
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -639,6 +640,72 @@ export default function AddElementType() {
         >
           <Loader2 className="animate-spin text-primary" />
           <span className="sr-only">Loading element type form...</span>
+        </div>
+      </div>
+    );
+  }
+
+  const isProjectSetupComplete =
+    projectCtx?.projectDetails?.is_hierachy &&
+    projectCtx?.projectDetails?.is_bom &&
+    projectCtx?.projectDetails?.is_drawingtype;
+
+  if (!isProjectSetupComplete) {
+    return (
+      <div className="w-full p-4">
+        <div className="flex flex-col items-center justify-center min-h-[60vh] text-center ">
+          <div className="w-full max-w-md space-y-6">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10">
+              <FileText className="w-8 h-8 text-primary" />
+            </div>
+            <div className="space-y-2">
+              <h2 className="text-xl font-semibold tracking-tight">
+                No Element Types Yet
+              </h2>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Element types are the different types of elements that can be
+                created in the project.
+              </p>
+            </div>
+            <div className="rounded-lg border bg-muted/40 p-4 text-left space-y-2">
+              <h3 className="text-sm font-medium">Getting started</h3>
+              <ul className="text-xs text-muted-foreground space-y-1 list-disc list-inside">
+                <li>Create a element type with a descriptive name</li>
+                <li>Add element types to the project</li>
+              </ul>
+            </div>
+
+            {/* show the hierachy add button  */}
+            {!projectCtx?.projectDetails?.is_hierachy && (
+              <Button
+                className="gap-2 mr-2"
+                onClick={() => navigate(`/project/${projectId}/hierarchy`)}
+              >
+                <Plus className="w-4 h-4" />
+                Add Hierachy
+              </Button>
+            )}
+            {/* show the bom add button  */}
+            {!projectCtx?.projectDetails?.is_bom && (
+              <Button
+                className="gap-2 mr-2"
+                onClick={() => navigate(`/project/${projectId}/large-import`)}
+              >
+                <Plus className="w-4 h-4" />
+                Add BOM
+              </Button>
+            )}
+            {/* show the drawing type add button  */}
+            {!projectCtx?.projectDetails?.is_drawingtype && (
+              <Button
+                className="gap-2 mr-2"
+                onClick={() => navigate(`/project/${projectId}/drawing`)}
+              >
+                <Plus className="w-4 h-4" />
+                Add Drawing Type
+              </Button>
+            )}
+          </div>
         </div>
       </div>
     );
@@ -898,27 +965,32 @@ export default function AddElementType() {
                             >
                               <X className="h-4 w-4" />
                             </Button>
-                            
+
                             <Input
                               type="hidden"
                               {...register(
                                 `hierarchy_quantity.${index}.hierarchy_id`,
                                 {
                                   setValueAs: (value) => Number(value),
-                                }
+                                },
                               )}
                               value={struc.id}
                             />
 
                             <div className="pr-6 mb-2">
-                              <span className="text-xs text-muted-foreground">Floor</span>
-                              <p className="font-medium truncate text-sm" title={struc.name}>
+                              <span className="text-xs text-muted-foreground">
+                                Floor
+                              </span>
+                              <p
+                                className="font-medium truncate text-sm"
+                                title={struc.name}
+                              >
                                 {struc.name}
                               </p>
                             </div>
 
                             <div className="grid w-full items-center gap-1.5">
-                              <Label htmlFor={`structure-qty-${struc.id}`} >
+                              <Label htmlFor={`structure-qty-${struc.id}`}>
                                 Quantity
                               </Label>
                               <Input
@@ -938,7 +1010,7 @@ export default function AddElementType() {
                                       value === ""
                                         ? 0
                                         : Number.parseInt(value, 10),
-                                  }
+                                  },
                                 )}
                                 aria-invalid={
                                   !!errors.hierarchy_quantity?.[index]?.quantity
@@ -946,7 +1018,10 @@ export default function AddElementType() {
                               />
                               {errors.hierarchy_quantity?.[index]?.quantity && (
                                 <p className="text-destructive min-h-[20px]">
-                                  {errors.hierarchy_quantity?.[index]?.quantity?.message}
+                                  {
+                                    errors.hierarchy_quantity?.[index]?.quantity
+                                      ?.message
+                                  }
                                 </p>
                               )}
                             </div>
@@ -1005,30 +1080,31 @@ export default function AddElementType() {
                         {selectedBom.map((product, index) => (
                           <Card
                             key={product.bom_id}
-                           className="relative p-3 border rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
+                            className="relative p-3 border rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
                           >
-                             <Button
+                            <Button
                               type="button"
                               variant="ghost"
                               size="icon"
                               className="absolute top-1 right-1 h-6 w-6 rounded-full hover:bg-destructive/10 hover:text-destructive"
-                              onClick={() =>  handleRemoveProduct(product.bom_id)}
+                              onClick={() =>
+                                handleRemoveProduct(product.bom_id)
+                              }
                             >
                               <X className="h-4 w-4" />
                             </Button>
-                           
-                              <span className="truncate">
-                                {product.bom_name} ({product.bom_type})
-                              </span>
-                              <Input
-                                type="hidden"
-                                {...register(`products.${index}.product_id`, {
-                                  setValueAs: (val) =>
-                                    val === "" ? 0 : Number.parseInt(val, 10),
-                                })}
-                                value={product.bom_id}
-                              />
-                            
+
+                            <span className="truncate">
+                              {product.bom_name} ({product.bom_type})
+                            </span>
+                            <Input
+                              type="hidden"
+                              {...register(`products.${index}.product_id`, {
+                                setValueAs: (val) =>
+                                  val === "" ? 0 : Number.parseInt(val, 10),
+                              })}
+                              value={product.bom_id}
+                            />
 
                             <div className="grid w-full items-center gap-1.5">
                               <Label htmlFor={`bom-qty-${product.bom_id}`}>
@@ -1055,7 +1131,6 @@ export default function AddElementType() {
                                   "\u00A0"}
                               </p>
                             </div>
-
                           </Card>
                         ))}
                       </div>
@@ -1157,7 +1232,7 @@ export default function AddElementType() {
                                   `drawings.${index}.drawing_type_id`,
                                   {
                                     setValueAs: (value) => Number(value),
-                                  }
+                                  },
                                 )}
                                 value={type.drawings_type_id}
                               />
@@ -1183,7 +1258,7 @@ export default function AddElementType() {
                                         }
                                         return true;
                                       },
-                                    }
+                                    },
                                   )}
                                   aria-invalid={
                                     !!errors.drawings?.[index]?.current_version
@@ -1218,7 +1293,7 @@ export default function AddElementType() {
                                 className={cn(
                                   "flex items-center justify-between gap-3 w-full border border-dashed rounded-md bg-background hover:bg-accent cursor-pointer transition-colors",
                                   uploadingFiles[index] &&
-                                    "opacity-60 cursor-not-allowed"
+                                    "opacity-60 cursor-not-allowed",
                                 )}
                               >
                                 <div className="flex items-center gap-3 p-3 min-w-0">
@@ -1233,8 +1308,8 @@ export default function AddElementType() {
                                     {uploadingFiles[index]
                                       ? "Uploading..."
                                       : uploadedFile
-                                      ? uploadedFile
-                                      : "Click to upload"}
+                                        ? uploadedFile
+                                        : "Click to upload"}
                                   </div>
                                 </div>
                                 <div className="p-3">
