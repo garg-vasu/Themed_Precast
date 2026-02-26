@@ -72,6 +72,8 @@ export default function AddWarehouse({
     };
   };
 
+  console.log("initialData", initialData);
+
   const {
     register,
     handleSubmit,
@@ -106,7 +108,7 @@ export default function AddWarehouse({
         }
         const response = await apiClient.put(
           `/stockyards/${warehouseId}`,
-          payload
+          payload,
         );
         if (response.status === 200 || response.status === 201) {
           toast.success("Warehouse updated successfully!");
@@ -129,7 +131,7 @@ export default function AddWarehouse({
     } catch (error: unknown) {
       const errorMessage = getErrorMessage(
         error,
-        isEditMode ? "update warehouse" : "create warehouse"
+        isEditMode ? "update warehouse" : "create warehouse",
       );
       toast.error(errorMessage);
       // Refresh even on error to ensure data is up to date
@@ -137,20 +139,20 @@ export default function AddWarehouse({
     }
   };
   return (
-    <div className="flex flex-col gap-2 py-4 px-4">
+    <div className="flex flex-col gap-1 mt-2">
       <form onSubmit={handleSubmit(onSubmit)}>
         {/* 2 row layout  */}
         <div>
           {/* two grid layout */}
-          <div className="grid grid-cols-1 gap-4 mt-4">
+          <div className="grid grid-cols-1 gap-1">
             {/* name */}
             <div className="grid w-full items-center gap-1.5">
-              <Label htmlFor="yard_name">
-                Yard Name <span className="text-red-500">*</span>
+              <Label htmlFor="stockyard_name">
+                Stockyard Name <span className="text-red-500">*</span>
               </Label>
               <Input
-                id="yard_name"
-                placeholder="Yard Name"
+                id="stockyard_name"
+                placeholder="Stockyard Name"
                 {...register("yard_name")}
                 aria-invalid={!!errors.yard_name}
               />
@@ -180,8 +182,9 @@ export default function AddWarehouse({
               </Label>
               <Input
                 id="carpet_area"
+                type="number"
                 placeholder="Carpet Area"
-                {...register("carpet_area")}
+                {...register("carpet_area", { valueAsNumber: true })}
                 aria-invalid={!!errors.carpet_area}
               />
               <p className="text-sm text-red-600 min-h-[20px]">
@@ -192,10 +195,11 @@ export default function AddWarehouse({
         </div>
 
         {/* Submit Button */}
-        <div className="flex justify-end gap-3 mt-6 pt-4 border-t">
+        <div className="flex justify-end gap-2">
           <Button
             type="button"
             variant="outline"
+            size="sm"
             onClick={() => {
               if (onClose) {
                 onClose();
@@ -206,12 +210,12 @@ export default function AddWarehouse({
           >
             Cancel
           </Button>
-          <Button type="submit" disabled={isSubmitting}>
+          <Button type="submit" size="sm" disabled={isSubmitting}>
             {isSubmitting
               ? "Saving..."
               : isEditMode
-              ? "Update Warehouse"
-              : "Create Warehouse"}
+                ? "Update Warehouse"
+                : "Create Warehouse"}
           </Button>
         </div>
       </form>

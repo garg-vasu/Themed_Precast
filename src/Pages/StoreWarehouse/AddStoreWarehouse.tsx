@@ -154,19 +154,19 @@ export default function AddStoreWarehouse({
     }
   };
   return (
-    <div className="flex flex-col gap-2 py-4 px-4">
+    <div className="flex flex-col gap-2 ">
       <form onSubmit={handleSubmit(onSubmit)}>
         {/* 2 row layout  */}
         <div>
           {/* two grid layout */}
-          <div className="grid grid-cols-1 gap-4 mt-4">
+          <div className="grid grid-cols-1 gap-1 ">
             {/* name */}
             <div className="grid w-full items-center gap-1.5">
-              <Label htmlFor="yard_name">
-                Yard Name <span className="text-red-500">*</span>
+              <Label htmlFor="email">
+                Email <span className="text-red-500">*</span>
               </Label>
               <Input
-                id="yard_name"
+                id="email"
                 placeholder="Enter  Email"
                 {...register("email")}
                 aria-invalid={!!errors.email}
@@ -192,12 +192,12 @@ export default function AddStoreWarehouse({
             </div>
             {/* name */}
             <div className="grid w-full items-center gap-1.5">
-              <Label htmlFor="name">
-                Name <span className="text-red-500">*</span>
+              <Label htmlFor="store_warehouse_name">
+                Store / Warehouse Name <span className="text-red-500">*</span>
               </Label>
               <Input
-                id="name"
-                placeholder="Enter Name"
+                id="store_warehouse_name"
+                placeholder="Enter Store / Warehouse Name"
                 {...register("name")}
                 aria-invalid={!!errors.name}
               />
@@ -228,7 +228,8 @@ export default function AddStoreWarehouse({
               <Input
                 id="capacity"
                 placeholder="Enter Capacity"
-                {...register("capacity")}
+                type="number"
+                {...register("capacity", { valueAsNumber: true })}
                 aria-invalid={!!errors.capacity}
               />
               <p className="text-sm text-red-600 min-h-[20px]">
@@ -243,7 +244,8 @@ export default function AddStoreWarehouse({
               <Input
                 id="used_capacity"
                 placeholder="Enter Used Capacity"
-                {...register("used_capacity")}
+                type="number"
+                {...register("used_capacity", { valueAsNumber: true })}
                 aria-invalid={!!errors.used_capacity}
               />
               <p className="text-sm text-red-600 min-h-[20px]">
@@ -269,10 +271,11 @@ export default function AddStoreWarehouse({
         </div>
 
         {/* Submit Button */}
-        <div className="flex justify-end gap-3 mt-6 pt-4 border-t">
+        <div className="flex justify-end gap-2">
           <Button
             type="button"
             variant="outline"
+            size="sm"
             onClick={() => {
               if (onClose) {
                 onClose();
@@ -283,12 +286,12 @@ export default function AddStoreWarehouse({
           >
             Cancel
           </Button>
-          <Button type="submit" disabled={isSubmitting}>
+          <Button type="submit" size="sm" disabled={isSubmitting}>
             {isSubmitting
               ? "Saving..."
               : isEditMode
-              ? "Update Store / Warehouse"
-              : "Create Store / Warehouse"}
+                ? "Update Store / Warehouse"
+                : "Create Store / Warehouse"}
           </Button>
         </div>
       </form>

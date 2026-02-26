@@ -20,7 +20,7 @@ const buttonVariants = cva(
           "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50 cursor-pointer",
         link: "text-primary underline-offset-4 hover:underline cursor-pointer",
         customPadding:
-          "text-primary underline-offset-4 hover:underline cursor-pointer text-sm",
+          "text-foreground underline-offset-4 hover:text-primary hover:underline focus-visible:text-primary cursor-pointer text-sm ",
       },
       size: {
         default: "h-9 px-4 py-2 has-[>svg]:px-3",

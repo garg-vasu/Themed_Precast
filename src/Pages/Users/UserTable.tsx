@@ -22,7 +22,6 @@ import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
- 
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
@@ -157,7 +156,8 @@ export const columns: ColumnDef<User>[] = [
     id: "email",
     header: ({ column }) => (
       <Button
-        variant="ghost"
+        variant="customPadding"
+        size="noPadding"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
       >
         Email
@@ -201,7 +201,8 @@ export const columns: ColumnDef<User>[] = [
     accessorKey: "created_at",
     header: ({ column }) => (
       <Button
-        variant="ghost"
+        variant="customPadding"
+        size="noPadding"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
       >
         Created At
@@ -245,6 +246,20 @@ export const columns: ColumnDef<User>[] = [
   //   },
   // },
 ];
+
+// Map column ids to display names used in table headers
+const COLUMN_LABELS: Record<string, string> = {
+  tenant: "Name",
+  email: "Email",
+  phone: "Phone",
+  address: "Address",
+  role: "Role",
+  created_at: "Created At",
+};
+
+const getColumnDisplayName = (columnId: string): string =>
+  COLUMN_LABELS[columnId] ??
+  columnId.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
 const getErrorMessage = (error: AxiosError | unknown, data: string): string => {
   if (axios.isAxiosError(error)) {
@@ -477,22 +492,18 @@ export function UserTable() {
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-center">
           <Button
             variant={hasActiveFilters() ? "default" : "outline"}
-            className="w-full sm:w-auto"
+            size="sm"
             onClick={() => setFilterOpen((prev) => !prev)}
           >
             Advance Filter
           </Button>
           {hasActiveFilters() && (
-            <Button variant="outline" onClick={clearAllFilters}>
+            <Button variant="outline" size="sm" onClick={clearAllFilters}>
               Clear Filters
             </Button>
           )}
           {table.getFilteredSelectedRowModel().rows.length > 0 && (
-            <Button
-              variant="default"
-              className="w-full sm:w-auto"
-              onClick={handleDownloadPDF}
-            >
+            <Button variant="default" size="sm" onClick={handleDownloadPDF}>
               <Download className="mr-2 h-4 w-4" />
               Download PDF ({table.getFilteredSelectedRowModel().rows.length})
             </Button>
@@ -500,7 +511,7 @@ export function UserTable() {
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="w-full sm:w-auto">
+              <Button variant="outline" size="sm">
                 Columns <ChevronDown className="ml-1 h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
@@ -518,7 +529,7 @@ export function UserTable() {
                         column.toggleVisibility(!!value)
                       }
                     >
-                      {column.id}
+                      {getColumnDisplayName(column.id)}
                     </DropdownMenuCheckboxItem>
                   );
                 })}
@@ -533,14 +544,14 @@ export function UserTable() {
           currentFilter={filterState}
         />
       )}
-      <div className="overflow-hidden rounded-md border">
+      <div className="overflow-hidden rounded-md border mt-4">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id} className="h-12">
+              <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
                   return (
-                    <TableHead key={header.id} className="py-2">
+                    <TableHead key={header.id}>
                       {header.isPlaceholder
                         ? null
                         : flexRender(
@@ -553,7 +564,7 @@ export function UserTable() {
               </TableRow>
             ))}
           </TableHeader>
-          <TableBody>
+          <TableBody className="[&_td]:py-1">
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow
@@ -589,9 +600,7 @@ export function UserTable() {
           {table.getFilteredSelectedRowModel().rows.length} of{" "}
           {table.getRowModel().rows.length} row(s) selected on this page.
           {pagination && (
-            <span className="ml-2">
-              (Total: {pagination.total} users)
-            </span>
+            <span className="ml-2">(Total: {pagination.total} users)</span>
           )}
         </div>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:space-x-2">

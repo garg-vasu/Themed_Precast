@@ -1,14 +1,8 @@
 import { Button } from "@/components/ui/button";
 import PageHeader from "@/components/ui/PageHeader";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { FileText, List, MoreHorizontal, Plus } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { DrawingTable } from "./DrawingTable";
 import { DrawingTypeTable, type DrawingType } from "./DrawingTypeTable";
 import { useProject } from "@/Provider/ProjectProvider";
@@ -30,8 +24,6 @@ interface TabLink {
 export default function MixDrawing() {
   const { projectDetails, permissions, refreshProject, markSetupStepDone } =
     useProject();
-  const [activeTab, setActiveTab] = useState<string>("");
-
   const [refreshKey, setRefreshKey] = useState<number>(0);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingDrawingType, setEditingDrawingType] =
@@ -72,26 +64,6 @@ export default function MixDrawing() {
 
     return tabs;
   }, [permissions]);
-
-  useEffect(() => {
-    if (tabLinks.length > 0 && !activeTab) {
-      setActiveTab(tabLinks[0].id);
-    }
-  }, [tabLinks, activeTab]);
-
-  const handleTabChange = (tabId: string) => {
-    setActiveTab(tabId);
-  };
-
-  const renderTabContent = () => {
-    if (activeTab === "2" && permissions?.includes("ViewDrawingType")) {
-      return <DrawingTypeTable key={refreshKey} refresh={refreshData} />;
-    }
-    if (activeTab === "1" && permissions?.includes("ViewDrawing")) {
-      return <DrawingTable key={refreshKey} refresh={refreshData} />;
-    }
-    return null;
-  };
 
   const renderContent = () => {
     if (tabLinks.length === 0) {
@@ -158,37 +130,29 @@ export default function MixDrawing() {
           )}
         </div>
 
-        <div className="flex flex-col gap-2">
-          <div className=" hidden md:flex flex-wrap gap-2">
-            {tabLinks.map((tab) => (
-              <Button
-                key={tab.id}
-                variant={activeTab === tab.id ? "default" : "outline"}
-                className={activeTab === tab.id ? "text-white" : ""}
-                onClick={() => handleTabChange(tab.id)}
-              >
-                <tab.icon className="w-4 h-4" />
-                {tab.label}
-              </Button>
-            ))}
-          </div>
-          <div className="md:hidden w-full">
-            <Select value={activeTab} onValueChange={handleTabChange}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select a tab" />
-              </SelectTrigger>
-              <SelectContent>
-                {tabLinks.map((tab) => (
-                  <SelectItem key={tab.id} value={tab.id}>
-                    {tab.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
+        <Tabs defaultValue={tabLinks[0]?.id}>
+          {tabLinks.length > 1 && (
+            <TabsList>
+              {tabLinks.map((tab) => (
+                <TabsTrigger key={tab.id} value={tab.id}>
+                  <tab.icon className="mr-1.5 h-4 w-4" />
+                  {tab.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          )}
 
-        {renderTabContent()}
+          {tabLinks.map((tab) => (
+            <TabsContent key={tab.id} value={tab.id}>
+              {tab.id === "2" && permissions?.includes("ViewDrawingType") && (
+                <DrawingTypeTable key={refreshKey} refresh={refreshData} />
+              )}
+              {tab.id === "1" && permissions?.includes("ViewDrawing") && (
+                <DrawingTable key={refreshKey} refresh={refreshData} />
+              )}
+            </TabsContent>
+          ))}
+        </Tabs>
       </div>
     );
   };

@@ -100,7 +100,9 @@ export const getColumns = (
     header: ({ column }) => {
       return (
         <Button
-          variant="ghost"
+          variant="customPadding"
+          size="noPadding"
+          className="font-semibold"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
           Email
@@ -177,7 +179,7 @@ export const getColumns = (
   {
     id: "actions",
     enableHiding: false,
-    header: "Actions",
+
     cell: ({ row }) => {
       const storeWarehouse = row.original;
       const handleEdit = () => {
@@ -207,6 +209,21 @@ export const getColumns = (
     },
   },
 ];
+
+// Map column ids to display names used in table headers
+const COLUMN_LABELS: Record<string, string> = {
+  name: "Name",
+  email: "Email",
+  description: "Description",
+  location: "Location",
+  contact_number: "Contact Number",
+  used_capacity: "Used Capacity",
+  capacity: "Total Capacity",
+};
+
+const getColumnDisplayName = (columnId: string): string =>
+  COLUMN_LABELS[columnId] ??
+  columnId.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
 const getErrorMessage = (error: AxiosError | unknown, data: string): string => {
   if (axios.isAxiosError(error)) {
@@ -348,26 +365,18 @@ export function StoreWareHouseTable() {
         />
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-center">
           {table.getFilteredSelectedRowModel().rows.length > 0 && (
-            <Button
-              variant="default"
-              className="w-full sm:w-auto"
-              onClick={handleDownloadPDF}
-            >
+            <Button variant="default" size="sm" onClick={handleDownloadPDF}>
               <Download className="mr-2 h-4 w-4" />
               Download PDF ({table.getFilteredSelectedRowModel().rows.length})
             </Button>
           )}
-          <Button
-            variant="outline"
-            className="w-full sm:w-auto"
-            onClick={openCreateDialog}
-          >
+          <Button variant="outline" size="sm" onClick={openCreateDialog}>
             Add Store / Warehouse
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="w-full sm:w-auto">
-                Columns <ChevronDown className="ml-1 h-4 w-4" />
+              <Button variant="outline" size="sm">
+                Columns <ChevronDown />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -384,7 +393,7 @@ export function StoreWareHouseTable() {
                         column.toggleVisibility(!!value)
                       }
                     >
-                      {column.id}
+                      {getColumnDisplayName(column.id)}
                     </DropdownMenuCheckboxItem>
                   );
                 })}
@@ -412,7 +421,7 @@ export function StoreWareHouseTable() {
               </TableRow>
             ))}
           </TableHeader>
-          <TableBody>
+          <TableBody className="[&_td]:py-1">
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow

@@ -143,7 +143,8 @@ export const columns: ColumnDef<EndClient>[] = [
     id: "email",
     header: ({ column }) => (
       <Button
-        variant="ghost"
+        variant="customPadding"
+        size="noPadding"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
       >
         Email
@@ -239,6 +240,23 @@ export const columns: ColumnDef<EndClient>[] = [
     },
   },
 ];
+
+// Map column ids to display names used in table headers
+const COLUMN_LABELS: Record<string, string> = {
+  client: "Name",
+  organization: "Organization",
+  email: "Email",
+  contact_person: "Contact Person",
+  phone: "Phone",
+  address: "Address",
+  cin: "CIN",
+  gst_number: "GST Number",
+  attachments: "Attachments",
+};
+
+const getColumnDisplayName = (columnId: string): string =>
+  COLUMN_LABELS[columnId] ??
+  columnId.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
 const getErrorMessage = (error: AxiosError | unknown, data: string): string => {
   if (axios.isAxiosError(error)) {
@@ -473,36 +491,32 @@ export function EndClientTable() {
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-center">
           <Button
             variant={hasActiveFilters() ? "default" : "outline"}
-            className="w-full sm:w-auto"
+            size="sm"
             onClick={() => setFilterOpen((prev) => !prev)}
           >
             Advance Filter
           </Button>
           {hasActiveFilters() && (
-            <Button variant="outline" onClick={clearAllFilters}>
+            <Button variant="outline" size="sm" onClick={clearAllFilters}>
               Clear Filters
             </Button>
           )}
           {table.getFilteredSelectedRowModel().rows.length > 0 && (
-            <Button
-              variant="default"
-              className="w-full sm:w-auto"
-              onClick={handleDownloadPDF}
-            >
+            <Button variant="default" size="sm" onClick={handleDownloadPDF}>
               <Download className="mr-2 h-4 w-4" />
               Download PDF ({table.getFilteredSelectedRowModel().rows.length})
             </Button>
           )}
           <Button
             variant="outline"
-            className="w-full sm:w-auto"
+            size="sm"
             onClick={() => navigate("/add-end-client")}
           >
             Add End Client
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="w-full sm:w-auto">
+              <Button variant="outline" size="sm">
                 Columns <ChevronDown className="ml-1 h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
@@ -520,7 +534,7 @@ export function EndClientTable() {
                         column.toggleVisibility(!!value)
                       }
                     >
-                      {column.id}
+                      {getColumnDisplayName(column.id)}
                     </DropdownMenuCheckboxItem>
                   );
                 })}
@@ -555,7 +569,7 @@ export function EndClientTable() {
               </TableRow>
             ))}
           </TableHeader>
-          <TableBody>
+          <TableBody className="[&_td]:py-1">
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow
@@ -564,7 +578,7 @@ export function EndClientTable() {
                   className="h-12"
                 >
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id} className="py-2">
+                    <TableCell key={cell.id} className="">
                       {flexRender(
                         cell.column.columnDef.cell,
                         cell.getContext(),

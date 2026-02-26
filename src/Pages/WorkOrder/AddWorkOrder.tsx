@@ -574,9 +574,11 @@ export default function AddWorkOrder({ workOrder }: WorkOrderFormProps) {
 
     const fetchProjects = async () => {
       try {
-        const response = await apiClient.get("/projects/basic", {
-          cancelToken: source.token,
-        });
+        const params = new URLSearchParams({ filter: "workorder" });
+        const response = await apiClient.get(
+          `/project_by_role?${params.toString()}`,
+          { cancelToken: source.token },
+        );
 
         if (response.status === 200) {
           setProjects(response.data);
@@ -894,12 +896,10 @@ export default function AddWorkOrder({ workOrder }: WorkOrderFormProps) {
         payment_term: paymentTermMap,
         recurrence_patterns: cleanedRecurrencePatterns,
       };
+      // if isEditMode is true, then we need to push workorder_id to the payload
 
       if (isEditMode && workOrder?.id) {
-        const response = await apiClient.put(
-          `/workorders/${workOrder.id}`,
-          payload,
-        );
+        const response = await apiClient.put(`/workorders_amendment`, payload);
         if (response.status === 200 || response.status === 201) {
           toast.success("Amendment updated successfully!");
           navigate("/work-order");
@@ -2016,20 +2016,17 @@ export default function AddWorkOrder({ workOrder }: WorkOrderFormProps) {
         )}
 
         {/* Form Actions */}
-        <div className="flex items-center justify-end gap-4 pt-6 mt-6 border-t">
+        <div className="flex items-center justify-end gap-2 mt-4">
           <Button
             type="button"
             variant="outline"
+            size="sm"
             onClick={() => navigate("/workorder")}
             disabled={isSubmitting || isLoading}
           >
             Cancel
           </Button>
-          <Button
-            type="submit"
-            disabled={isSubmitting || isLoading}
-            className="min-w-[120px]"
-          >
+          <Button type="submit" size="sm" disabled={isSubmitting || isLoading}>
             {isSubmitting || isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />

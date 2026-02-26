@@ -176,7 +176,7 @@ export const columns: ColumnDef<Invoice>[] = [
           className="capitalize cursor-pointer"
           onClick={() =>
             navigate(
-              `/invoice-detail/${row.original.id}/${row.original.work_order_id}`
+              `/invoice-detail/${row.original.id}/${row.original.work_order_id}`,
             )
           }
         >
@@ -189,7 +189,8 @@ export const columns: ColumnDef<Invoice>[] = [
     id: "email",
     header: ({ column }) => (
       <Button
-        variant="ghost"
+        variant="customPadding"
+        size="noPadding"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
       >
         Email
@@ -311,6 +312,26 @@ export const columns: ColumnDef<Invoice>[] = [
   },
 ];
 
+// Map column ids to display names used in table headers
+const COLUMN_LABELS: Record<string, string> = {
+  name: "Name",
+  email: "Email",
+  payment_status: "Payment Status",
+  billing_address: "Billing Address",
+  shipping_address: "Shipping Address",
+  end_client: "End Client",
+  project_name: "Project Name",
+  created_by: "Created By",
+  revision_no: "Revision No",
+  work_order_id: "Work Order ID",
+  total_amount: "Total Amount",
+  total_paid: "Total Paid",
+};
+
+const getColumnDisplayName = (columnId: string): string =>
+  COLUMN_LABELS[columnId] ??
+  columnId.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+
 const getErrorMessage = (error: AxiosError | unknown, data: string): string => {
   if (axios.isAxiosError(error)) {
     if (error.response?.status === 401) {
@@ -366,7 +387,7 @@ export function InvoiceTable() {
         setCurrentPage(1); // Reset to first page when filters change
       }
     },
-    [filterState]
+    [filterState],
   );
 
   const handleFilterClose = useCallback(() => {
@@ -612,7 +633,7 @@ export function InvoiceTable() {
       doc.save(fileName);
 
       toast.success(
-        `PDF downloaded successfully with ${selectedRows.length} invoice(s)`
+        `PDF downloaded successfully with ${selectedRows.length} invoice(s)`,
       );
     } catch (error) {
       console.error("Error generating PDF:", error);
@@ -634,32 +655,28 @@ export function InvoiceTable() {
         />
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-center">
           {table.getFilteredSelectedRowModel().rows.length > 0 && (
-            <Button
-              variant="default"
-              className="w-full sm:w-auto"
-              onClick={handleDownloadPDF}
-            >
+            <Button variant="default" size="sm" onClick={handleDownloadPDF}>
               <Download className="mr-2 h-4 w-4" />
               Download PDF ({table.getFilteredSelectedRowModel().rows.length})
             </Button>
           )}
           <Button
             variant={hasActiveFilters() ? "default" : "outline"}
-            className="w-full sm:w-auto"
+            size="sm"
             onClick={() => setFilterOpen((prev) => !prev)}
           >
             Advance Filter
           </Button>
           {hasActiveFilters() && (
-            <Button variant="outline" onClick={clearAllFilters}>
+            <Button variant="outline" size="sm" onClick={clearAllFilters}>
               Clear Filters
             </Button>
           )}
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="w-full sm:w-auto">
-                Columns <ChevronDown className="ml-1 h-4 w-4" />
+              <Button variant="outline" size="sm">
+                Columns <ChevronDown className="" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -676,7 +693,7 @@ export function InvoiceTable() {
                         column.toggleVisibility(!!value)
                       }
                     >
-                      {column.id}
+                      {getColumnDisplayName(column.id)}
                     </DropdownMenuCheckboxItem>
                   );
                 })}
@@ -691,7 +708,7 @@ export function InvoiceTable() {
           currentFilter={filterState}
         />
       )}
-      <div className="overflow-hidden rounded-md border">
+      <div className="overflow-hidden rounded-md border mt-4">
         <div className="hide-x-scrollbar">
           <Table>
             <TableHeader>
@@ -704,7 +721,7 @@ export function InvoiceTable() {
                           ? null
                           : flexRender(
                               header.column.columnDef.header,
-                              header.getContext()
+                              header.getContext(),
                             )}
                       </TableHead>
                     );
@@ -712,7 +729,7 @@ export function InvoiceTable() {
                 </TableRow>
               ))}
             </TableHeader>
-            <TableBody>
+            <TableBody className="[&_td]:py-1.5">
               {table.getRowModel().rows?.length ? (
                 table.getRowModel().rows.map((row) => (
                   <TableRow
@@ -724,7 +741,7 @@ export function InvoiceTable() {
                       <TableCell key={cell.id} className="py-2">
                         {flexRender(
                           cell.column.columnDef.cell,
-                          cell.getContext()
+                          cell.getContext(),
                         )}
                       </TableCell>
                     ))}
@@ -749,9 +766,7 @@ export function InvoiceTable() {
           {table.getFilteredSelectedRowModel().rows.length} of{" "}
           {table.getRowModel().rows.length} row(s) selected on this page.
           {pagination && (
-            <span className="ml-2">
-              (Total: {pagination.total} invoices)
-            </span>
+            <span className="ml-2">(Total: {pagination.total} invoices)</span>
           )}
         </div>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:space-x-2">
@@ -801,7 +816,7 @@ export function InvoiceTable() {
                 setCurrentPage((prev) =>
                   pagination
                     ? Math.min(pagination.total_pages, prev + 1)
-                    : prev + 1
+                    : prev + 1,
                 )
               }
               disabled={

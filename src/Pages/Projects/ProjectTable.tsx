@@ -181,7 +181,8 @@ const createColumns = (
       accessorKey: "start_date",
       header: ({ column }) => (
         <Button
-          variant="ghost"
+          variant="customPadding"
+          size="noPadding"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
           Start Date
@@ -198,7 +199,8 @@ const createColumns = (
       accessorKey: "end_date",
       header: ({ column }) => (
         <Button
-          variant="ghost"
+          variant="customPadding"
+          size="noPadding"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
           End Date
@@ -223,7 +225,8 @@ const createColumns = (
       accessorKey: "project_status",
       header: ({ column }) => (
         <Button
-          variant="ghost"
+          variant="customPadding"
+          size="noPadding"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
           Status
@@ -289,6 +292,21 @@ const createColumns = (
     },
   ];
 };
+
+// Map column ids to display names used in table headers
+const COLUMN_LABELS: Record<string, string> = {
+  name: "Name",
+  description: "Description",
+  budget: "Budget",
+  start_date: "Start Date",
+  end_date: "End Date",
+  priority: "Priority",
+  project_status: "Status",
+};
+
+const getColumnDisplayName = (columnId: string): string =>
+  COLUMN_LABELS[columnId] ??
+  columnId.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
 const getErrorMessage = (error: AxiosError | unknown, data: string): string => {
   if (axios.isAxiosError(error)) {
@@ -474,7 +492,7 @@ export function ProjectTable() {
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-center">
           <Button
             variant={hasActiveFilters() ? "default" : "outline"}
-            className="w-full sm:w-auto"
+            size="sm"
             onClick={() => setFilterOpen((prev) => !prev)}
           >
             Advance Filter
@@ -487,7 +505,7 @@ export function ProjectTable() {
           {user?.role_name === "superadmin" && (
             <Button
               variant="outline"
-              className="w-full sm:w-auto"
+              size="sm"
               onClick={() => navigate("/add-projects")}
             >
               Add Project
@@ -495,13 +513,14 @@ export function ProjectTable() {
           )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="w-full sm:w-auto">
-                Columns <ChevronDown className="ml-1 h-4 w-4" />
+              <Button variant="outline" size="sm">
+                Columns <ChevronDown />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               {table
                 .getAllColumns()
+
                 .filter((column) => column.getCanHide())
                 .map((column) => {
                   return (
@@ -513,7 +532,7 @@ export function ProjectTable() {
                         column.toggleVisibility(!!value)
                       }
                     >
-                      {column.id}
+                      {getColumnDisplayName(column.id)}
                     </DropdownMenuCheckboxItem>
                   );
                 })}
@@ -528,7 +547,7 @@ export function ProjectTable() {
           currentFilter={filterState}
         />
       )}
-      <div className="overflow-hidden rounded-md border">
+      <div className="overflow-hidden rounded-md border mt-4">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -548,7 +567,7 @@ export function ProjectTable() {
               </TableRow>
             ))}
           </TableHeader>
-          <TableBody>
+          <TableBody className="[&_td]:py-1">
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => {
                 const isSuperAdmin = user?.role_name === "superadmin";

@@ -54,7 +54,7 @@ export type Warehouse = {
   carpet_area: number;
 };
 export const getColumns = (
-  onEdit?: (warehouse: Warehouse) => void
+  onEdit?: (warehouse: Warehouse) => void,
 ): ColumnDef<Warehouse>[] => [
   {
     id: "select",
@@ -91,11 +91,12 @@ export const getColumns = (
     accessorKey: "created_at",
     header: ({ column }) => (
       <Button
-        variant="ghost"
+        variant="customPadding"
+        size="noPadding"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
       >
         Created At
-        <ArrowUpDown className="ml-1 h-4 w-4" />
+        <ArrowUpDown />
       </Button>
     ),
     cell: ({ row }) => {
@@ -170,6 +171,18 @@ export const getColumns = (
   },
 ];
 
+// Map column ids to display names used in table headers
+const COLUMN_LABELS: Record<string, string> = {
+  yard_name: "Name",
+  created_at: "Created At",
+  location: "Location",
+  carpet_area: "Carpet Area",
+};
+
+const getColumnDisplayName = (columnId: string): string =>
+  COLUMN_LABELS[columnId] ??
+  columnId.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+
 const getErrorMessage = (error: AxiosError | unknown, data: string): string => {
   if (axios.isAxiosError(error)) {
     if (error.response?.status === 401) {
@@ -194,7 +207,7 @@ export function WareHouseTable() {
   const [data, setData] = useState<Warehouse[]>([]);
   const [refreshKey, setRefreshKey] = useState<number>(0);
   const [editingWarehouse, setEditingWarehouse] = useState<Warehouse | null>(
-    null
+    null,
   );
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const refreshData = () => {
@@ -220,7 +233,7 @@ export function WareHouseTable() {
         });
 
         if (response.status === 200) {
-          setData(response.data.data);
+          setData(response.data);
         } else {
           toast.error(response.data?.message || "Failed to fetch stockyards");
         }
@@ -272,16 +285,12 @@ export function WareHouseTable() {
           className="w-full max-w-sm sm:max-w-xs"
         />
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-center">
-          <Button
-            variant="outline"
-            className="w-full sm:w-auto"
-            onClick={openCreateDialog}
-          >
+          <Button variant="outline" size="sm" onClick={openCreateDialog}>
             Add Stockyard
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="w-full sm:w-auto">
+              <Button variant="outline" size="sm">
                 Columns <ChevronDown className="ml-1 h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
@@ -299,7 +308,7 @@ export function WareHouseTable() {
                         column.toggleVisibility(!!value)
                       }
                     >
-                      {column.id}
+                      {getColumnDisplayName(column.id)}
                     </DropdownMenuCheckboxItem>
                   );
                 })}
@@ -319,7 +328,7 @@ export function WareHouseTable() {
                         ? null
                         : flexRender(
                             header.column.columnDef.header,
-                            header.getContext()
+                            header.getContext(),
                           )}
                     </TableHead>
                   );
@@ -332,13 +341,14 @@ export function WareHouseTable() {
               table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
+                  className="[&_td]:py-1"
                   data-state={row.getIsSelected() && "selected"}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
                       {flexRender(
                         cell.column.columnDef.cell,
-                        cell.getContext()
+                        cell.getContext(),
                       )}
                     </TableCell>
                   ))}

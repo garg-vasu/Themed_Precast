@@ -718,7 +718,7 @@ export function AddEndClient({
         </div>
 
         {/* Attachments Section */}
-        <div className="mt-6 pt-6 border-t">
+        <div className="mt-2">
           <Label className="text-base font-semibold mb-4 block">
             Attachments <span className="text-red-500">*</span>
           </Label>
@@ -794,10 +794,11 @@ export function AddEndClient({
         </div>
 
         {/* Form Actions */}
-        <div className="flex items-center justify-end gap-4 pt-6 border-t mt-6">
+        <div className="flex items-center justify-end gap-2 mt-4">
           <Button
             type="button"
             variant="outline"
+            size="sm"
             onClick={() => {
               if (onClose) {
                 onClose();
@@ -807,11 +808,7 @@ export function AddEndClient({
           >
             Cancel
           </Button>
-          <Button
-            type="submit"
-            disabled={isSubmitting || isLoading}
-            className="min-w-[120px]"
-          >
+          <Button type="submit" disabled={isSubmitting || isLoading} size="sm">
             {isSubmitting || isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />

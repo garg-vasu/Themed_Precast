@@ -127,7 +127,7 @@ export default function EditTenants() {
     last_name: data.last_name || "",
     organization: data.organization || "",
     address: data.address || "",
-    employee_id: data.employee_id || "",
+    // employee_id: data.employee_id || "",
     city: data.city || "",
     state: data.state || "",
     country: data.country || "",

@@ -173,7 +173,8 @@ export const columns: ColumnDef<Tenant>[] = [
     id: "email",
     header: ({ column }) => (
       <Button
-        variant="ghost"
+        variant="customPadding"
+        size="noPadding"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
       >
         Email
@@ -289,6 +290,20 @@ const getErrorMessage = (error: AxiosError | unknown, data: string): string => {
   }
   return "An unexpected error occurred. Please try again later.";
 };
+
+// Map column ids to display names used in table headers
+const COLUMN_LABELS: Record<string, string> = {
+  tenant: "Name",
+  organization: "Organization",
+  email: "Email",
+  phone: "Phone",
+  location: "Location",
+  role: "Role",
+};
+
+const getColumnDisplayName = (columnId: string): string =>
+  COLUMN_LABELS[columnId] ??
+  columnId.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
 export function TenantsTable() {
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -524,7 +539,7 @@ export function TenantsTable() {
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-center">
           <Button
             variant={hasActiveFilters() ? "default" : "outline"}
-            className="w-full sm:w-auto"
+            size="sm"
             onClick={() => setFilterOpen((prev) => !prev)}
           >
             Advance Filter
@@ -535,25 +550,21 @@ export function TenantsTable() {
             </Button>
           )}
           {table.getFilteredSelectedRowModel().rows.length > 0 && (
-            <Button
-              variant="default"
-              className="w-full sm:w-auto"
-              onClick={handleDownloadPDF}
-            >
+            <Button variant="default" size="sm" onClick={handleDownloadPDF}>
               <Download className="mr-2 h-4 w-4" />
               Download PDF ({table.getFilteredSelectedRowModel().rows.length})
             </Button>
           )}
           <Button
             variant="outline"
-            className="w-full sm:w-auto"
+            size="sm"
             onClick={() => navigate("/add-tenant")}
           >
             Add Client
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="w-full sm:w-auto">
+              <Button variant="outline" size="sm">
                 Columns <ChevronDown className="ml-1 h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
@@ -571,7 +582,7 @@ export function TenantsTable() {
                         column.toggleVisibility(!!value)
                       }
                     >
-                      {column.id}
+                      {getColumnDisplayName(column.id)}
                     </DropdownMenuCheckboxItem>
                   );
                 })}
@@ -586,7 +597,7 @@ export function TenantsTable() {
           currentFilter={filterState}
         />
       )}
-      <div className="overflow-hidden rounded-md border">
+      <div className="overflow-hidden rounded-md border mt-4">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -606,7 +617,7 @@ export function TenantsTable() {
               </TableRow>
             ))}
           </TableHeader>
-          <TableBody>
+          <TableBody className="[&_td]:py-1">
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow

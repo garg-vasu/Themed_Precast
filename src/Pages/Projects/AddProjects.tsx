@@ -20,7 +20,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { CalendarIcon, Loader2, Upload, X, ImageIcon } from "lucide-react";
+import {
+  CalendarIcon,
+  Loader2,
+  Upload,
+  X,
+  ImageIcon,
+  Shield,
+} from "lucide-react";
 import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
@@ -33,8 +40,14 @@ import { apiClient } from "@/utils/apiClient";
 import MultiStockyard from "@/components/MultiStockyard/MultiStockyard";
 import MultiRole, { type Role } from "@/components/multirole/mulitrole";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { RadioGroup } from "@/components/ui/radio-group";
-import { RadioGroupItem } from "@/components/ui/radio-group";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 
 export type Template = {
@@ -116,6 +129,17 @@ export interface EndClient {
   created_by: number;
 }
 
+export type RoleWithQuantity = {
+  role_id: number;
+  quantity: number;
+};
+
+export interface EditRole {
+  role_id: number;
+  quantity: number;
+  role_name: string;
+}
+
 const getErrorMessage = (error: AxiosError | unknown, data: string): string => {
   if (axios.isAxiosError(error)) {
     if (error.response?.status === 401) {
@@ -175,7 +199,7 @@ type UserFormProps = {
 export default function AddProjects({ user }: UserFormProps) {
   const navigate = useNavigate();
   const isEditMode = !!user;
-
+  const [oldroledata, setoldroledata] = useState<EditRole[]>([]);
   const [templates, setTemplates] = useState<Template[]>([]);
   const [openStartDate, setOpenStartDate] = useState(false);
   const [openEndDate, setOpenEndDate] = useState(false);
@@ -197,6 +221,7 @@ export default function AddProjects({ user }: UserFormProps) {
     if (!baseUrl) return fileName;
     return `${baseUrl}/get-file?file=${encodeURIComponent(fileName)}`;
   };
+  console.log("user", user);
 
   const handleImageUpload = async (file: File) => {
     // Validate file type
@@ -364,6 +389,46 @@ export default function AddProjects({ user }: UserFormProps) {
     };
   }, []);
 
+  // fetch old role data
+  useEffect(() => {
+    //  run this if editmode is true
+    if (!isEditMode) {
+      setoldroledata([]);
+      return;
+    }
+
+    const source = axios.CancelToken.source();
+    console.log("user?.project_id", user?.project_id);
+    const fetchOldRoleData = async () => {
+      try {
+        const response = await apiClient.get(
+          `/project_roles/${Number(user?.project_id)}`,
+          {
+            cancelToken: source.token,
+          },
+        );
+
+        if (response.status === 200 || response.status === 201) {
+          setoldroledata(response.data.roles);
+        } else {
+          toast.error(
+            response.data?.message || "Failed to fetch old role data",
+          );
+        }
+      } catch (err: unknown) {
+        if (!axios.isCancel(err)) {
+          toast.error(getErrorMessage(err, "old role data"));
+        }
+      }
+    };
+
+    fetchOldRoleData();
+
+    return () => {
+      source.cancel();
+    };
+  }, [isEditMode]);
+
   //   end clients api call
   useEffect(() => {
     const source = axios.CancelToken.source();
@@ -530,18 +595,18 @@ export default function AddProjects({ user }: UserFormProps) {
   };
 
   return (
-    <div className="flex flex-col gap-2 py-4 px-4">
+    <div className="flex flex-col gap-1.5 py-2 px-3">
       <div className="flex items-center justify-between">
         <PageHeader title={isEditMode ? "Edit Project" : "Add Project"} />
       </div>
       <Separator />
       <form onSubmit={handleSubmit(onSubmit)}>
         {/* Profile Picture Picker */}
-        <div className="flex flex-col items-center gap-4 py-6 border-b">
-          <Label className="text-base font-semibold">Project Logo</Label>
+        <div className="flex flex-col items-center gap-2 py-3 border-b">
+          <Label className="text-sm font-semibold">Project Logo</Label>
           <div className="relative group">
             <div className="relative">
-              <Avatar className="w-32 h-32 border-4 border-background shadow-lg ring-2 ring-ring ring-offset-2">
+              <Avatar className="w-20 h-20 border-2 border-background shadow-md ring-2 ring-ring ring-offset-1">
                 {imagePreview || (imageUrl && buildImageUrl(imageUrl)) ? (
                   <AvatarImage
                     src={imagePreview || buildImageUrl(imageUrl)}
@@ -550,7 +615,7 @@ export default function AddProjects({ user }: UserFormProps) {
                   />
                 ) : (
                   <AvatarFallback className="bg-muted text-muted-foreground text-2xl">
-                    <ImageIcon className="w-12 h-12" />
+                    <ImageIcon className="w-8 h-8" />
                   </AvatarFallback>
                 )}
               </Avatar>
@@ -573,11 +638,11 @@ export default function AddProjects({ user }: UserFormProps) {
               </Button>
             )}
           </div>
-          <div className="flex flex-col items-center gap-2">
+          <div className="flex flex-col items-center gap-1">
             <label
               htmlFor="logo-upload"
               className={cn(
-                "flex items-center gap-2 px-4 py-2 rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground cursor-pointer transition-colors",
+                "flex items-center gap-2 px-3 py-1.5 rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground cursor-pointer transition-colors text-sm",
                 isUploadingImage && "opacity-50 cursor-not-allowed",
               )}
             >
@@ -609,548 +674,672 @@ export default function AddProjects({ user }: UserFormProps) {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
-          {/* name */}
-          <div className="grid w-full items-center gap-1.5">
-            <Label htmlFor="project_name">
-              Project Name <span className="text-red-500">*</span>
-            </Label>
-            <Input
-              id="project_name"
-              placeholder="Project Name"
-              {...register("name")}
-              aria-invalid={!!errors.name}
-            />
-            <p className="text-sm text-red-600 min-h-[20px]">
-              {errors.name?.message || "\u00A0"}
-            </p>
-          </div>
-          {/* description */}
-          <div className="grid w-full items-center gap-1.5">
-            <Label htmlFor="project_description">Project Description</Label>
-            <Textarea
-              id="project_description"
-              placeholder="Project Description"
-              {...register("description")}
-              aria-invalid={!!errors.description}
-            />
-            <p className="text-sm text-red-600 min-h-[20px]">
-              {errors.description?.message || "\u00A0"}
-            </p>
-          </div>
-          {/* ABBREVIATION */}
-          <div className="grid w-full items-center gap-1.5">
-            <Label htmlFor="project_abbreviation">
-              Project Abbreviation <span className="text-red-500">*</span>
-            </Label>
-            <Input
-              id="project_abbreviation"
-              placeholder="Project Abbreviation"
-              {...register("abbreviation")}
-              aria-invalid={!!errors.abbreviation}
-            />
-            <p className="text-sm text-red-600 min-h-[20px]">
-              {errors.abbreviation?.message || "\u00A0"}
-            </p>
-          </div>
-          {/* project status */}
-          <div className="grid w-full items-center gap-1.5">
-            <Label htmlFor="project_status">
-              Project Status <span className="text-red-500">*</span>
-            </Label>
-            <Controller
-              control={control}
-              name="project_status"
-              render={({ field }) => (
-                <Select
-                  value={field.value}
-                  onValueChange={(val) => {
-                    field.onChange(val);
-                    const selectedStatus = statuses.find(
-                      (status) => status.value === val,
-                    );
-                    if (selectedStatus) {
-                      setValue("project_status", selectedStatus.value);
-                    }
-                  }}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select Project Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      <SelectLabel>Project Status</SelectLabel>
-                      {statuses.map((status) => (
-                        <SelectItem key={status.value} value={status.value}>
-                          {status.label}
-                        </SelectItem>
-                      ))}
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-              )}
-            />
-            <p className="text-sm text-red-600 min-h-[20px]">
-              {errors.project_status?.message || "\u00A0"}
-            </p>
-          </div>
-          {/* priority */}
-          <div className="grid w-full items-center gap-1.5">
-            <Label htmlFor="project_priority">
-              Project Priority <span className="text-red-500">*</span>
-            </Label>
-            <Controller
-              control={control}
-              name="priority"
-              render={({ field }) => (
-                <Select
-                  value={field.value}
-                  onValueChange={(val) => {
-                    field.onChange(val);
-                    const selectedPriority = priority.find(
-                      (priority) => priority.value === val,
-                    );
-                    if (selectedPriority) {
-                      setValue("priority", selectedPriority.value);
-                    }
-                  }}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select Project Priority" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      <SelectLabel>Project Priority</SelectLabel>
-                      {priority.map((priority) => (
-                        <SelectItem key={priority.value} value={priority.value}>
-                          {priority.label}
-                        </SelectItem>
-                      ))}
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-              )}
-            />
-            <p className="text-sm text-red-600 min-h-[20px]">
-              {errors.priority?.message || "\u00A0"}
-            </p>
-          </div>
-          {/* template */}
-          <div className="grid w-full items-center gap-1.5">
-            <Label htmlFor="project_template">
-              Project Template <span className="text-red-500">*</span>
-            </Label>
-            <Controller
-              control={control}
-              name="template_id"
-              render={({ field }) => (
-                <Select
-                  value={field.value ? field.value.toString() : ""}
-                  onValueChange={(val) => {
-                    field.onChange(Number(val));
-                    const selectedTemplate = templates.find(
-                      (template) => template.id === Number(val),
-                    );
-                    if (selectedTemplate) {
-                      setValue("template_id", selectedTemplate.id);
-                    }
-                  }}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select Project Template" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      <SelectLabel>Project Templates</SelectLabel>
-                      {templates.map((template) => (
-                        <SelectItem
-                          key={template.id}
-                          value={template.id.toString()}
-                        >
-                          {template.name}
-                        </SelectItem>
-                      ))}
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-              )}
-            />
-            <p className="text-sm text-red-600 min-h-[20px]">
-              {errors.template_id?.message || "\u00A0"}
-            </p>
-          </div>
-          {/* end client  */}
-          <div className="grid w-full items-center gap-1.5">
-            <Label htmlFor="project_end_client">
-              Project End Client <span className="text-red-500">*</span>
-            </Label>
-            <Controller
-              control={control}
-              name="client_id"
-              render={({ field }) => (
-                <Select
-                  value={field.value?.toString()}
-                  onValueChange={(val) => {
-                    field.onChange(Number(val));
-                    const selectedEndClient = endClients.find(
-                      (endClient) => endClient.id === Number(val),
-                    );
-                    if (selectedEndClient) {
-                      setValue("client_id", selectedEndClient.id);
-                    }
-                  }}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select End Client" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      <SelectLabel>End Clients</SelectLabel>
-                      {endClients.map((client) => (
-                        <SelectItem
-                          key={client.id}
-                          value={client.id.toString()}
-                        >
-                          {client.contact_person || client.email}
-                        </SelectItem>
-                      ))}
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-              )}
-            />
-            <p className="text-sm text-red-600 min-h-[20px]">
-              {errors.client_id?.message || "\u00A0"}
-            </p>
-          </div>
-          {/* start date  */}
-          <div className="grid w-full items-center gap-1.5">
-            <Label htmlFor="start_date" className="px-1">
-              Start Date <span className="text-red-500">*</span>
-            </Label>
-            <Controller
-              control={control}
-              name="start_date"
-              render={({ field }) => (
-                <Popover open={openStartDate} onOpenChange={setOpenStartDate}>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className={cn(
-                        "w-full justify-start text-left font-normal",
-                        !field.value && "text-muted-foreground",
-                      )}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {field.value ? (
-                        format(new Date(field.value), "PPP")
-                      ) : (
-                        <span>Select start date</span>
-                      )}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={field.value ? new Date(field.value) : undefined}
-                      onSelect={(date) => {
-                        if (date) {
-                          field.onChange(format(date, "yyyy-MM-dd"));
-                          setOpenStartDate(false);
-                        }
-                      }}
-                      initialFocus
-                      captionLayout="dropdown"
-                    />
-                  </PopoverContent>
-                </Popover>
-              )}
-            />
-            <p className="text-sm text-red-600 min-h-[20px]">
-              {errors.start_date?.message || "\u00A0"}
-            </p>
-          </div>
-          {/* end date */}
-          <div className="grid w-full items-center gap-1.5">
-            <Label htmlFor="end_date" className="px-1">
-              End Date <span className="text-red-500">*</span>
-            </Label>
-            <Controller
-              control={control}
-              name="end_date"
-              render={({ field }) => (
-                <Popover open={openEndDate} onOpenChange={setOpenEndDate}>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className={cn(
-                        "w-full justify-start text-left font-normal",
-                        !field.value && "text-muted-foreground",
-                      )}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {field.value ? (
-                        format(new Date(field.value), "PPP")
-                      ) : (
-                        <span>Select end date</span>
-                      )}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={field.value ? new Date(field.value) : undefined}
-                      onSelect={(date) => {
-                        if (date) {
-                          field.onChange(format(date, "yyyy-MM-dd"));
-                          setOpenEndDate(false);
-                        }
-                      }}
-                      initialFocus
-                      captionLayout="dropdown"
-                    />
-                  </PopoverContent>
-                </Popover>
-              )}
-            />
-            <p className="text-sm text-red-600 min-h-[20px]">
-              {errors.end_date?.message || "\u00A0"}
-            </p>
-          </div>
-          {/* subscription start date  */}
-          <div className="grid w-full items-center gap-1.5">
-            <Label htmlFor="subscription_start_date" className="px-1">
-              Subscription Start Date <span className="text-red-500">*</span>
-            </Label>
-            <Controller
-              control={control}
-              name="subscription_start_date"
-              render={({ field }) => (
-                <Popover
-                  open={openSubscriptionStartDate}
-                  onOpenChange={setOpenSubscriptionStartDate}
-                >
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className={cn(
-                        "w-full justify-start text-left font-normal",
-                        !field.value && "text-muted-foreground",
-                      )}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {field.value ? (
-                        format(new Date(field.value), "PPP")
-                      ) : (
-                        <span>Select subscription start date</span>
-                      )}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={field.value ? new Date(field.value) : undefined}
-                      onSelect={(date) => {
-                        if (date) {
-                          field.onChange(format(date, "yyyy-MM-dd"));
-                          setOpenSubscriptionStartDate(false);
-                        }
-                      }}
-                      initialFocus
-                      captionLayout="dropdown"
-                    />
-                  </PopoverContent>
-                </Popover>
-              )}
-            />
-            <p className="text-sm text-red-600 min-h-[20px]">
-              {errors.subscription_start_date?.message || "\u00A0"}
-            </p>
-          </div>
-          {/* subscription end date */}
-          <div className="grid w-full items-center gap-1.5">
-            <Label htmlFor="subscription_end_date" className="px-1">
-              Subscription End Date <span className="text-red-500">*</span>
-            </Label>
-            <Controller
-              control={control}
-              name="subscription_end_date"
-              render={({ field }) => (
-                <Popover
-                  open={openSubscriptionEndDate}
-                  onOpenChange={setOpenSubscriptionEndDate}
-                >
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className={cn(
-                        "w-full justify-start text-left font-normal",
-                        !field.value && "text-muted-foreground",
-                      )}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {field.value ? (
-                        format(new Date(field.value), "PPP")
-                      ) : (
-                        <span>Select subscription end date</span>
-                      )}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={field.value ? new Date(field.value) : undefined}
-                      onSelect={(date) => {
-                        if (date) {
-                          field.onChange(format(date, "yyyy-MM-dd"));
-                          setOpenSubscriptionEndDate(false);
-                        }
-                      }}
-                      initialFocus
-                      captionLayout="dropdown"
-                    />
-                  </PopoverContent>
-                </Popover>
-              )}
-            />
-            <p className="text-sm text-red-600 min-h-[20px]">
-              {errors.subscription_end_date?.message || "\u00A0"}
-            </p>
-          </div>
-          {/* budget  */}
-          <div className="grid w-full items-center gap-1.5">
-            <Label htmlFor="project_budget">
-              Budget <span className="text-red-500">*</span>
-            </Label>
-            <Input
-              id="project_budget"
-              placeholder="Project Budget"
-              {...register("budget")}
-              type="number"
-              aria-invalid={!!errors.budget}
-            />
-            <p className="text-sm text-red-600 min-h-[20px]">
-              {errors.budget?.message || "\u00A0"}
-            </p>
-          </div>
-          {/* stockyards selection  */}
-          <div className="grid w-full items-center gap-1.5">
-            <Label htmlFor="stockyards" className="px-1">
-              Select Stockyards <span className="text-red-500">*</span>
-            </Label>
-            <MultiStockyard
-              users={stockyards}
-              onSelectionChange={handleStockyardChange}
-              placeholder="Select stockyards..."
-              initialSelected={watch("stockyards") || []}
-            />
-            <p className="text-sm text-red-600 min-h-[20px]">
-              {errors.stockyards?.message || "\u00A0"}
-            </p>
-          </div>
+        <div className="flex flex-col gap-4 mt-4">
+          {/* Section: Project Details */}
+          <Card className="py-4 gap-3">
+            <CardHeader className="px-4 pb-0">
+              <CardTitle className="text-sm">Project Details</CardTitle>
+              <CardDescription className="text-xs">
+                Basic information about the project
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="px-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2">
+                <div className="grid w-full items-center gap-1">
+                  <Label htmlFor="project_name" className="text-xs font-medium">
+                    Project Name <span className="text-red-500">*</span>
+                  </Label>
+                  <Input
+                    id="project_name"
+                    placeholder="Project Name"
+                    {...register("name")}
+                    aria-invalid={!!errors.name}
+                  />
+                  <p className="text-xs text-red-600 min-h-[16px]">
+                    {errors.name?.message || "\u00A0"}
+                  </p>
+                </div>
 
-          {/* SELECT ROLES  */}
-          <div className="grid w-full items-center gap-1.5">
-            <Label htmlFor="roles" className="px-1">
-              Select Roles <span className="text-red-500">*</span>
-            </Label>
-            <MultiRole
-              users={roles}
-              onSelectionChange={handleRoleChange}
-              placeholder="Select roles..."
-              initialSelected={watch("roles")?.map((r: any) => r.role_id) || []}
-            />
-            <p className="text-sm text-red-600 min-h-[20px]">
-              {errors.roles?.message || "\u00A0"}
-            </p>
-          </div>
-          {/* section show the radio button for the hra, work_order, invoice, calculator in the same row  */}
-          <div className="grid w-full items-center bg-blue-400 gap-0">
-            <Label htmlFor="modules" className=" bg-green-400">
-              Modules <span className="text-red-500">*</span>
-            </Label>
-            <div className="grid grid-cols-2 md:grid-cols-4  gap-2 bg-red-400 m-0">
-              {/* could we use switch case to show the radio button for the hra, work_order, invoice, calculator in the same row  */}
+                <div className="grid w-full items-center gap-1">
+                  <Label htmlFor="project_abbreviation">
+                    Abbreviation <span className="text-red-500">*</span>
+                  </Label>
+                  <Input
+                    id="project_abbreviation"
+                    placeholder="e.g. PROJ"
+                    {...register("abbreviation")}
+                    aria-invalid={!!errors.abbreviation}
+                  />
+                  <p className="text-xs text-red-600 min-h-[16px]">
+                    {errors.abbreviation?.message || "\u00A0"}
+                  </p>
+                </div>
 
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="hra"
-                  checked={watch("hra")}
-                  onCheckedChange={(checked) => {
-                    setValue("hra", checked);
-                  }}
-                />
-                <Label htmlFor="hra">HRA</Label>
+                <div className="grid w-full items-center gap-1">
+                  <Label htmlFor="project_budget">
+                    Budget <span className="text-red-500">*</span>
+                  </Label>
+                  <Input
+                    id="project_budget"
+                    placeholder="Project Budget"
+                    {...register("budget")}
+                    type="number"
+                    aria-invalid={!!errors.budget}
+                  />
+                  <p className="text-xs text-red-600 min-h-[16px]">
+                    {errors.budget?.message || "\u00A0"}
+                  </p>
+                </div>
+
+                <div className="grid w-full items-center gap-1 md:col-span-2">
+                  <Label htmlFor="project_description">Description</Label>
+                  <Textarea
+                    id="project_description"
+                    placeholder="Brief description of the project"
+                    {...register("description")}
+                    aria-invalid={!!errors.description}
+                    rows={2}
+                  />
+                  <p className="text-xs text-red-600 min-h-[16px]">
+                    {errors.description?.message || "\u00A0"}
+                  </p>
+                </div>
               </div>
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="work_order"
-                  checked={watch("work_order")}
-                  onCheckedChange={(checked) => {
-                    setValue("work_order", checked);
-                  }}
-                />
-                <Label htmlFor="work_order">Work Order</Label>
+            </CardContent>
+          </Card>
+
+          {/* Section: Status & Configuration */}
+          <Card className="py-4 gap-3">
+            <CardHeader className="px-4 pb-0">
+              <CardTitle className="text-sm">Status & Configuration</CardTitle>
+              <CardDescription className="text-xs">
+                Set the project status, priority, template, and client
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="px-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2">
+                <div className="grid w-full items-center gap-1">
+                  <Label htmlFor="project_status">
+                    Status <span className="text-red-500">*</span>
+                  </Label>
+                  <Controller
+                    control={control}
+                    name="project_status"
+                    render={({ field }) => (
+                      <Select
+                        value={field.value}
+                        onValueChange={(val) => {
+                          field.onChange(val);
+                          const selectedStatus = statuses.find(
+                            (status) => status.value === val,
+                          );
+                          if (selectedStatus) {
+                            setValue("project_status", selectedStatus.value);
+                          }
+                        }}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select Project Status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectGroup>
+                            <SelectLabel>Project Status</SelectLabel>
+                            {statuses.map((status) => (
+                              <SelectItem
+                                key={status.value}
+                                value={status.value}
+                              >
+                                {status.label}
+                              </SelectItem>
+                            ))}
+                          </SelectGroup>
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                  <p className="text-xs text-red-600 min-h-[16px]">
+                    {errors.project_status?.message || "\u00A0"}
+                  </p>
+                </div>
+
+                <div className="grid w-full items-center gap-1">
+                  <Label htmlFor="project_priority">
+                    Priority <span className="text-red-500">*</span>
+                  </Label>
+                  <Controller
+                    control={control}
+                    name="priority"
+                    render={({ field }) => (
+                      <Select
+                        value={field.value}
+                        onValueChange={(val) => {
+                          field.onChange(val);
+                          const selectedPriority = priority.find(
+                            (p) => p.value === val,
+                          );
+                          if (selectedPriority) {
+                            setValue("priority", selectedPriority.value);
+                          }
+                        }}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select Priority" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectGroup>
+                            <SelectLabel>Priority</SelectLabel>
+                            {priority.map((p) => (
+                              <SelectItem key={p.value} value={p.value}>
+                                {p.label}
+                              </SelectItem>
+                            ))}
+                          </SelectGroup>
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                  <p className="text-xs text-red-600 min-h-[16px]">
+                    {errors.priority?.message || "\u00A0"}
+                  </p>
+                </div>
+
+                <div className="grid w-full items-center gap-1">
+                  <Label htmlFor="project_template">
+                    Template <span className="text-red-500">*</span>
+                  </Label>
+                  <Controller
+                    control={control}
+                    name="template_id"
+                    render={({ field }) => (
+                      <Select
+                        value={field.value ? field.value.toString() : ""}
+                        onValueChange={(val) => {
+                          field.onChange(Number(val));
+                          const selectedTemplate = templates.find(
+                            (template) => template.id === Number(val),
+                          );
+                          if (selectedTemplate) {
+                            setValue("template_id", selectedTemplate.id);
+                          }
+                        }}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select Template" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectGroup>
+                            <SelectLabel>Templates</SelectLabel>
+                            {templates.map((template) => (
+                              <SelectItem
+                                key={template.id}
+                                value={template.id.toString()}
+                              >
+                                {template.name}
+                              </SelectItem>
+                            ))}
+                          </SelectGroup>
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                  <p className="text-xs text-red-600 min-h-[16px]">
+                    {errors.template_id?.message || "\u00A0"}
+                  </p>
+                </div>
+
+                <div className="grid w-full items-center gap-1">
+                  <Label htmlFor="project_end_client">
+                    End Client <span className="text-red-500">*</span>
+                  </Label>
+                  <Controller
+                    control={control}
+                    name="client_id"
+                    render={({ field }) => (
+                      <Select
+                        value={field.value?.toString()}
+                        onValueChange={(val) => {
+                          field.onChange(Number(val));
+                          const selectedEndClient = endClients.find(
+                            (endClient) => endClient.id === Number(val),
+                          );
+                          if (selectedEndClient) {
+                            setValue("client_id", selectedEndClient.id);
+                          }
+                        }}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select End Client" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectGroup>
+                            <SelectLabel>End Clients</SelectLabel>
+                            {endClients.map((client) => (
+                              <SelectItem
+                                key={client.id}
+                                value={client.id.toString()}
+                              >
+                                {client.contact_person || client.email}
+                              </SelectItem>
+                            ))}
+                          </SelectGroup>
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                  <p className="text-xs text-red-600 min-h-[16px]">
+                    {errors.client_id?.message || "\u00A0"}
+                  </p>
+                </div>
               </div>
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="invoice"
-                  checked={watch("invoice")}
-                  onCheckedChange={(checked) => {
-                    setValue("invoice", checked);
-                  }}
-                />
-                <Label htmlFor="invoice">Invoice</Label>
+            </CardContent>
+          </Card>
+
+          {/* Section: Project Timeline */}
+          <Card className="py-4 gap-3">
+            <CardHeader className="px-4 pb-0">
+              <CardTitle className="text-sm">Project Timeline</CardTitle>
+              <CardDescription className="text-xs">
+                Project and subscription date ranges
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="px-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2">
+                <div className="grid w-full items-center gap-1">
+                  <Label>
+                    Start Date <span className="text-red-500">*</span>
+                  </Label>
+                  <Controller
+                    control={control}
+                    name="start_date"
+                    render={({ field }) => (
+                      <Popover
+                        open={openStartDate}
+                        onOpenChange={setOpenStartDate}
+                      >
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className={cn(
+                              "w-full justify-start text-left font-normal",
+                              !field.value && "text-muted-foreground",
+                            )}
+                          >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {field.value ? (
+                              format(new Date(field.value), "PPP")
+                            ) : (
+                              <span>Select start date</span>
+                            )}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={
+                              field.value ? new Date(field.value) : undefined
+                            }
+                            onSelect={(date) => {
+                              if (date) {
+                                field.onChange(format(date, "yyyy-MM-dd"));
+                                setOpenStartDate(false);
+                              }
+                            }}
+                            initialFocus
+                            captionLayout="dropdown"
+                            endMonth={
+                              new Date(new Date().getFullYear() + 10, 11)
+                            }
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    )}
+                  />
+                  <p className="text-xs text-red-600 min-h-[16px]">
+                    {errors.start_date?.message || "\u00A0"}
+                  </p>
+                </div>
+
+                <div className="grid w-full items-center gap-1">
+                  <Label>
+                    End Date <span className="text-red-500">*</span>
+                  </Label>
+                  <Controller
+                    control={control}
+                    name="end_date"
+                    render={({ field }) => (
+                      <Popover open={openEndDate} onOpenChange={setOpenEndDate}>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className={cn(
+                              "w-full justify-start text-left font-normal",
+                              !field.value && "text-muted-foreground",
+                            )}
+                          >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {field.value ? (
+                              format(new Date(field.value), "PPP")
+                            ) : (
+                              <span>Select end date</span>
+                            )}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={
+                              field.value ? new Date(field.value) : undefined
+                            }
+                            onSelect={(date) => {
+                              if (date) {
+                                field.onChange(format(date, "yyyy-MM-dd"));
+                                setOpenEndDate(false);
+                              }
+                            }}
+                            initialFocus
+                            captionLayout="dropdown"
+                            endMonth={
+                              new Date(new Date().getFullYear() + 10, 11)
+                            }
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    )}
+                  />
+                  <p className="text-xs text-red-600 min-h-[16px]">
+                    {errors.end_date?.message || "\u00A0"}
+                  </p>
+                </div>
+
+                <div className="grid w-full items-center gap-1">
+                  <Label>
+                    Subscription Start Date{" "}
+                    <span className="text-red-500">*</span>
+                  </Label>
+                  <Controller
+                    control={control}
+                    name="subscription_start_date"
+                    render={({ field }) => (
+                      <Popover
+                        open={openSubscriptionStartDate}
+                        onOpenChange={setOpenSubscriptionStartDate}
+                      >
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className={cn(
+                              "w-full justify-start text-left font-normal",
+                              !field.value && "text-muted-foreground",
+                            )}
+                          >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {field.value ? (
+                              format(new Date(field.value), "PPP")
+                            ) : (
+                              <span>Select subscription start date</span>
+                            )}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={
+                              field.value ? new Date(field.value) : undefined
+                            }
+                            onSelect={(date) => {
+                              if (date) {
+                                field.onChange(format(date, "yyyy-MM-dd"));
+                                setOpenSubscriptionStartDate(false);
+                              }
+                            }}
+                            initialFocus
+                            captionLayout="dropdown"
+                            endMonth={
+                              new Date(new Date().getFullYear() + 10, 11)
+                            }
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    )}
+                  />
+                  <p className="text-xs text-red-600 min-h-[16px]">
+                    {errors.subscription_start_date?.message || "\u00A0"}
+                  </p>
+                </div>
+
+                <div className="grid w-full items-center gap-1">
+                  <Label>
+                    Subscription End Date{" "}
+                    <span className="text-red-500">*</span>
+                  </Label>
+                  <Controller
+                    control={control}
+                    name="subscription_end_date"
+                    render={({ field }) => (
+                      <Popover
+                        open={openSubscriptionEndDate}
+                        onOpenChange={setOpenSubscriptionEndDate}
+                      >
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className={cn(
+                              "w-full justify-start text-left font-normal",
+                              !field.value && "text-muted-foreground",
+                            )}
+                          >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {field.value ? (
+                              format(new Date(field.value), "PPP")
+                            ) : (
+                              <span>Select subscription end date</span>
+                            )}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={
+                              field.value ? new Date(field.value) : undefined
+                            }
+                            onSelect={(date) => {
+                              if (date) {
+                                field.onChange(format(date, "yyyy-MM-dd"));
+                                setOpenSubscriptionEndDate(false);
+                              }
+                            }}
+                            initialFocus
+                            captionLayout="dropdown"
+                            endMonth={
+                              new Date(new Date().getFullYear() + 10, 11)
+                            }
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    )}
+                  />
+                  <p className="text-xs text-red-600 min-h-[16px]">
+                    {errors.subscription_end_date?.message || "\u00A0"}
+                  </p>
+                </div>
               </div>
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="calculator"
-                  checked={watch("calculator")}
-                  onCheckedChange={(checked) => {
-                    setValue("calculator", checked);
-                  }}
-                />
-                <Label htmlFor="calculator">Calculator</Label>
+            </CardContent>
+          </Card>
+
+          {/* Section: Assignments */}
+          <Card className="py-4 gap-3">
+            <CardHeader className="px-4 pb-0">
+              <CardTitle className="text-sm">Assignments</CardTitle>
+              <CardDescription className="text-xs">
+                Assign stockyards and roles to this project
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="px-4 space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2">
+                <div className="grid w-full items-center gap-1">
+                  <Label>
+                    Stockyards <span className="text-red-500">*</span>
+                  </Label>
+                  <MultiStockyard
+                    users={stockyards}
+                    onSelectionChange={handleStockyardChange}
+                    placeholder="Select stockyards..."
+                    initialSelected={watch("stockyards") || []}
+                  />
+                  <p className="text-xs text-red-600 min-h-[16px]">
+                    {errors.stockyards?.message || "\u00A0"}
+                  </p>
+                </div>
+
+                <div className="grid w-full items-center gap-1">
+                  <Label>
+                    Roles <span className="text-red-500">*</span>
+                  </Label>
+                  <MultiRole
+                    users={roles}
+                    onSelectionChange={handleRoleChange}
+                    placeholder="Select roles..."
+                    initialSelected={
+                      watch("roles")?.map((r: any) => r.role_id) || []
+                    }
+                  />
+                  <p className="text-xs text-red-600 min-h-[16px]">
+                    {errors.roles?.message || "\u00A0"}
+                  </p>
+                </div>
               </div>
-            </div>
-          </div>
+
+              {(watch("roles") || []).length > 0 && (
+                <div className="space-y-2 pt-2 border-t">
+                  <Label className="text-sm font-semibold">
+                    Role Quantities
+                  </Label>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                    {(watch("roles") || []).map((role: any, index: number) => {
+                      const roleObj = roles.find(
+                        (r) => r.role_id === role.role_id,
+                      );
+                      return (
+                        <div
+                          key={role.role_id}
+                          className="flex items-center justify-between gap-2 bg-muted/50 p-2 rounded-md border"
+                        >
+                          <Label className="capitalize min-w-0 truncate font-medium text-xs">
+                            {roleObj?.role_name}
+                          </Label>
+                          <Input
+                            type="number"
+                            min={1}
+                            {...register(`roles.${index}.quantity`, {
+                              valueAsNumber: true,
+                            })}
+                            className="w-20"
+                            aria-invalid={!!errors.roles?.[index]?.quantity}
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Section: Modules */}
+          <Card className="py-4 gap-3">
+            <CardHeader className="px-4 pb-0">
+              <CardTitle className="text-sm">Modules</CardTitle>
+              <CardDescription className="text-xs">
+                Enable or disable project modules
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="px-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                <div className="flex items-center space-x-2 rounded-md border p-2">
+                  <Switch
+                    id="hra"
+                    checked={watch("hra")}
+                    onCheckedChange={(checked) => setValue("hra", checked)}
+                  />
+                  <Label htmlFor="hra" className="cursor-pointer">
+                    HRA
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2 rounded-md border p-2">
+                  <Switch
+                    id="work_order"
+                    checked={watch("work_order")}
+                    onCheckedChange={(checked) =>
+                      setValue("work_order", checked)
+                    }
+                  />
+                  <Label htmlFor="work_order" className="cursor-pointer">
+                    Work Order
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2 rounded-md border p-2">
+                  <Switch
+                    id="invoice"
+                    checked={watch("invoice")}
+                    onCheckedChange={(checked) => setValue("invoice", checked)}
+                  />
+                  <Label htmlFor="invoice" className="cursor-pointer">
+                    Invoice
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2 rounded-md border p-2">
+                  <Switch
+                    id="calculator"
+                    checked={watch("calculator")}
+                    onCheckedChange={(checked) =>
+                      setValue("calculator", checked)
+                    }
+                  />
+                  <Label htmlFor="calculator" className="cursor-pointer">
+                    Calculator
+                  </Label>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Section: Existing Roles (edit mode only, read-only) */}
+          {isEditMode && oldroledata.length > 0 && (
+            <Card className="border-dashed py-4 gap-3">
+              <CardHeader className="px-4 pb-0">
+                <CardTitle className="flex items-center gap-2 text-sm">
+                  <Shield className="h-4 w-4 text-muted-foreground" />
+                  Existing Roles
+                  <Badge variant="secondary" className="ml-1 text-xs">
+                    Read-only
+                  </Badge>
+                </CardTitle>
+                <CardDescription className="text-xs">
+                  Currently assigned roles and their quantities. These cannot be
+                  modified here.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="px-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                  {oldroledata.map((role) => (
+                    <div
+                      key={role.role_id}
+                      className="flex items-center justify-between gap-2 bg-muted/30 p-2 rounded-md border border-dashed"
+                    >
+                      <span className="capitalize min-w-0 truncate font-medium text-sm text-muted-foreground">
+                        {role.role_name}
+                      </span>
+                      <Badge variant="outline">{role.quantity}</Badge>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
 
-        {/* Role Quantities Section */}
-        {(watch("roles") || []).length > 0 && (
-          <div className="space-y-3">
-            <Label className="text-base font-semibold">Role Quantities</Label>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {(watch("roles") || []).map((role: any, index: number) => {
-                const roleObj = roles.find((r) => r.role_id === role.role_id);
-                return (
-                  <div
-                    key={role.role_id}
-                    className="flex items-center justify-between gap-3 bg-muted/50 p-3 rounded-lg border"
-                  >
-                    <Label className="capitalize min-w-0 truncate font-medium text-sm">
-                      {roleObj?.role_name}
-                    </Label>
-                    <div className="flex items-center gap-2">
-                      <Input
-                        type="number"
-                        min={1}
-                        {...register(`roles.${index}.quantity`, {
-                          valueAsNumber: true,
-                        })}
-                        className="w-20"
-                        aria-invalid={!!errors.roles?.[index]?.quantity}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
         {/* Form Actions */}
-        <div className="flex items-center justify-end gap-4 pt-6 border-t">
+        <div className="flex items-center justify-end gap-3 pt-4 mt-4 border-t">
           <Button
             type="button"
             variant="outline"

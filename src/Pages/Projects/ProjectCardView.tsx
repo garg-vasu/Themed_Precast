@@ -6,12 +6,11 @@ import { apiClient } from "@/utils/apiClient";
 import { toast } from "sonner";
 import PageHeader from "@/components/ui/PageHeader";
 import { Button } from "@/components/ui/button";
-import { PlusIcon, Ban } from "lucide-react";
+import { PlusIcon, Ban, Power } from "lucide-react";
 import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -72,20 +71,6 @@ type Aggregates = {
 export type ProjectsOverviewResponse = {
   projects: Project[];
   aggregates: Aggregates;
-};
-
-const formatDateTime = (value?: string) => {
-  if (!value) return "-";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-
-  return date.toLocaleString(undefined, {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
 };
 
 export const getStatusStyles = (status: string | undefined) => {
@@ -207,7 +192,7 @@ export default function ProjectCardView() {
           setProjectStats(response.data);
         } else {
           toast.error(
-            response.data?.message || "Failed to fetch project stats"
+            response.data?.message || "Failed to fetch project stats",
           );
         }
       } catch (err: unknown) {
@@ -250,7 +235,7 @@ export default function ProjectCardView() {
             },
           ]
         : [],
-    [projectStats]
+    [projectStats],
   );
 
   const WithFilterParam = (endpoint: string) => {
@@ -262,7 +247,7 @@ export default function ProjectCardView() {
   const fetchProjectData = useCallback(async () => {
     try {
       const response = await apiClient.get(
-        WithFilterParam("/projects_overview")
+        WithFilterParam("/projects_overview"),
       );
 
       if (response.status === 200) {
@@ -316,7 +301,7 @@ export default function ProjectCardView() {
       </div>
 
       {/* stats summary section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-2">
         {/* Bar Chart Card */}
         <Card className="flex flex-col">
           <CardHeader className="pb-2 sm:pb-4">
@@ -339,7 +324,7 @@ export default function ProjectCardView() {
             {projectStats ? (
               <ChartContainer
                 config={chartConfig}
-                className="h-[200px] sm:h-[250px] lg:h-[300px] w-full"
+                className="h-[150px]   w-full"
               >
                 <LineChart data={chartData}>
                   <CartesianGrid vertical={false} strokeDasharray="3 3" />
@@ -469,7 +454,7 @@ export default function ProjectCardView() {
           </span>
         </div>
         {data?.projects?.length ? (
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {data.projects.map((project) => (
               <ProjectCard
                 key={project.project_id}
@@ -535,14 +520,14 @@ function ProjectCard({
     try {
       const response = await apiClient.put(
         `/project/${project.project_id}/suspend`,
-        { suspend: !isSuspended }
+        { suspend: !isSuspended },
       );
 
       if (response.status === 200) {
         toast.success(
           isSuspended
             ? "Project activated successfully"
-            : "Project suspended successfully"
+            : "Project suspended successfully",
         );
         await fetchProjectData();
       } else {
@@ -570,27 +555,45 @@ function ProjectCard({
       tabIndex={canOpenProject ? 0 : -1}
     >
       {isDisabledForUser && (
-        // Only when project is suspended AND user is not superadmin:
-        // show a blocking overlay and disallow interaction
         <div className="absolute inset-0 z-10 rounded-xl bg-background/50 backdrop-blur-[1px] cursor-not-allowed" />
       )}
 
-      {/* Suspend Icon - Top Right */}
-      {isSuspended && (
+      {/* Activate / Deactivate icon – top right */}
+      {isSuperAdmin ? (
+        <button
+          type="button"
+          className={`absolute top-2 right-2 z-20 flex items-center justify-center w-7 h-7 rounded-full transition ${
+            isSuspended
+              ? "bg-green-100 border border-green-300 hover:bg-green-200 text-green-600"
+              : "bg-destructive/10 border border-destructive/30 hover:bg-destructive/20 text-destructive"
+          }`}
+          title={isSuspended ? "Activate Project" : "Suspend Project"}
+          onClick={(e) => {
+            e.stopPropagation();
+            handleSuspend(e);
+          }}
+        >
+          {isSuspended ? (
+            <Power className="w-3.5 h-3.5" />
+          ) : (
+            <Ban className="w-3.5 h-3.5" />
+          )}
+        </button>
+      ) : isSuspended ? (
         <div
-          className="absolute top-3 right-3 z-20 flex items-center justify-center w-8 h-8 rounded-full bg-destructive/10 border border-destructive/30"
+          className="absolute top-2 right-2 z-20 flex items-center justify-center w-7 h-7 rounded-full bg-destructive/10 border border-destructive/30"
           title="Project Suspended"
         >
-          <Ban className="w-4 h-4 text-destructive" />
+          <Ban className="w-3.5 h-3.5 text-destructive" />
         </div>
-      )}
+      ) : null}
 
-      <CardHeader className="flex-row items-start justify-between gap-3">
-        <div className="min-w-0 flex-1 space-y-1 pr-8">
-          <CardTitle className="truncate text-base font-semibold">
+      <CardHeader className="flex-row items-start justify-between gap-2 p-3 pb-1">
+        <div className="min-w-0 flex-1 space-y-0.5 pr-7">
+          <CardTitle className="truncate text-sm font-semibold">
             {project.name}
           </CardTitle>
-          <CardDescription className="flex flex-wrap items-center gap-2 text-xs">
+          <CardDescription className="flex flex-wrap items-center gap-1.5 text-xs">
             <span
               className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide ${statusStyles.badge}`}
             >
@@ -607,100 +610,34 @@ function ProjectCard({
         </div>
       </CardHeader>
 
-      <CardContent className="space-y-3 text-xs">
-        <div className="grid grid-cols-[1.1fr_1.2fr] gap-3">
-          <div className="space-y-1">
-            <p className="text-[11px] font-medium text-muted-foreground">
-              Schedule
-            </p>
-            <p className="text-xs">
-              <span className="font-medium">{project.start_date || "N/A"}</span>
-              – <span>{project.end_date || "N/A"}</span>
-            </p>
-          </div>
-          <div className="space-y-1 rounded-md bg-muted/60 px-2 py-1.5">
-            <p className="text-[11px] font-medium text-muted-foreground">
-              Elements
-            </p>
-            <p className="text-xs">
-              <span className="font-semibold">
-                {project.casted_elements}/{project.total_elements}
-              </span>{" "}
-              casted
-            </p>
-            <p className="text-[11px] text-muted-foreground">
-              In stock: <span className="font-medium">{project.in_stock}</span>,
-              In production:{" "}
-              <span className="font-medium">{project.in_production}</span>
-            </p>
-          </div>
-        </div>
-
-        {project.description && (
-          <p className="line-clamp-2 text-xs text-muted-foreground">
-            {project.description}
+      <CardContent className="space-y-1.5 text-xs p-3 pt-0">
+        <div className="space-y-0.5">
+          <p className="text-[11px] font-medium text-muted-foreground">
+            Schedule
           </p>
-        )}
+          <p className="text-xs">
+            <span className="font-medium">{project.start_date || "N/A"}</span>
+            {" – "}
+            <span>{project.end_date || "N/A"}</span>
+          </p>
+        </div>
+        <div className="space-y-0.5 rounded-md bg-muted/60 px-2 py-1.5">
+          <p className="text-[11px] font-medium text-muted-foreground">
+            Elements
+          </p>
+          <p className="text-xs">
+            <span className="font-semibold">
+              {project.casted_elements}/{project.total_elements}
+            </span>{" "}
+            casted
+          </p>
+          <p className="text-[11px] text-muted-foreground">
+            In stock: <span className="font-medium">{project.in_stock}</span>,
+            In production:{" "}
+            <span className="font-medium">{project.in_production}</span>
+          </p>
+        </div>
       </CardContent>
-
-      <CardFooter className="mt-auto flex items-center justify-between border-t py-3">
-        <div className="flex flex-col text-[11px] text-muted-foreground">
-          <span>
-            Last updated:{" "}
-            <span className="font-medium">
-              {formatDateTime(project.last_updated)}
-            </span>
-          </span>
-          {project.last_updated_by && <span>By {project.last_updated_by}</span>}
-        </div>
-        <div className="flex items-center gap-2 relative z-20">
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            className="h-7 px-2 text-xs"
-            disabled={isDisabledForUser}
-            onClick={(e) => {
-              e.stopPropagation();
-              if (canOpenProject) {
-                handleOpenProject();
-              }
-            }}
-          >
-            Open
-          </Button>
-          {/* Show Suspend button only for superadmin when project is NOT suspended */}
-          {isSuperAdmin && !isSuspended && (
-            <Button
-              type="button"
-              size="sm"
-              variant="destructive"
-              className="h-7 px-2 text-xs"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleSuspend(e);
-              }}
-            >
-              Suspend
-            </Button>
-          )}
-          {/* Show Activate button only for superadmin when project IS suspended */}
-          {isSuperAdmin && isSuspended && (
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              className="h-7 px-2 text-xs border-green-500 text-green-600 hover:bg-green-50 hover:text-green-700"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleSuspend(e);
-              }}
-            >
-              Activate
-            </Button>
-          )}
-        </div>
-      </CardFooter>
     </Card>
   );
 }

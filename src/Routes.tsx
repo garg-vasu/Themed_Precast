@@ -154,6 +154,9 @@ const EditWorkOrder = lazy(() => import("./Pages/WorkOrder/EditWorkOrder"));
 const EditElementType = lazy(
   () => import("./Pages/Elementtype/EditElementtype"),
 );
+const UploadElementtype = lazy(
+  () => import("./Pages/Elementtype/UploadElementtype"),
+);
 const MixHierarchy = lazy(() => import("./Pages/Hierarchy/HierarchyTable"));
 const AddAttendance = lazy(() => import("./Pages/Attendance/AddAttendance"));
 const AddMember = lazy(() => import("./Pages/ProjectMember/AddMember"));
@@ -166,6 +169,9 @@ const TermsOfService = lazy(() => import("./Pages/Legal/TermsOfService"));
 const Support = lazy(() => import("./Pages/Legal/Support"));
 const CuttingStockCalculator = lazy(
   () => import("./Pages/calculator/CuttingStockCalculator"),
+);
+const NotificationPage = lazy(
+  () => import("./Pages/Notification/Notification"),
 );
 
 const routeLoadingFallback = (
@@ -421,6 +427,7 @@ const mainChildren: RouteObject[] = [
       withSuspense(<CuttingStockCalculator />),
     ),
   },
+  { path: "notification", element: withSuspense(<NotificationPage />) },
 ];
 
 const projectChildren: RouteObject[] = [
@@ -638,6 +645,14 @@ const projectChildren: RouteObject[] = [
   {
     path: "edit-member/:user_id",
     element: projectRoleGuard(["EditMember"], withSuspense(<EditMember />)),
+  },
+  {
+    path: "upload-elementtype",
+    element: projectRoleGuard(
+      ["ViewUploadElementType"],
+      withSuspense(<UploadElementtype />),
+      "/",
+    ),
   },
 ];
 

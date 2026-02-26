@@ -71,7 +71,7 @@ const schema = z.object({
   city: z.string().min(1, "City is required"),
   state: z.string().min(1, "State is required"),
   country: z.string().min(1, "Country is required"),
-  employee_id: z.string().min(1, "Employee ID is required"),
+  // employee_id: z.string().min(1, "Employee ID is required"),
   zip_code: z.string().min(1, "Zip code is required"),
   phone_no: z.string().min(10, "Phone number must be at least 10 digits"),
   phone_code: z.number().min(1, "Phone code is required"),
@@ -86,7 +86,7 @@ export interface EditTenant {
   id: number;
   email: string;
   password?: string;
-  employee_id: string;
+  // employee_id: string;
   first_name: string;
   last_name: string;
   organization: string;
@@ -207,7 +207,7 @@ export default function AddTenants({ user }: TenantFormProps) {
         state: "",
         country: "",
         zip_code: "",
-        employee_id: "",
+        // employee_id: "",
         phone_no: "",
         phone_code: 0,
         profile_picture: "",
@@ -227,7 +227,7 @@ export default function AddTenants({ user }: TenantFormProps) {
       state: user.state || "",
       country: user.country || "",
       zip_code: user.zip_code || "",
-      employee_id: user.employee_id || "",
+     // employee_id: user.employee_id || "",
       phone_no: user.phone_no || "",
       phone_code: user.phone_code || 0,
       profile_picture: user.profile_picture || "",
@@ -557,7 +557,7 @@ export default function AddTenants({ user }: TenantFormProps) {
             </p>
           </div>
           {/* Employee ID    */}
-          <div className="grid w-full items-center gap-1.5">
+          {/* <div className="grid w-full items-center gap-1.5">
             <Label htmlFor="employee_id">
               Employee ID <span className="text-red-500">*</span>
             </Label>
@@ -570,7 +570,7 @@ export default function AddTenants({ user }: TenantFormProps) {
             <p className="text-sm text-red-600 min-h-[20px]">
               {errors.employee_id?.message || "\u00A0"}
             </p>
-          </div>
+          </div> */}
 
           {/* Phone Code */}
           <div className="grid w-full items-center gap-1.5">
@@ -758,20 +758,17 @@ export default function AddTenants({ user }: TenantFormProps) {
         </div>
 
         {/* Form Actions */}
-        <div className="flex items-center justify-end gap-4 pt-6 border-t">
+        <div className="flex items-center justify-end gap-2">
           <Button
             type="button"
             variant="outline"
+            size="sm"
             onClick={() => navigate("/tenants")}
             disabled={isSubmitting || isLoading}
           >
             Cancel
           </Button>
-          <Button
-            type="submit"
-            disabled={isSubmitting || isLoading}
-            className="min-w-[120px]"
-          >
+          <Button type="submit" size="sm" disabled={isSubmitting || isLoading}>
             {isSubmitting || isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
