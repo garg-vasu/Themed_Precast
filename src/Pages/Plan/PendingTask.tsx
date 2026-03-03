@@ -85,13 +85,13 @@ export default function PendingTask() {
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
   const [pendingStatus, setPendingStatus] = useState<string | null>(null);
   const [pendingActivityId, setPendingActivityId] = useState<number | null>(
-    null
+    null,
   );
 
   const handleStatusChange = async (
     newStatus: string,
     id: number,
-    role: string
+    role: string,
   ) => {
     setLoading(true);
     const data: { qc_status?: string; status?: string; activity_id: number } = {
@@ -200,23 +200,21 @@ export default function PendingTask() {
   }
 
   return (
-    <div className="space-y-2 sm:space-y-4">
+    <div className="space-y-2 ">
       {lists.map((list) => (
         <div
           key={list.task_id}
-          className="rounded-lg border overflow-hidden transition-all duration-200 hover:shadow-md"
-        >
+          className="rounded-lg border overflow-hidden transition-all duration-200 hover:shadow-md">
           <div
-            className="flex justify-between items-center p-2 sm:p-3 cursor-pointer hover:bg-accent/50 transition-colors"
+            className="flex justify-between items-center py-1 px-2 cursor-pointer hover:bg-accent/50 transition-colors"
             onClick={() =>
               list.activities.length > 0 && toggleExpand(list.task_id)
-            }
-          >
-            <div className="flex items-center gap-2 sm:gap-3">
+            }>
+            <div className="flex items-center gap-2">
               <h3 className="text-sm sm:text-base font-medium">
                 {list.element_type}
               </h3>
-              <span className="px-1.5 sm:px-2 py-0.5 sm:py-1 text-xs font-medium rounded-full bg-primary/10 text-primary">
+              <span className=" px-2 py-1 text-xs font-medium rounded-full bg-primary/10 text-primary">
                 {list.activities.length} Elements
               </span>
             </div>
@@ -236,15 +234,14 @@ export default function PendingTask() {
             <div className="border-t">
               {/* Mobile Layout */}
               <div className="block md:hidden">
-                <div className="p-2 text-xs font-medium text-muted-foreground border-b bg-muted/50">
+                <div className="py-1 px-2 text-xs font-medium text-muted-foreground border-b bg-muted/50">
                   Activities
                 </div>
                 {list.activities.map((activity) => (
                   <div
                     key={activity.id}
-                    className="p-2 border-b hover:bg-accent/50 transition-colors"
-                  >
-                    <div className="space-y-2">
+                    className="border-b hover:bg-accent/50 transition-colors px-2 py-1">
+                    <div className="space-y-1">
                       <div className="flex justify-between items-center">
                         <span className="text-xs font-medium text-muted-foreground">
                           Name:
@@ -268,12 +265,10 @@ export default function PendingTask() {
                             <Button
                               variant="outline"
                               size="sm"
-                              className="text-xs px-2 py-1"
                               onClick={() => {
                                 setSelectedActivity(activity);
                                 setIsOpen(true);
-                              }}
-                            >
+                              }}>
                               {activity.qc_status || "InProgress"}
                             </Button>
                           ) : (
@@ -293,8 +288,8 @@ export default function PendingTask() {
                               {activity.stage_name === "Mesh & Mould"
                                 ? activity.mesh_mold_status
                                 : activity.stage_name === "Reinforcement"
-                                ? activity.reinforcement_status
-                                : activity.status}
+                                  ? activity.reinforcement_status
+                                  : activity.status}
                             </span>
                           ) : (
                             <Select
@@ -307,11 +302,10 @@ export default function PendingTask() {
                                 activity.stage_name === "Mesh & Mould"
                                   ? activity.mesh_mold_status
                                   : activity.stage_name === "Reinforcement"
-                                  ? activity.reinforcement_status
-                                  : activity.status
-                              }
-                            >
-                              <SelectTrigger className="w-full text-xs">
+                                    ? activity.reinforcement_status
+                                    : activity.status
+                              }>
+                              <SelectTrigger className="w-full h-8 text-xs">
                                 <SelectValue placeholder="Select status" />
                               </SelectTrigger>
                               <SelectContent>
@@ -334,7 +328,7 @@ export default function PendingTask() {
 
               {/* Desktop Layout */}
               <div className="hidden md:block">
-                <div className="grid grid-cols-4 gap-2 p-3 text-xs font-medium text-muted-foreground bg-muted/50">
+                <div className="grid grid-cols-4 gap-2 py-1 px-2 text-xs font-medium text-muted-foreground bg-muted/50">
                   <div>Name</div>
                   <div>Current Stage</div>
                   <div>QC Status</div>
@@ -344,8 +338,7 @@ export default function PendingTask() {
                 {list.activities.map((activity) => (
                   <div
                     key={activity.id}
-                    className="grid grid-cols-4 gap-2 p-3 border-t hover:bg-accent/50 transition-colors items-center"
-                  >
+                    className="grid grid-cols-4 py-1 px-2 border-t hover:bg-accent/50 transition-colors items-center">
                     <div className="text-sm font-medium">
                       {activity.element_id}
                     </div>
@@ -355,12 +348,10 @@ export default function PendingTask() {
                         <Button
                           variant="outline"
                           size="sm"
-                          className="w-full md:w-auto text-left"
                           onClick={() => {
                             setSelectedActivity(activity);
                             setIsOpen(true);
-                          }}
-                        >
+                          }}>
                           {activity.qc_status || "InProgress"}
                         </Button>
                       ) : (
@@ -375,8 +366,8 @@ export default function PendingTask() {
                           {activity.stage_name === "Mesh & Mould"
                             ? activity.mesh_mold_status
                             : activity.stage_name === "Reinforcement"
-                            ? activity.reinforcement_status
-                            : activity.status}
+                              ? activity.reinforcement_status
+                              : activity.status}
                         </span>
                       ) : (
                         <Select
@@ -389,11 +380,10 @@ export default function PendingTask() {
                             activity.MeshMold === true
                               ? activity.mesh_mold_status
                               : activity.Reinforcement === true
-                              ? activity.reinforcement_status
-                              : activity.status
-                          }
-                        >
-                          <SelectTrigger className="w-full text-sm">
+                                ? activity.reinforcement_status
+                                : activity.status
+                          }>
+                          <SelectTrigger className="w-full h-8 text-sm">
                             <SelectValue placeholder="Select status" />
                           </SelectTrigger>
                           <SelectContent>
@@ -421,8 +411,7 @@ export default function PendingTask() {
           if (!open) {
             setSelectedActivity(null);
           }
-        }}
-      >
+        }}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>QC Questions</DialogTitle>
@@ -452,22 +441,22 @@ export default function PendingTask() {
           <div className="flex justify-end gap-2 mt-4">
             <Button
               variant="outline"
-              onClick={() => setConfirmModalOpen(false)}
-            >
+              size="sm"
+              onClick={() => setConfirmModalOpen(false)}>
               Cancel
             </Button>
             <Button
+              size="sm"
               onClick={() => {
                 if (pendingStatus && pendingActivityId) {
                   handleStatusChange(
                     pendingStatus,
                     pendingActivityId,
-                    "member"
+                    "member",
                   );
                 }
                 setConfirmModalOpen(false);
-              }}
-            >
+              }}>
               Yes
             </Button>
           </div>

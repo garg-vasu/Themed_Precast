@@ -173,6 +173,7 @@ const CuttingStockCalculator = lazy(
 const NotificationPage = lazy(
   () => import("./Pages/Notification/Notification"),
 );
+const ModelViewer = lazy(() => import("./Pages/ModelViewer/ModelViewer"));
 
 const routeLoadingFallback = (
   <div className="route-loading" role="status" aria-live="polite">
@@ -211,8 +212,7 @@ const projectRoleGuard = (
 ) => (
   <ProjectRoleRoute
     allowedPermissions={allowedPermissions}
-    redirectTo={redirectTo}
-  >
+    redirectTo={redirectTo}>
     {element}
   </ProjectRoleRoute>
 );
@@ -428,6 +428,7 @@ const mainChildren: RouteObject[] = [
     ),
   },
   { path: "notification", element: withSuspense(<NotificationPage />) },
+  { path: "model-viewer", element: withSuspense(<ModelViewer />) },
 ];
 
 const projectChildren: RouteObject[] = [

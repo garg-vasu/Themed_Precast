@@ -200,7 +200,7 @@ export default function AddAssignMember({
     }
   };
   return (
-    <div className="flex flex-col gap-2 py-4 px-4">
+    <div className="flex flex-col gap-2 ">
       <form onSubmit={handleSubmit(onSubmit)}>
         {/* 2 row layout  */}
         <div>
@@ -219,8 +219,7 @@ export default function AddAssignMember({
                     value={field.value ? field.value.toString() : ""}
                     onValueChange={(val) => {
                       field.onChange(Number(val));
-                    }}
-                  >
+                    }}>
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Select a User" />
                     </SelectTrigger>
@@ -231,8 +230,7 @@ export default function AddAssignMember({
                           users.map((user) => (
                             <SelectItem
                               key={user.user_id}
-                              value={user.user_id.toString()}
-                            >
+                              value={user.user_id.toString()}>
                               {`${user.first_name || ""} ${
                                 user.last_name || ""
                               }`.trim() || user.email}
@@ -256,21 +254,21 @@ export default function AddAssignMember({
         </div>
 
         {/* Submit Button */}
-        <div className="flex justify-end gap-2 pt-2 border-t">
+        <div className="flex justify-end gap-2">
           <Button
             type="button"
             variant="outline"
+            size="sm"
             onClick={() => {
               if (onClose) {
                 onClose();
               } else {
                 navigate("/categories");
               }
-            }}
-          >
+            }}>
             Cancel
           </Button>
-          <Button type="submit" disabled={isSubmitting}>
+          <Button type="submit" size="sm" disabled={isSubmitting}>
             {isSubmitting
               ? "Saving..."
               : isEditMode

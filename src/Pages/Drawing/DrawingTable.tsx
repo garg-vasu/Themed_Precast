@@ -167,8 +167,7 @@ export const getColumns = (
               )}`,
               "_blank",
             )
-          }
-        >
+          }>
           View File
         </Button>
       );
@@ -336,8 +335,7 @@ export function DrawingTable({ refresh }: { refresh: () => void }) {
             <Button
               variant="default"
               className="w-full sm:w-auto"
-              onClick={handleDownloadPDF}
-            >
+              onClick={handleDownloadPDF}>
               <Download className="mr-2 h-4 w-4" />
               Download PDF ({table.getFilteredSelectedRowModel().rows.length})
             </Button>
@@ -361,8 +359,7 @@ export function DrawingTable({ refresh }: { refresh: () => void }) {
                       checked={column.getIsVisible()}
                       onCheckedChange={(value) =>
                         column.toggleVisibility(!!value)
-                      }
-                    >
+                      }>
                       {column.id}
                     </DropdownMenuCheckboxItem>
                   );
@@ -392,14 +389,12 @@ export function DrawingTable({ refresh }: { refresh: () => void }) {
                 </TableRow>
               ))}
             </TableHeader>
-            <TableBody>
+            <TableBody className="[&_td]:py-1">
               {table.getRowModel().rows?.length ? (
                 table.getRowModel().rows.map((row) => (
                   <TableRow
                     key={row.id}
-                    data-state={row.getIsSelected() && "selected"}
-                    className="h-8"
-                  >
+                    data-state={row.getIsSelected() && "selected"}>
                     {row.getVisibleCells().map((cell) => (
                       <TableCell key={cell.id} className="py-2">
                         {flexRender(
@@ -414,8 +409,7 @@ export function DrawingTable({ refresh }: { refresh: () => void }) {
                 <TableRow className="h-12">
                   <TableCell
                     colSpan={table.getAllColumns().length}
-                    className="h-24 text-center py-2"
-                  >
+                    className="h-24 text-center py-2">
                     No results.
                   </TableCell>
                 </TableRow>
@@ -444,8 +438,7 @@ export function DrawingTable({ refresh }: { refresh: () => void }) {
               onValueChange={(value) => {
                 setLimit(Number(value));
                 setCurrentPage(1);
-              }}
-            >
+              }}>
               <SelectTrigger className="w-[70px]">
                 <SelectValue />
               </SelectTrigger>
@@ -469,8 +462,7 @@ export function DrawingTable({ refresh }: { refresh: () => void }) {
               variant="outline"
               size="sm"
               onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
-              disabled={!pagination?.has_prev}
-            >
+              disabled={!pagination?.has_prev}>
               Previous
             </Button>
             <Button
@@ -483,8 +475,7 @@ export function DrawingTable({ refresh }: { refresh: () => void }) {
                     : prev + 1,
                 )
               }
-              disabled={!pagination?.has_next}
-            >
+              disabled={!pagination?.has_next}>
               Next
             </Button>
           </div>

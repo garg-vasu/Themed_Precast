@@ -180,8 +180,7 @@ export function ReceiveTable() {
                   `/project/${projectId}/element-detail/${row.original.element_id}`,
                 );
               }
-            }}
-          >
+            }}>
             {row.getValue("element_name")}
           </div>
         );
@@ -209,8 +208,9 @@ export function ReceiveTable() {
           <Button
             variant="customPadding"
             size="noPadding"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          >
+            onClick={() =>
+              column.toggleSorting(column.getIsSorted() === "asc")
+            }>
             Thickness
             <ArrowUpDown className="ml-1 h-4 w-4" />
           </Button>
@@ -227,8 +227,9 @@ export function ReceiveTable() {
           <Button
             variant="customPadding"
             size="noPadding"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          >
+            onClick={() =>
+              column.toggleSorting(column.getIsSorted() === "asc")
+            }>
             Length
             <ArrowUpDown className="ml-1 h-4 w-4" />
           </Button>
@@ -245,8 +246,9 @@ export function ReceiveTable() {
           <Button
             variant="customPadding"
             size="noPadding"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          >
+            onClick={() =>
+              column.toggleSorting(column.getIsSorted() === "asc")
+            }>
             Height
             <ArrowUpDown className="ml-1 h-4 w-4" />
           </Button>
@@ -263,8 +265,9 @@ export function ReceiveTable() {
           <Button
             variant="customPadding"
             size="noPadding"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          >
+            onClick={() =>
+              column.toggleSorting(column.getIsSorted() === "asc")
+            }>
             Mass
             <ArrowUpDown className="ml-1 h-4 w-4" />
           </Button>
@@ -284,8 +287,7 @@ export function ReceiveTable() {
         <Button
           variant="customPadding"
           size="noPadding"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
           Production Date
           <ArrowUpDown className="ml-1 h-4 w-4" />
         </Button>
@@ -327,8 +329,7 @@ export function ReceiveTable() {
                   setSelectedElement(element);
                   setSelectedStockyardId("");
                   setIsDialogOpen(true);
-                }}
-              >
+                }}>
                 Approve
               </Button>
             )}
@@ -337,6 +338,24 @@ export function ReceiveTable() {
       },
     },
   ];
+
+  // Map column ids to display names used in table headers
+  const COLUMN_LABELS: Record<string, string> = {
+    element_name: "Element Name",
+    element_type: "Element Type",
+    element_type_name: "Element Type Name",
+    thickness: "Thickness",
+    length: "Length",
+    height: "Height",
+    mass: "Mass",
+    production_date: "Production Date",
+    floor_name: "Floor Name",
+    tower_name: "Tower Name",
+  };
+
+  const getColumnDisplayName = (columnId: string): string =>
+    COLUMN_LABELS[columnId] ??
+    columnId.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
   useEffect(() => {
     if (!projectId) return;
@@ -539,19 +558,15 @@ export function ReceiveTable() {
         />
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-center">
           {table.getFilteredSelectedRowModel().rows.length > 0 && (
-            <Button
-              variant="default"
-              className="w-full sm:w-auto"
-              onClick={handleDownloadPDF}
-            >
-              <Download className="mr-2 h-4 w-4" />
+            <Button variant="default" size="sm" onClick={handleDownloadPDF}>
+              <Download className="" />
               Download PDF ({table.getFilteredSelectedRowModel().rows.length})
             </Button>
           )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="w-full sm:w-auto">
-                Columns <ChevronDown className="ml-1 h-4 w-4" />
+              <Button variant="outline" size="sm">
+                Columns <ChevronDown className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -566,9 +581,8 @@ export function ReceiveTable() {
                       checked={column.getIsVisible()}
                       onCheckedChange={(value) =>
                         column.toggleVisibility(!!value)
-                      }
-                    >
-                      {column.id}
+                      }>
+                      {getColumnDisplayName(column.id)}
                     </DropdownMenuCheckboxItem>
                   );
                 })}
@@ -597,7 +611,7 @@ export function ReceiveTable() {
               </TableRow>
             ))}
           </TableHeader>
-          <TableBody>
+          <TableBody className="[&_td]:py-1">
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => {
                 const isDisabled = row.original.disable;
@@ -609,13 +623,11 @@ export function ReceiveTable() {
                       isDisabled
                         ? "opacity-50 bg-gray-100 cursor-not-allowed"
                         : ""
-                    }
-                  >
+                    }>
                     {row.getVisibleCells().map((cell) => (
                       <TableCell
                         key={cell.id}
-                        className={`${isDisabled ? "text-gray-500" : ""}`}
-                      >
+                        className={`${isDisabled ? "text-gray-500" : ""}`}>
                         {flexRender(
                           cell.column.columnDef.cell,
                           cell.getContext(),
@@ -629,8 +641,7 @@ export function ReceiveTable() {
               <TableRow>
                 <TableCell
                   colSpan={getColumns(permissions).length}
-                  className="h-24 text-center"
-                >
+                  className="h-24 text-center">
                   No results.
                 </TableCell>
               </TableRow>
@@ -648,16 +659,14 @@ export function ReceiveTable() {
             variant="outline"
             size="sm"
             onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-          >
+            disabled={!table.getCanPreviousPage()}>
             Previous
           </Button>
           <Button
             variant="outline"
             size="sm"
             onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-          >
+            disabled={!table.getCanNextPage()}>
             Next
           </Button>
         </div>
@@ -679,8 +688,7 @@ export function ReceiveTable() {
               userStockyards.length > 0 ? (
                 <Select
                   value={selectedStockyardId}
-                  onValueChange={setSelectedStockyardId}
-                >
+                  onValueChange={setSelectedStockyardId}>
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Select a stockyard" />
                   </SelectTrigger>
@@ -695,8 +703,7 @@ export function ReceiveTable() {
                         return (
                           <SelectItem
                             key={stockyard.id}
-                            value={stockyard.stockyard_id.toString()}
-                          >
+                            value={stockyard.stockyard_id.toString()}>
                             {yardName}
                           </SelectItem>
                         );
@@ -723,8 +730,7 @@ export function ReceiveTable() {
                   !selectedStockyardId ||
                   !userStockyards ||
                   userStockyards.length === 0
-                }
-              >
+                }>
                 {isSubmitting ? "Saving..." : "Save changes"}
               </Button>
             </DialogFooter>

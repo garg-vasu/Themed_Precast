@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import type { AxiosError } from "axios";
 import axios from "axios";
+import { X } from "lucide-react";
 
 type PaperDialogProps = {
   onClose?: () => void;
@@ -63,7 +64,7 @@ const templateSchema = z.object({
 type FormData = z.infer<typeof templateSchema>;
 
 const getDefaultQuestions = (
-  paper?: PaperDialogProps["paper"]
+  paper?: PaperDialogProps["paper"],
 ): FormData["questions"] => {
   if (!paper?.questions || paper.questions.length === 0) {
     return [{ question_text: "", options: [""] }];
@@ -100,26 +101,31 @@ function QuestionItem({
   });
 
   return (
-    <div className="border rounded-md p-3 flex flex-col gap-3">
+    <div className="  flex flex-col gap-1 ">
       <div className="flex items-center justify-between">
         <div className="font-medium text-sm">Question {questionIndex + 1}</div>
         {canRemove && (
-          <Button type="button" variant="ghost" size="sm" onClick={onRemove}>
-            Remove
-          </Button>
+          // <Button type="button" variant="ghost" >
+          //   Remove
+          // </Button>
+          <X
+            className="h-4 w-4 cursor-pointer text-red-500"
+            size="sm"
+            onClick={onRemove}
+          />
         )}
       </div>
-      <div className="grid gap-1.5">
-        <Label htmlFor={`questions.${questionIndex}.question_text`}>
+      <div className="grid gap-1">
+        {/* <Label htmlFor={`questions.${questionIndex}.question_text`}>
           Question Text <span className="text-red-500">*</span>
-        </Label>
+        </Label> */}
         <Input
           id={`questions.${questionIndex}.question_text`}
           placeholder="Enter question text"
           {...register(`questions.${questionIndex}.question_text` as const)}
           aria-invalid={!!errors.questions?.[questionIndex]?.question_text}
         />
-        <p className="text-sm text-red-600 min-h-[20px]">
+        <p className="text-xs text-red-600 min-h-[16px]">
           {errors.questions?.[questionIndex]?.question_text?.message ||
             "\u00A0"}
         </p>
@@ -130,39 +136,35 @@ function QuestionItem({
           type="button"
           variant="outline"
           size="sm"
-          onClick={() => append("")}
-        >
+          onClick={() => append("")}>
           Add Option
         </Button>
       </div>
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-1">
         {fields.map((optionField, optionIndex) => (
-          <div key={optionField.id} className="flex items-center gap-2">
-            <div className="flex-1 grid gap-1.5">
+          <div key={optionField.id} className="flex flex-col">
+            <div className="flex items-center gap-2">
               <Input
                 placeholder={`Option ${optionIndex + 1}`}
                 {...register(
-                  `questions.${questionIndex}.options.${optionIndex}` as const
+                  `questions.${questionIndex}.options.${optionIndex}` as const,
                 )}
                 aria-invalid={
                   !!errors.questions?.[questionIndex]?.options?.[optionIndex]
                 }
               />
-              <p className="text-sm text-red-600 min-h-[20px]">
-                {errors.questions?.[questionIndex]?.options?.[optionIndex]
-                  ?.message || "\u00A0"}
-              </p>
+              {fields.length > 1 && (
+                <X
+                  className="h-4 w-4 cursor-pointer text-red-500 shrink-0"
+                  size="sm"
+                  onClick={() => remove(optionIndex)}
+                />
+              )}
             </div>
-            {fields.length > 1 && (
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => remove(optionIndex)}
-              >
-                Remove
-              </Button>
-            )}
+            <p className="text-xs text-red-600 min-h-[16px]">
+              {errors.questions?.[questionIndex]?.options?.[optionIndex]
+                ?.message || "\u00A0"}
+            </p>
           </div>
         ))}
       </div>
@@ -247,7 +249,7 @@ export default function AddPaper({ onClose, paper }: PaperDialogProps) {
       if (isEditMode) {
         const response = await apiClient.put(
           `questions/update_paper/${paper?.paper_id}`,
-          payload
+          payload,
         );
         if (response.status === 200 || response.status === 201) {
           toast.success("Paper updated successfully!");
@@ -272,19 +274,16 @@ export default function AddPaper({ onClose, paper }: PaperDialogProps) {
     } catch (error: unknown) {
       const errorMessage = getErrorMessage(
         error,
-        isEditMode ? "update paper" : "create paper"
+        isEditMode ? "update paper" : "create paper",
       );
       toast.error(errorMessage);
     }
   };
 
   return (
-    <div className="flex flex-col gap-2 py-4 ">
-      <form
-        onSubmit={handleSubmit(onSubmit as any)}
-        className="flex flex-col gap-2"
-      >
-        <div className="grid w-full items-center gap-1.5">
+    <div className="flex flex-col gap-1  ">
+      <form onSubmit={handleSubmit(onSubmit as any)} className="flex flex-col ">
+        <div className="grid w-full items-center gap-1">
           <Label htmlFor="paper_name">
             Paper Name <span className="text-red-500">*</span>
           </Label>
@@ -294,13 +293,13 @@ export default function AddPaper({ onClose, paper }: PaperDialogProps) {
             {...register("paper_name")}
             aria-invalid={!!errors.paper_name}
           />
-          <p className="text-sm text-red-600 min-h-[20px]">
+          <p className="text-xs text-red-600 min-h-[16px]">
             {errors.paper_name?.message || "\u00A0"}
           </p>
         </div>
 
-        <div className="flex items-center justify-between mt-2">
-          <Label className="font-semibold">Questions</Label>
+        <div className="flex items-center justify-end mb-2 ">
+          {/* <Label className="font-semibold">Questions</Label> */}
           <Button
             type="button"
             variant="outline"
@@ -310,13 +309,12 @@ export default function AddPaper({ onClose, paper }: PaperDialogProps) {
                 question_text: "",
                 options: [""],
               })
-            }
-          >
+            }>
             Add Question
           </Button>
         </div>
 
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col ">
           {fields.map((field, questionIndex) => (
             <QuestionItem
               key={field.id}
@@ -330,7 +328,7 @@ export default function AddPaper({ onClose, paper }: PaperDialogProps) {
           ))}
         </div>
 
-        <div className="flex justify-end gap-3 pt-4">
+        <div className="flex justify-end gap-3 pt-2">
           <Button
             type="button"
             variant="outline"
@@ -340,16 +338,15 @@ export default function AddPaper({ onClose, paper }: PaperDialogProps) {
               } else {
                 navigate("/papers");
               }
-            }}
-          >
+            }}>
             Cancel
           </Button>
           <Button type="submit" disabled={isSubmitting}>
             {isSubmitting
               ? "Saving..."
               : isEditMode
-              ? "Update Paper"
-              : "Create Paper"}
+                ? "Update Paper"
+                : "Create Paper"}
           </Button>
         </div>
       </form>

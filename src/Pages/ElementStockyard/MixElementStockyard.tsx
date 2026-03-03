@@ -1,8 +1,8 @@
-import { Button } from "@/components/ui/button";
 import PageHeader from "@/components/ui/PageHeader";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { List, MoreHorizontal } from "lucide-react";
+import { CheckCheck, Warehouse } from "lucide-react";
 import { useContext, useMemo } from "react";
+import { Truck } from "lucide-react";
 
 import { ProjectContext, useProject } from "@/Provider/ProjectProvider";
 import { StockyardTable } from "./StockyardTable";
@@ -40,7 +40,7 @@ export default function MixElementStockyard() {
         id: "1",
         label: "Stockyard",
         number: 1,
-        icon: List,
+        icon: Warehouse,
         content: <StockyardTable />,
       });
     }
@@ -50,7 +50,7 @@ export default function MixElementStockyard() {
         id: "2",
         label: "Dispatched",
         number: 24,
-        icon: MoreHorizontal,
+        icon: Truck,
         content: <DispatchedTable />,
       });
     }
@@ -60,7 +60,7 @@ export default function MixElementStockyard() {
         id: "3",
         label: "Received",
         number: 255,
-        icon: MoreHorizontal,
+        icon: CheckCheck,
         content: <ReceiveTable />,
       });
     }

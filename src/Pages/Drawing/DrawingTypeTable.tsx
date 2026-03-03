@@ -331,12 +331,8 @@ export function DrawingTypeTable({ refresh }: { refresh: () => void }) {
         />
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-center">
           {table.getFilteredSelectedRowModel().rows.length > 0 && (
-            <Button
-              variant="default"
-              className="w-full sm:w-auto"
-              onClick={handleDownloadPDF}
-            >
-              <Download className="mr-2 h-4 w-4" />
+            <Button variant="default" size="sm" onClick={handleDownloadPDF}>
+              <Download className=" h-4 w-4" />
               Download PDF ({table.getFilteredSelectedRowModel().rows.length})
             </Button>
           )}
@@ -344,16 +340,15 @@ export function DrawingTypeTable({ refresh }: { refresh: () => void }) {
             <Button
               variant="outline"
               className="w-full sm:w-auto"
-              onClick={openCreateDialog}
-            >
+              onClick={openCreateDialog}>
               Add Drawing Type
             </Button>
           )}
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="w-full sm:w-auto">
-                Columns <ChevronDown className="ml-1 h-4 w-4" />
+              <Button variant="outline" size="sm">
+                Columns <ChevronDown className=" h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -368,8 +363,7 @@ export function DrawingTypeTable({ refresh }: { refresh: () => void }) {
                       checked={column.getIsVisible()}
                       onCheckedChange={(value) =>
                         column.toggleVisibility(!!value)
-                      }
-                    >
+                      }>
                       {column.id}
                     </DropdownMenuCheckboxItem>
                   );
@@ -399,14 +393,12 @@ export function DrawingTypeTable({ refresh }: { refresh: () => void }) {
                 </TableRow>
               ))}
             </TableHeader>
-            <TableBody>
+            <TableBody className="[&_td]:py-1">
               {table.getRowModel().rows?.length ? (
                 table.getRowModel().rows.map((row) => (
                   <TableRow
                     key={row.id}
-                    data-state={row.getIsSelected() && "selected"}
-                    className="h-6"
-                  >
+                    data-state={row.getIsSelected() && "selected"}>
                     {row.getVisibleCells().map((cell) => (
                       <TableCell key={cell.id} className="py-0.5">
                         {flexRender(
@@ -421,8 +413,7 @@ export function DrawingTypeTable({ refresh }: { refresh: () => void }) {
                 <TableRow className="h-12">
                   <TableCell
                     colSpan={table.getAllColumns().length}
-                    className="h-24 text-center py-2"
-                  >
+                    className="h-24 text-center py-2">
                     No results.
                   </TableCell>
                 </TableRow>
@@ -441,16 +432,14 @@ export function DrawingTypeTable({ refresh }: { refresh: () => void }) {
             variant="outline"
             size="sm"
             onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-          >
+            disabled={!table.getCanPreviousPage()}>
             Previous
           </Button>
           <Button
             variant="outline"
             size="sm"
             onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-          >
+            disabled={!table.getCanNextPage()}>
             Next
           </Button>
         </div>
@@ -463,8 +452,7 @@ export function DrawingTypeTable({ refresh }: { refresh: () => void }) {
             if (!open) {
               setEditingDrawingType(null);
             }
-          }}
-        >
+          }}>
           <DialogContent className="max-w-3xl">
             <DialogHeader>
               <DialogTitle>

@@ -193,8 +193,7 @@ export const getColumns = (
               "An unexpected error occurred while downloading the file.",
             );
           }
-        }}
-      >
+        }}>
         <Eye />
         View File
       </Button>
@@ -219,8 +218,7 @@ export const getColumns = (
       <Button
         variant="customPadding"
         size="noPadding"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
         Total Items
         <ArrowUpDown />
       </Button>
@@ -233,8 +231,7 @@ export const getColumns = (
       <Button
         variant="customPadding"
         size="noPadding"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
         Processed Items
         <ArrowUpDown />
       </Button>
@@ -247,8 +244,7 @@ export const getColumns = (
       <Button
         variant="customPadding"
         size="noPadding"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
         Created At
         <ArrowUpDown />
       </Button>
@@ -264,8 +260,7 @@ export const getColumns = (
       <Button
         variant="customPadding"
         size="noPadding"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
         Completed At
         <ArrowUpDown />
       </Button>
@@ -314,8 +309,7 @@ export const getColumns = (
               isWithin30Minutes
                 ? "text-red-600 hover:text-red-700 border-red-600 hover:border-red-700"
                 : "text-gray-400 cursor-not-allowed"
-            }`}
-          >
+            }`}>
             <RotateCcw />
             Rollback
           </Button>
@@ -324,6 +318,22 @@ export const getColumns = (
     },
   },
 ];
+
+// Map column ids to display names used in table headers
+const COLUMN_LABELS: Record<string, string> = {
+  element_name: "Element Name",
+  element_id: "Element ID",
+  element_type_id: "Element Type ID",
+  element_type_name: "Element Type Name",
+  element_type: "Element Type",
+  stage_name: "Stage Name",
+  tower_name: "Tower Name",
+  floor_name: "Floor Name",
+};
+
+const getColumnDisplayName = (columnId: string): string =>
+  COLUMN_LABELS[columnId] ??
+  columnId.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
 type PaginationInfo = {
   current_page: number;
@@ -461,8 +471,6 @@ export function CompletedJobTable() {
     });
   };
 
-
-
   return (
     <div className="w-full">
       <div className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
@@ -481,8 +489,7 @@ export function CompletedJobTable() {
             <Button
               variant="default"
               className="w-full sm:w-auto"
-              onClick={handleDownloadPDF}
-            >
+              onClick={handleDownloadPDF}>
               <Download className="mr-2 h-4 w-4" />
               Download PDF ({table.getFilteredSelectedRowModel().rows.length})
             </Button>
@@ -505,9 +512,8 @@ export function CompletedJobTable() {
                       checked={column.getIsVisible()}
                       onCheckedChange={(value) =>
                         column.toggleVisibility(!!value)
-                      }
-                    >
-                      {column.id}
+                      }>
+                      {getColumnDisplayName(column.id)}
                     </DropdownMenuCheckboxItem>
                   );
                 })}
@@ -536,13 +542,12 @@ export function CompletedJobTable() {
               </TableRow>
             ))}
           </TableHeader>
-          <TableBody>
+          <TableBody className="">
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
-                >
+                  data-state={row.getIsSelected() && "selected"}>
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
                       {flexRender(
@@ -557,8 +562,7 @@ export function CompletedJobTable() {
               <TableRow>
                 <TableCell
                   colSpan={columns.length}
-                  className="h-24 text-center"
-                >
+                  className="h-24 text-center">
                   No results.
                 </TableCell>
               </TableRow>
@@ -586,8 +590,7 @@ export function CompletedJobTable() {
               onValueChange={(value) => {
                 setLimit(Number(value));
                 setCurrentPage(1);
-              }}
-            >
+              }}>
               <SelectTrigger className="w-[70px]">
                 <SelectValue />
               </SelectTrigger>
@@ -611,8 +614,7 @@ export function CompletedJobTable() {
               variant="outline"
               size="sm"
               onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
-              disabled={!pagination?.has_prev}
-            >
+              disabled={!pagination?.has_prev}>
               Previous
             </Button>
             <Button
@@ -625,8 +627,7 @@ export function CompletedJobTable() {
                     : prev + 1,
                 )
               }
-              disabled={!pagination?.has_next}
-            >
+              disabled={!pagination?.has_next}>
               Next
             </Button>
           </div>

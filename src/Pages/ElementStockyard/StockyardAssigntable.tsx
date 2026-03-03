@@ -134,11 +134,11 @@ export const getColumns = (
     accessorKey: "created_at",
     header: ({ column }) => (
       <Button
-        variant="ghost"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
+        variant="customPadding"
+        size="noPadding"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
         Created At
-        <ArrowUpDown className="ml-1 h-4 w-4" />
+        <ArrowUpDown className="" />
       </Button>
     ),
     cell: ({ row }) => {
@@ -177,6 +177,17 @@ export const getColumns = (
     },
   },
 ];
+
+const COLUMN_LABELS: Record<string, string> = {
+  yard_name: "Stockyard Name",
+  project_name: "Project Name",
+  user_name: "User Name",
+  created_at: "Created At",
+};
+
+const getColumnDisplayName = (columnId: string): string =>
+  COLUMN_LABELS[columnId] ??
+  columnId.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
 const getErrorMessage = (error: AxiosError | unknown, data: string): string => {
   if (axios.isAxiosError(error)) {
@@ -374,8 +385,7 @@ export function StockyardAssigntable({ refresh }: { refresh: () => void }) {
                 <Button
                   variant="default"
                   className="w-full sm:w-auto"
-                  onClick={handleDownloadPDF}
-                >
+                  onClick={handleDownloadPDF}>
                   <Download className="mr-2 h-4 w-4" />
                   Download PDF (
                   {table.getFilteredSelectedRowModel().rows.length})
@@ -400,9 +410,8 @@ export function StockyardAssigntable({ refresh }: { refresh: () => void }) {
                           checked={column.getIsVisible()}
                           onCheckedChange={(value) =>
                             column.toggleVisibility(!!value)
-                          }
-                        >
-                          {column.id}
+                          }>
+                          {getColumnDisplayName(column.id)}
                         </DropdownMenuCheckboxItem>
                       );
                     })}
@@ -431,14 +440,13 @@ export function StockyardAssigntable({ refresh }: { refresh: () => void }) {
                     </TableRow>
                   ))}
                 </TableHeader>
-                <TableBody>
+                <TableBody className="[&_td]:py-1">
                   {table.getRowModel().rows?.length ? (
                     table.getRowModel().rows.map((row) => (
                       <TableRow
                         key={row.id}
                         data-state={row.getIsSelected() && "selected"}
-                        className="h-8"
-                      >
+                        className="h-8">
                         {row.getVisibleCells().map((cell) => (
                           <TableCell key={cell.id} className="py-2">
                             {flexRender(
@@ -453,8 +461,7 @@ export function StockyardAssigntable({ refresh }: { refresh: () => void }) {
                     <TableRow className="h-12">
                       <TableCell
                         colSpan={table.getAllColumns().length}
-                        className="h-24 text-center py-2"
-                      >
+                        className="h-24 text-center py-2">
                         No results.
                       </TableCell>
                     </TableRow>
@@ -473,16 +480,14 @@ export function StockyardAssigntable({ refresh }: { refresh: () => void }) {
                 variant="outline"
                 size="sm"
                 onClick={() => table.previousPage()}
-                disabled={!table.getCanPreviousPage()}
-              >
+                disabled={!table.getCanPreviousPage()}>
                 Previous
               </Button>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => table.nextPage()}
-                disabled={!table.getCanNextPage()}
-              >
+                disabled={!table.getCanNextPage()}>
                 Next
               </Button>
             </div>
@@ -496,8 +501,7 @@ export function StockyardAssigntable({ refresh }: { refresh: () => void }) {
           if (!open) {
             setEditingAssignMember(null);
           }
-        }}
-      >
+        }}>
         <DialogContent className="max-w-3xl">
           <DialogHeader>
             <DialogTitle>
