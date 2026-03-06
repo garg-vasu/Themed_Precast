@@ -20,6 +20,9 @@ import {
   FileText,
   ChevronDown,
   ChevronUp,
+  Check,
+  CalendarDays,
+  X,
 } from "lucide-react";
 import {
   Dialog,
@@ -37,6 +40,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Input } from "@/components/ui/input";
 import { YearMonthFilter } from "@/components/common/yearmonthfilter";
 import { apiClient } from "@/utils/apiClient";
 import PageHeader from "@/components/ui/PageHeader";
@@ -76,6 +80,8 @@ interface ElementDetails {
   production_concrete: number;
   stockyard: number;
   stockyard_concrete: number;
+  pending_qc: number;
+  pending_rectification: number;
   totalelement: number;
   totalelement_concrete: number;
 }
@@ -83,6 +89,8 @@ interface ElementDetails {
 interface FloorSummary {
   [elementType: string]: ElementDetails | number;
   balance: 8412;
+  pending_qc: number;
+  pending_rectification: number;
   balance_concrete: number;
   dispatch: number;
   dispatch_concrete: number;
@@ -105,6 +113,8 @@ interface FloorSummary {
 interface FloorData {
   [floor: string]: FloorSummary | number;
   balance: number;
+  pending_qc: number;
+  pending_rectification: number;
   balance_concrete: number;
   dispatch: number;
   dispatch_concrete: number;
@@ -148,6 +158,19 @@ export default function NewProjectDashboard() {
   const [collapsedFloors, setCollapsedFloors] = useState<
     Record<string, boolean>
   >({});
+
+  // Date filter: applied values (sent to API)
+  const [appliedStartDate, setAppliedStartDate] = useState<string>("");
+  const [appliedEndDate, setAppliedEndDate] = useState<string>("");
+  // Date filter: dialog temporary values
+  const [dateFilterOpen, setDateFilterOpen] = useState(false);
+  const [tempStartDate, setTempStartDate] = useState<string>("");
+  const [tempEndDate, setTempEndDate] = useState<string>("");
+
+  const isDateFilterApplied = Boolean(appliedStartDate && appliedEndDate);
+  const isApplyEnabled = Boolean(
+    tempStartDate && tempEndDate && tempEndDate >= tempStartDate,
+  );
 
   // check if the project is setup complete
   const isProjectSetupComplete =
@@ -263,7 +286,12 @@ export default function NewProjectDashboard() {
   const fetchTowerData = async () => {
     setLoading(true);
     try {
-      const response = await apiClient.get(`/dashboard/towers/${projectId}`);
+      const params = new URLSearchParams();
+      if (appliedStartDate) params.set("start_date", appliedStartDate);
+      if (appliedEndDate) params.set("end_date", appliedEndDate);
+      const queryString = params.toString();
+      const url = `/dashboard/towers/${projectId}${queryString ? `?${queryString}` : ""}`;
+      const response = await apiClient.get(url);
       if (response.status === 200) {
         setTowerData(response.data);
         // Set the first tower as default selected
@@ -283,8 +311,12 @@ export default function NewProjectDashboard() {
 
     setLoading(true);
     try {
+      const params = new URLSearchParams();
+      params.set("hierarchy_ids", String(selectedTower));
+      if (appliedStartDate) params.set("start_date", appliedStartDate);
+      if (appliedEndDate) params.set("end_date", appliedEndDate);
       const response = await apiClient.get(
-        `/element_type_status_breakdown_multiple/${projectId}?hierarchy_ids=${selectedTower}`,
+        `/element_type_status_breakdown_multiple/${projectId}?${params.toString()}`,
       );
       if (response.status === 200) {
         setData(response.data);
@@ -298,7 +330,7 @@ export default function NewProjectDashboard() {
 
   useEffect(() => {
     fetchTowerData();
-  }, [projectId]);
+  }, [projectId, appliedStartDate, appliedEndDate]);
 
   useEffect(() => {
     if (selectedTower) {
@@ -306,7 +338,27 @@ export default function NewProjectDashboard() {
       setSelectedFloor("all"); // Reset floor selection on tower change
       setSelectedElementType("all"); // Reset element type selection on tower change
     }
-  }, [selectedTower, projectId]);
+  }, [selectedTower, projectId, appliedStartDate, appliedEndDate]);
+
+  const handleOpenDateFilter = () => {
+    // Pre-fill dialog with currently applied values
+    setTempStartDate(appliedStartDate);
+    setTempEndDate(appliedEndDate);
+    setDateFilterOpen(true);
+  };
+
+  const handleApplyDateFilter = () => {
+    setAppliedStartDate(tempStartDate);
+    setAppliedEndDate(tempEndDate);
+    setDateFilterOpen(false);
+  };
+
+  const handleResetDateFilter = () => {
+    setAppliedStartDate("");
+    setAppliedEndDate("");
+    setTempStartDate("");
+    setTempEndDate("");
+  };
 
   const renderTowerPills = () => {
     if (!towerData?.towers) return null;
@@ -321,8 +373,7 @@ export default function NewProjectDashboard() {
               selectedTower === tower.id
                 ? "bg-primary text-white"
                 : "bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-            }`}
-          >
+            }`}>
             {tower.name}
           </button>
         ))}
@@ -375,8 +426,7 @@ export default function NewProjectDashboard() {
             </label>
             <Select
               value={selectedFloor || "all"}
-              onValueChange={setSelectedFloor}
-            >
+              onValueChange={setSelectedFloor}>
               <SelectTrigger className="w-full sm:w-64">
                 <SelectValue placeholder="Select a floor" />
               </SelectTrigger>
@@ -401,8 +451,7 @@ export default function NewProjectDashboard() {
                 </label>
                 <Select
                   value={selectedElementType || "all"}
-                  onValueChange={setSelectedElementType}
-                >
+                  onValueChange={setSelectedElementType}>
                   <SelectTrigger className="w-full sm:w-64">
                     <SelectValue placeholder="Select an element type" />
                   </SelectTrigger>
@@ -465,6 +514,20 @@ export default function NewProjectDashboard() {
         label: "Erected Balance",
         value: floorData.erectedbalance,
         concrete: floorData.erectedbalance_concrete,
+        icon: Package,
+      },
+      // qc and rectification
+      {
+        label: "Pending QC",
+        value: floorData.pending_qc,
+        concrete: floorData.pending_qc_concrete ?? 0,
+        // icon according to Quality check
+        icon: Check,
+      },
+      {
+        label: "Pending Rectification",
+        value: floorData.pending_rectification,
+        concrete: floorData.pending_rectification_concrete ?? 0,
         icon: Package,
       },
     ];
@@ -591,12 +654,10 @@ export default function NewProjectDashboard() {
     return (
       <div
         key={floorName}
-        className="mb-3 sm:mb-4 border rounded-lg overflow-hidden"
-      >
+        className="mb-3 sm:mb-4 border rounded-lg overflow-hidden">
         <button
           onClick={() => toggleFloorCollapse(floorName)}
-          className="w-full flex items-center justify-between px-4 py-3 bg-muted/50 hover:bg-muted transition-colors"
-        >
+          className="w-full flex items-center justify-between px-4 py-3 bg-muted/50 hover:bg-muted transition-colors">
           <h5 className="text-xl font-bold text-primary">{floorName}</h5>
           {isCollapsed ? (
             <ChevronDown className="h-5 w-5 text-muted-foreground" />
@@ -706,21 +767,29 @@ export default function NewProjectDashboard() {
     <div className="w-full p-4">
       <div className="w-full mx-auto">
         <div className="flex items-center justify-between">
-          <div>
-            <PageHeader title="Project Dashboard" />
+          <PageHeader title="Project Dashboard" />
+          <div className="flex gap-2 item-center">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={openPdfDialog}
+              disabled={downloading}>
+              {downloading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <FileText className="h-4 w-4" />
+              )}
+              {downloading ? "Generating..." : "Download Report"}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleOpenDateFilter}
+              className="gap-2">
+              <CalendarDays className="h-4 w-4" />
+              Date Filter
+            </Button>
           </div>
-          <Button
-            variant="outline"
-            onClick={openPdfDialog}
-            disabled={downloading}
-          >
-            {downloading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <FileText className="h-4 w-4" />
-            )}
-            {downloading ? "Generating..." : "Download Report"}
-          </Button>
         </div>
 
         <Dialog open={pdfDialogOpen} onOpenChange={setPdfDialogOpen}>
@@ -765,8 +834,7 @@ export default function NewProjectDashboard() {
                         | "erected",
                     )
                   }
-                  className="flex flex-wrap items-center gap-4"
-                >
+                  className="flex flex-wrap items-center gap-4">
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem id="view-all" value="all" />
                     <Label htmlFor="view-all">All</Label>
@@ -799,14 +867,12 @@ export default function NewProjectDashboard() {
               <Button
                 variant="outline"
                 onClick={closePdfDialog}
-                disabled={downloading}
-              >
+                disabled={downloading}>
                 Cancel
               </Button>
               <Button
                 onClick={handleDownloadPDF}
-                disabled={downloading || !isPdfRangeValid}
-              >
+                disabled={downloading || !isPdfRangeValid}>
                 {downloading ? "Generating..." : "Download"}
               </Button>
             </DialogFooter>
@@ -814,6 +880,76 @@ export default function NewProjectDashboard() {
         </Dialog>
 
         <SetupProgressCard />
+
+        {/* Date Filter Button + Applied Badge */}
+        <div className="flex flex-wrap items-center gap-3 mb-4 sm:mb-6">
+          {isDateFilterApplied && (
+            <div className="flex items-center gap-2 rounded-full bg-primary/10 border border-primary/20 px-3 py-1.5 text-sm text-primary">
+              <CalendarDays className="h-3.5 w-3.5" />
+              <span className="font-medium">
+                {appliedStartDate} &mdash; {appliedEndDate}
+              </span>
+              <button
+                onClick={handleResetDateFilter}
+                className="ml-1 rounded-full p-0.5 hover:bg-primary/20 transition-colors"
+                title="Remove date filter">
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Date Filter Dialog */}
+        <Dialog open={dateFilterOpen} onOpenChange={setDateFilterOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Select Date Range</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-2">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-medium text-foreground">
+                  Start Date
+                </label>
+                <Input
+                  type="date"
+                  value={tempStartDate}
+                  onChange={(e) => setTempStartDate(e.target.value)}
+                  className="h-10"
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-medium text-foreground">
+                  End Date
+                </label>
+                <Input
+                  type="date"
+                  value={tempEndDate}
+                  onChange={(e) => setTempEndDate(e.target.value)}
+                  className="h-10"
+                  min={tempStartDate || undefined}
+                />
+              </div>
+              {tempStartDate && tempEndDate && tempEndDate < tempStartDate && (
+                <p className="text-xs text-destructive">
+                  End date must be on or after the start date.
+                </p>
+              )}
+            </div>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setDateFilterOpen(false)}>
+                Cancel
+              </Button>
+              <Button
+                onClick={handleApplyDateFilter}
+                disabled={!isApplyEnabled}>
+                Apply
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
         {renderTowerPills()}
         {/* Overview section always visible */}
         {data && (

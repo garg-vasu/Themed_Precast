@@ -4,10 +4,23 @@ import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import { apiClient } from "@/utils/apiClient";
 import axios from "axios";
-import { Loader2, Truck, Package, Weight, Building2, Layers } from "lucide-react";
+import {
+  Loader2,
+  Truck,
+  Package,
+  Weight,
+  Building2,
+  Layers,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
@@ -60,7 +73,7 @@ export default function VehicleDispatch() {
     setLoading(true);
     try {
       const response = await apiClient.get<Element[] | null>(
-        `${API_ENDPOINTS.STOCK_SUMMARY}/${projectId}`
+        `${API_ENDPOINTS.STOCK_SUMMARY}/${projectId}`,
       );
       // Handle null response from API
       setElements(response.data ?? []);
@@ -121,7 +134,9 @@ export default function VehicleDispatch() {
   // Calculate capacities
   const calculateSelectedCapacity = useCallback(() => {
     return Array.from(selectedItems).reduce((total, elementId) => {
-      const foundElement = elements.find((e) => e.element_table_id === elementId);
+      const foundElement = elements.find(
+        (e) => e.element_table_id === elementId,
+      );
       return total + (foundElement?.weight || 0);
     }, 0);
   }, [selectedItems, elements]);
@@ -164,15 +179,20 @@ export default function VehicleDispatch() {
         driver_phone_no: driverPhoneNo,
         emergency_contact_phone_no: emergencyContactPhoneNo,
         items: Array.from(selectedItems),
-        vehicle_details: vehicleInfo ? {
-          ...vehicleInfo,
-          driver_name: driverName,
-          driver_phone_no: driverPhoneNo,
-          emergency_contact_phone_no: emergencyContactPhoneNo,
-        } : null,
+        vehicle_details: vehicleInfo
+          ? {
+              ...vehicleInfo,
+              driver_name: driverName,
+              driver_phone_no: driverPhoneNo,
+              emergency_contact_phone_no: emergencyContactPhoneNo,
+            }
+          : null,
       };
 
-      const response = await apiClient.post(API_ENDPOINTS.DISPATCH_ORDER, payload);
+      const response = await apiClient.post(
+        API_ENDPOINTS.DISPATCH_ORDER,
+        payload,
+      );
 
       if (response.status === 200 || response.status === 201) {
         toast.success("Dispatch order sent successfully!");
@@ -181,7 +201,7 @@ export default function VehicleDispatch() {
         setDriverPhoneNo("");
         setEmergencyContactPhoneNo("");
         fetchElements();
-        navigate(`/project/${projectId}/dispatchlog`);
+        navigate(`/project/${projectId}/errection-receving`);
       }
     } catch (error) {
       console.error("Error sending dispatch:", error);
@@ -242,7 +262,9 @@ export default function VehicleDispatch() {
                 </CardTitle>
                 {elements.length > 0 && (
                   <Button variant="outline" size="sm" onClick={handleSelectAll}>
-                    {selectedItems.size === elements.length ? "Deselect All" : "Select All"}
+                    {selectedItems.size === elements.length
+                      ? "Deselect All"
+                      : "Select All"}
                   </Button>
                 )}
               </div>
@@ -256,24 +278,35 @@ export default function VehicleDispatch() {
                 <ScrollArea className="h-[calc(100vh-340px)]">
                   <div className="space-y-1 pr-2">
                     {elements.map((item) => {
-                      const isSelected = selectedItems.has(item.element_table_id);
+                      const isSelected = selectedItems.has(
+                        item.element_table_id,
+                      );
                       return (
                         <div
                           key={item.element_table_id}
-                          onClick={() => handleItemSelection(item.element_table_id)}
+                          onClick={() =>
+                            handleItemSelection(item.element_table_id)
+                          }
                           className={`flex cursor-pointer items-center gap-2 rounded-md border px-2 py-1.5 transition-colors hover:bg-accent/50 ${
-                            isSelected ? "border-primary bg-primary/5" : "border-border"
-                          }`}
-                        >
+                            isSelected
+                              ? "border-primary bg-primary/5"
+                              : "border-border"
+                          }`}>
                           <Checkbox
                             checked={isSelected}
-                            onCheckedChange={() => handleItemSelection(item.element_table_id)}
+                            onCheckedChange={() =>
+                              handleItemSelection(item.element_table_id)
+                            }
                             aria-label={`Select ${item.element_type_name}`}
                           />
                           <div className="flex flex-1 items-center justify-between gap-2 min-w-0">
                             <div className="flex items-center gap-2 min-w-0">
-                              <span className="font-medium text-sm truncate">{item.element_type_name}</span>
-                              <Badge variant="secondary" className="text-xs shrink-0">
+                              <span className="font-medium text-sm truncate">
+                                {item.element_type_name}
+                              </span>
+                              <Badge
+                                variant="secondary"
+                                className="text-xs shrink-0">
                                 {item.element_element_id}
                               </Badge>
                             </div>
@@ -326,8 +359,7 @@ export default function VehicleDispatch() {
                     <span
                       className={`font-semibold ${
                         isOverCapacity ? "text-destructive" : "text-green-600"
-                      }`}
-                    >
+                      }`}>
                       {leftCapacity} kg
                     </span>
                   </div>
@@ -336,8 +368,7 @@ export default function VehicleDispatch() {
                 <Button
                   onClick={handleSendDispatch}
                   disabled={selectedItems.size === 0 || submitting}
-                  size="sm"
-                >
+                  size="sm">
                   {submitting ? (
                     <>
                       <Loader2 className="mr-1 h-3 w-3 animate-spin" />

@@ -567,10 +567,10 @@ export default function AddElementType() {
       if (response.status === 200) {
         toast.success("Element Type Created Successfully");
         markSetupStepDone("is_elementtype");
-        navigate(`/project/${pid}/element`);
+        navigate(`/project/${pid}/element-type`);
       } else {
         toast.error("Failed to create element type");
-        navigate(`/project/${pid}/element`);
+        navigate(`/project/${pid}/element-type`);
       }
     } catch (error) {
       console.error("Failed to create element type:", error);
@@ -636,8 +636,7 @@ export default function AddElementType() {
         <div
           role="status"
           aria-live="polite"
-          className="flex flex-col items-center gap-2"
-        >
+          className="flex flex-col items-center gap-2">
           <Loader2 className="animate-spin text-primary" />
           <span className="sr-only">Loading element type form...</span>
         </div>
@@ -679,8 +678,7 @@ export default function AddElementType() {
             {!projectCtx?.projectDetails?.is_hierachy && (
               <Button
                 className="gap-2 mr-2"
-                onClick={() => navigate(`/project/${projectId}/hierarchy`)}
-              >
+                onClick={() => navigate(`/project/${projectId}/hierarchy`)}>
                 <Plus className="w-4 h-4" />
                 Add Hierachy
               </Button>
@@ -689,8 +687,7 @@ export default function AddElementType() {
             {!projectCtx?.projectDetails?.is_bom && (
               <Button
                 className="gap-2 mr-2"
-                onClick={() => navigate(`/project/${projectId}/large-import`)}
-              >
+                onClick={() => navigate(`/project/${projectId}/large-import`)}>
                 <Plus className="w-4 h-4" />
                 Add BOM
               </Button>
@@ -699,8 +696,7 @@ export default function AddElementType() {
             {!projectCtx?.projectDetails?.is_drawingtype && (
               <Button
                 className="gap-2 mr-2"
-                onClick={() => navigate(`/project/${projectId}/drawing`)}
-              >
+                onClick={() => navigate(`/project/${projectId}/drawing`)}>
                 <Plus className="w-4 h-4" />
                 Add Drawing Type
               </Button>
@@ -731,8 +727,7 @@ export default function AddElementType() {
           <Tabs
             value={activeTab}
             onValueChange={handleTabChange}
-            className="w-full"
-          >
+            className="w-full">
             <TabsList className="grid grid-cols-2 md:grid-cols-4">
               <TabsTrigger value="element-info">Element Info</TabsTrigger>
               <TabsTrigger value="structure">Structure</TabsTrigger>
@@ -920,14 +915,12 @@ export default function AddElementType() {
                   <Button
                     variant="outline"
                     type="button"
-                    onClick={() => navigate(-1)}
-                  >
+                    onClick={() => navigate(-1)}>
                     Cancel
                   </Button>
                   <Button
                     type="button"
-                    onClick={() => handleNextTab("structure")}
-                  >
+                    onClick={() => handleNextTab("structure")}>
                     Next
                   </Button>
                 </div>
@@ -954,15 +947,13 @@ export default function AddElementType() {
                         {selectedStructures.map((struc, index) => (
                           <Card
                             key={struc.id}
-                            className="relative p-3 border rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
-                          >
+                            className="relative p-3 border rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
                             <Button
                               type="button"
                               variant="ghost"
                               size="icon"
                               className="absolute top-1 right-1 h-6 w-6 rounded-full hover:bg-destructive/10 hover:text-destructive"
-                              onClick={() => handleRemoveStructure(struc.id)}
-                            >
+                              onClick={() => handleRemoveStructure(struc.id)}>
                               <X className="h-4 w-4" />
                             </Button>
 
@@ -983,8 +974,7 @@ export default function AddElementType() {
                               </span>
                               <p
                                 className="font-medium truncate text-sm"
-                                title={struc.name}
-                              >
+                                title={struc.name}>
                                 {struc.name}
                               </p>
                             </div>
@@ -1049,8 +1039,7 @@ export default function AddElementType() {
                   <Button
                     variant="outline"
                     type="button"
-                    onClick={() => setActiveTab("element-info")}
-                  >
+                    onClick={() => setActiveTab("element-info")}>
                     Previous
                   </Button>
                   <Button type="button" onClick={() => handleNextTab("bom")}>
@@ -1080,8 +1069,7 @@ export default function AddElementType() {
                         {selectedBom.map((product, index) => (
                           <Card
                             key={product.bom_id}
-                            className="relative p-3 border rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
-                          >
+                            className="relative p-3 border rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
                             <Button
                               type="button"
                               variant="ghost"
@@ -1089,8 +1077,7 @@ export default function AddElementType() {
                               className="absolute top-1 right-1 h-6 w-6 rounded-full hover:bg-destructive/10 hover:text-destructive"
                               onClick={() =>
                                 handleRemoveProduct(product.bom_id)
-                              }
-                            >
+                              }>
                               <X className="h-4 w-4" />
                             </Button>
 
@@ -1155,14 +1142,12 @@ export default function AddElementType() {
                   <Button
                     variant="outline"
                     type="button"
-                    onClick={() => setActiveTab("structure")}
-                  >
+                    onClick={() => setActiveTab("structure")}>
                     Previous
                   </Button>
                   <Button
                     type="button"
-                    onClick={() => handleNextTab("drawings")}
-                  >
+                    onClick={() => handleNextTab("drawings")}>
                     Next
                   </Button>
                 </div>
@@ -1184,8 +1169,7 @@ export default function AddElementType() {
                         />
                         <Label
                           htmlFor={`stage-${stage.name}`}
-                          className="cursor-pointer"
-                        >
+                          className="cursor-pointer">
                           {stage.name}
                         </Label>
                       </div>
@@ -1294,8 +1278,7 @@ export default function AddElementType() {
                                   "flex items-center justify-between gap-3 w-full border border-dashed rounded-md bg-background hover:bg-accent cursor-pointer transition-colors",
                                   uploadingFiles[index] &&
                                     "opacity-60 cursor-not-allowed",
-                                )}
-                              >
+                                )}>
                                 <div className="flex items-center gap-3 p-3 min-w-0">
                                   {uploadingFiles[index] ? (
                                     <Loader2 className="animate-spin text-primary" />
@@ -1346,8 +1329,7 @@ export default function AddElementType() {
                                           variant="outline"
                                           onClick={() =>
                                             window.open(fileUrl, "_blank")
-                                          }
-                                        >
+                                          }>
                                           View
                                         </Button>
                                       ) : null}
@@ -1378,8 +1360,7 @@ export default function AddElementType() {
                     <Button
                       variant="outline"
                       type="button"
-                      onClick={() => setActiveTab("bom")}
-                    >
+                      onClick={() => setActiveTab("bom")}>
                       Previous
                     </Button>
                   </div>

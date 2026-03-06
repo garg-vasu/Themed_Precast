@@ -139,8 +139,7 @@ const createColumns = (
               if (!disabled) {
                 navigate(`/project/${row.original.project_id}/dashboard`);
               }
-            }}
-          >
+            }}>
             {row.getValue("name")}
           </div>
         );
@@ -152,7 +151,10 @@ const createColumns = (
       accessorKey: "description",
       header: "Description",
       cell: ({ row }) => (
-        <div className="capitalize">{row.getValue("description")}</div>
+        // make it truncate
+        <div className="capitalize truncate max-w-[200px]">
+          {row.getValue("description")}
+        </div>
       ),
     },
     //   budget
@@ -183,8 +185,7 @@ const createColumns = (
         <Button
           variant="customPadding"
           size="noPadding"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
           Start Date
           <ArrowUpDown className="ml-1 h-4 w-4" />
         </Button>
@@ -201,8 +202,7 @@ const createColumns = (
         <Button
           variant="customPadding"
           size="noPadding"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
           End Date
           <ArrowUpDown className="ml-1 h-4 w-4" />
         </Button>
@@ -227,8 +227,7 @@ const createColumns = (
         <Button
           variant="customPadding"
           size="noPadding"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
           Status
           <ArrowUpDown className="ml-1 h-4 w-4" />
         </Button>
@@ -239,8 +238,7 @@ const createColumns = (
 
         return (
           <span
-            className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide ${badge}`}
-          >
+            className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide ${badge}`}>
             <span className={`h-1.5 w-1.5 rounded-full ${dot}`} />
             {status || "Unknown"}
           </span>
@@ -261,8 +259,7 @@ const createColumns = (
               <Button
                 variant="ghost"
                 className="h-8 w-8 p-0"
-                disabled={disabled}
-              >
+                disabled={disabled}>
                 <span className="sr-only">Open menu</span>
                 <MoreHorizontal />
               </Button>
@@ -272,16 +269,14 @@ const createColumns = (
               <DropdownMenuItem
                 onClick={() =>
                   navigate(`/project/${project.project_id}/dashboard`)
-                }
-              >
+                }>
                 View Project
               </DropdownMenuItem>
               {isSuperAdmin && (
                 <DropdownMenuItem
                   onClick={() =>
                     navigate(`/edit-projects/${project.project_id}`)
-                  }
-                >
+                  }>
                   Edit Project
                 </DropdownMenuItem>
               )}
@@ -493,8 +488,7 @@ export function ProjectTable() {
           <Button
             variant={hasActiveFilters() ? "default" : "outline"}
             size="sm"
-            onClick={() => setFilterOpen((prev) => !prev)}
-          >
+            onClick={() => setFilterOpen((prev) => !prev)}>
             Advance Filter
           </Button>
           {hasActiveFilters() && (
@@ -506,8 +500,7 @@ export function ProjectTable() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => navigate("/add-projects")}
-            >
+              onClick={() => navigate("/add-projects")}>
               Add Project
             </Button>
           )}
@@ -530,8 +523,7 @@ export function ProjectTable() {
                       checked={column.getIsVisible()}
                       onCheckedChange={(value) =>
                         column.toggleVisibility(!!value)
-                      }
-                    >
+                      }>
                       {getColumnDisplayName(column.id)}
                     </DropdownMenuCheckboxItem>
                   );
@@ -581,8 +573,7 @@ export function ProjectTable() {
                       isDisabled
                         ? "opacity-50 cursor-not-allowed bg-muted/30"
                         : ""
-                    }
-                  >
+                    }>
                     {row.getVisibleCells().map((cell) => (
                       <TableCell key={cell.id}>
                         {flexRender(
@@ -598,8 +589,7 @@ export function ProjectTable() {
               <TableRow>
                 <TableCell
                   colSpan={columns.length}
-                  className="h-24 text-center"
-                >
+                  className="h-24 text-center">
                   No results.
                 </TableCell>
               </TableRow>
@@ -627,8 +617,7 @@ export function ProjectTable() {
               onValueChange={(value) => {
                 setLimit(Number(value));
                 setCurrentPage(1);
-              }}
-            >
+              }}>
               <SelectTrigger className="w-[70px]">
                 <SelectValue />
               </SelectTrigger>
@@ -653,8 +642,7 @@ export function ProjectTable() {
               variant="outline"
               size="sm"
               onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
-              disabled={!pagination || pagination.current_page <= 1}
-            >
+              disabled={!pagination || pagination.current_page <= 1}>
               Previous
             </Button>
             <Button
@@ -669,8 +657,7 @@ export function ProjectTable() {
               }
               disabled={
                 !pagination || pagination.current_page >= pagination.total_pages
-              }
-            >
+              }>
               Next
             </Button>
           </div>

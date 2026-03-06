@@ -157,6 +157,7 @@ const EditElementType = lazy(
 const UploadElementtype = lazy(
   () => import("./Pages/Elementtype/UploadElementtype"),
 );
+const AdjustmentPage = lazy(() => import("./Pages/Elementtype/AdjustmentPage"));
 const MixHierarchy = lazy(() => import("./Pages/Hierarchy/HierarchyTable"));
 const AddAttendance = lazy(() => import("./Pages/Attendance/AddAttendance"));
 const AddMember = lazy(() => import("./Pages/ProjectMember/AddMember"));
@@ -654,6 +655,10 @@ const projectChildren: RouteObject[] = [
       withSuspense(<UploadElementtype />),
       "/",
     ),
+  },
+  {
+    path: "adjustment/:element_type_id",
+    element: withSuspense(<AdjustmentPage />),
   },
 ];
 

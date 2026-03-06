@@ -170,9 +170,15 @@ export default function EditElementType() {
 
   // State management
   const [loading, setLoading] = useState(true);
-  const [existingData, setExistingData] = useState<ExistingElementType | null>(null);
-  const [uploadingFiles, setUploadingFiles] = useState<Record<number, boolean>>({});
-  const [drawingPreviews, setDrawingPreviews] = useState<Record<number, string>>({});
+  const [existingData, setExistingData] = useState<ExistingElementType | null>(
+    null,
+  );
+  const [uploadingFiles, setUploadingFiles] = useState<Record<number, boolean>>(
+    {},
+  );
+  const [drawingPreviews, setDrawingPreviews] = useState<
+    Record<number, string>
+  >({});
 
   const [activeTab, setActiveTab] = useState("element-info");
   const [selectedStages, setSelectedStages] = useState<string[]>([]);
@@ -262,7 +268,7 @@ export default function EditElementType() {
       clearErrors("hierarchy_quantity");
 
       const qtyFields = selectedStructures.map(
-        (_, index) => `hierarchy_quantity.${index}.quantity` as const
+        (_, index) => `hierarchy_quantity.${index}.quantity` as const,
       );
       const ok = await trigger(qtyFields as any);
       return ok;
@@ -280,7 +286,7 @@ export default function EditElementType() {
       clearErrors("products");
 
       const qtyFields = selectedBom.map(
-        (_, index) => `products.${index}.quantity` as const
+        (_, index) => `products.${index}.quantity` as const,
       );
       const ok = await trigger(qtyFields as any);
       return ok;
@@ -291,7 +297,7 @@ export default function EditElementType() {
     let ok = true;
     const values = getValues();
     const hasValidDrawing = values.drawings?.some(
-      (d) => d?.current_version && d?.file
+      (d) => d?.current_version && d?.file,
     );
     if (selectedStages.length === 0) {
       ok = false;
@@ -300,7 +306,7 @@ export default function EditElementType() {
       ok = false;
     }
     const drawingFields = allDrawingTypes.map(
-      (_, index) => `drawings.${index}.current_version` as const
+      (_, index) => `drawings.${index}.current_version` as const,
     );
     const triggerOk = await trigger(drawingFields as any);
     return ok && triggerOk;
@@ -379,14 +385,16 @@ export default function EditElementType() {
 
         // Pre-populate selected structures from existing hierarchy_quantity
         if (data.hierarchy_quantity && data.hierarchy_quantity.length > 0) {
-          const existingStructures: Structure[] = data.hierarchy_quantity.map((h) => ({
-            id: h.hierarchy_id,
-            name: h.name,
-            project_id: h.project_id,
-            parent_id: h.parent_id,
-            description: "",
-            prefix: h.naming_convention || "",
-          }));
+          const existingStructures: Structure[] = data.hierarchy_quantity.map(
+            (h) => ({
+              id: h.hierarchy_id,
+              name: h.name,
+              project_id: h.project_id,
+              parent_id: h.parent_id,
+              description: "",
+              prefix: h.naming_convention || "",
+            }),
+          );
           setSelectedStructures(existingStructures);
 
           // Set hierarchy quantities
@@ -418,7 +426,7 @@ export default function EditElementType() {
   const fetchColumn = async (pid: number) => {
     try {
       const response = await apiClient.get<ApiResponse<ColumnLayout[]>>(
-        `/get_allstages/${pid}`
+        `/get_allstages/${pid}`,
       );
       if (Array.isArray(response.data?.data)) {
         setColumn(response.data.data);
@@ -433,7 +441,7 @@ export default function EditElementType() {
   const fetchBomData = async (pid: number) => {
     try {
       const res = await apiClient.get<ApiResponse<Product[]>>(
-        `/fetch_bom_products/${pid}`
+        `/fetch_bom_products/${pid}`,
       );
       const payload = (res.data as any)?.data ?? res.data;
       setBomData(Array.isArray(payload) ? payload : []);
@@ -445,7 +453,7 @@ export default function EditElementType() {
   const fetchAllDrawingTypes = async (pid: number) => {
     try {
       const res = await apiClient.get<ApiResponse<DrawingType[]>>(
-        `/drawingtype/${pid}`
+        `/drawingtype/${pid}`,
       );
       const payload = (res.data as any)?.data ?? res.data;
       setAllDrawingTypes(Array.isArray(payload) ? payload : []);
@@ -489,7 +497,7 @@ export default function EditElementType() {
     if (existingData && allDrawingTypes.length > 0 && existingData.drawings) {
       const drawingsForm = allDrawingTypes.map((type) => {
         const existingDrawing = existingData.drawings.find(
-          (d) => d.drawing_type_id === type.drawings_type_id
+          (d) => d.drawing_type_id === type.drawings_type_id,
         );
         return {
           drawing_type_id: type.drawings_type_id,
@@ -516,7 +524,7 @@ export default function EditElementType() {
         );
       });
     },
-    [column]
+    [column],
   );
 
   const handleStageToggle = useCallback(
@@ -531,7 +539,7 @@ export default function EditElementType() {
         });
       }
     },
-    [column, sortStagesByOrder]
+    [column, sortStagesByOrder],
   );
 
   /* ------------------------------------------------------------------
@@ -594,7 +602,7 @@ export default function EditElementType() {
     setSelectedBom((prev) => prev.filter((p) => p.bom_id !== id));
     const currentProducts = getValues("products") || [];
     const updatedProducts = currentProducts.filter(
-      (prod: any) => prod.product_id !== id
+      (prod: any) => prod.product_id !== id,
     );
     setValue("products", updatedProducts);
   };
@@ -606,11 +614,11 @@ export default function EditElementType() {
     const currentProducts = getValues("products") || [];
     const mergedProducts = selectedBom.map((product) => {
       const existing = currentProducts.find(
-        (p: any) => p.product_id === product.bom_id
+        (p: any) => p.product_id === product.bom_id,
       );
       // Also check existing data for initial quantity
       const existingFromData = existingData?.products?.find(
-        (p) => p.product_id === product.bom_id
+        (p) => p.product_id === product.bom_id,
       );
       return {
         product_id: product.bom_id,
@@ -625,7 +633,12 @@ export default function EditElementType() {
   -------------------------------------------------------------------*/
   const onSubmit = async (data: FormData) => {
     // Check if any edit mode is enabled
-    if (!isBasicDetailsEditable && !isStructureEditable && !isProductsEditable && !isDrawingsEditable) {
+    if (
+      !isBasicDetailsEditable &&
+      !isStructureEditable &&
+      !isProductsEditable &&
+      !isDrawingsEditable
+    ) {
       toast.error("Please enable at least one edit mode to save changes");
       return;
     }
@@ -676,7 +689,9 @@ export default function EditElementType() {
 
     // Only include drawings and stages if toggle is ON
     if (isDrawingsEditable) {
-      const validDrawings = data.drawings.filter((d) => d.current_version && d.file);
+      const validDrawings = data.drawings.filter(
+        (d) => d.current_version && d.file,
+      );
       if (validDrawings.length === 0) {
         setActiveTab("drawings");
         return;
@@ -700,18 +715,18 @@ export default function EditElementType() {
       setLoading(true);
       const response = await apiClient.put(
         `/elementtype_update/${Number(elementTypeId)}`,
-        submitData
+        submitData,
       );
 
       if (response.status === 200) {
         toast.success("Element Type Updated Successfully");
         const wantsToAdjust = window.confirm(
-          "Element type updated successfully. Do you want to adjust?"
+          "Element type updated successfully. Do you want to adjust?",
         );
         if (wantsToAdjust) {
           navigate(`/project/${projectId}/adjustment/${elementTypeId}`);
         } else {
-          navigate(`/project/${projectId}/element`);
+          navigate(`/project/${projectId}/element-type`);
         }
       } else {
         toast.error("Failed to update element type");
@@ -779,10 +794,11 @@ export default function EditElementType() {
         <div
           role="status"
           aria-live="polite"
-          className="flex flex-col items-center gap-2"
-        >
+          className="flex flex-col items-center gap-2">
           <Loader2 className="animate-spin text-primary" />
-          <span className="text-sm text-muted-foreground">Loading element type data...</span>
+          <span className="text-sm text-muted-foreground">
+            Loading element type data...
+          </span>
         </div>
       </div>
     );
@@ -794,7 +810,9 @@ export default function EditElementType() {
         <Alert>
           <Info className="h-4 w-4" />
           <AlertTitle>Error</AlertTitle>
-          <AlertDescription>No data found for this element type</AlertDescription>
+          <AlertDescription>
+            No data found for this element type
+          </AlertDescription>
         </Alert>
       </div>
     );
@@ -820,8 +838,7 @@ export default function EditElementType() {
           <Tabs
             value={activeTab}
             onValueChange={handleTabChange}
-            className="w-full"
-          >
+            className="w-full">
             <TabsList className="grid grid-cols-2 md:grid-cols-4">
               <TabsTrigger value="element-info">Element Info</TabsTrigger>
               <TabsTrigger value="structure">Structure</TabsTrigger>
@@ -833,7 +850,9 @@ export default function EditElementType() {
             <TabsContent value="element-info">
               <div className="grid gap-4 mt-4">
                 <div className="flex items-center justify-between">
-                  <Label className="text-lg font-semibold">Basic Information</Label>
+                  <Label className="text-lg font-semibold">
+                    Basic Information
+                  </Label>
                   <div className="flex items-center gap-2">
                     <Label>Edit Mode</Label>
                     <Switch
@@ -851,11 +870,15 @@ export default function EditElementType() {
                       placeholder="Element Type Name"
                       disabled={!isBasicDetailsEditable}
                       {...register("element_type_name", {
-                        required: isBasicDetailsEditable ? "Element type name is required" : false,
-                        minLength: isBasicDetailsEditable ? {
-                          value: 2,
-                          message: "Minimum 2 characters required",
-                        } : undefined,
+                        required: isBasicDetailsEditable
+                          ? "Element type name is required"
+                          : false,
+                        minLength: isBasicDetailsEditable
+                          ? {
+                              value: 2,
+                              message: "Minimum 2 characters required",
+                            }
+                          : undefined,
                       })}
                       aria-invalid={!!errors.element_type_name}
                     />
@@ -871,11 +894,15 @@ export default function EditElementType() {
                       placeholder="Element Type"
                       disabled={!isBasicDetailsEditable}
                       {...register("element_type", {
-                        required: isBasicDetailsEditable ? "Element type is required" : false,
-                        minLength: isBasicDetailsEditable ? {
-                          value: 2,
-                          message: "Minimum 2 characters required",
-                        } : undefined,
+                        required: isBasicDetailsEditable
+                          ? "Element type is required"
+                          : false,
+                        minLength: isBasicDetailsEditable
+                          ? {
+                              value: 2,
+                              message: "Minimum 2 characters required",
+                            }
+                          : undefined,
                       })}
                       aria-invalid={!!errors.element_type}
                     />
@@ -892,11 +919,15 @@ export default function EditElementType() {
                       placeholder="Height"
                       disabled={!isBasicDetailsEditable}
                       {...register("height", {
-                        required: isBasicDetailsEditable ? "Height is required" : false,
-                        min: isBasicDetailsEditable ? {
-                          value: 1,
-                          message: "Height must be greater than 0",
-                        } : undefined,
+                        required: isBasicDetailsEditable
+                          ? "Height is required"
+                          : false,
+                        min: isBasicDetailsEditable
+                          ? {
+                              value: 1,
+                              message: "Height must be greater than 0",
+                            }
+                          : undefined,
                         valueAsNumber: true,
                       })}
                       aria-invalid={!!errors.height}
@@ -914,11 +945,15 @@ export default function EditElementType() {
                       placeholder="Area"
                       disabled={!isBasicDetailsEditable}
                       {...register("Area", {
-                        required: isBasicDetailsEditable ? "Area is required" : false,
-                        min: isBasicDetailsEditable ? {
-                          value: 1,
-                          message: "Area must be greater than 0",
-                        } : undefined,
+                        required: isBasicDetailsEditable
+                          ? "Area is required"
+                          : false,
+                        min: isBasicDetailsEditable
+                          ? {
+                              value: 1,
+                              message: "Area must be greater than 0",
+                            }
+                          : undefined,
                         valueAsNumber: true,
                       })}
                       aria-invalid={!!errors.Area}
@@ -936,11 +971,15 @@ export default function EditElementType() {
                       placeholder="Volume"
                       disabled={!isBasicDetailsEditable}
                       {...register("Volume", {
-                        required: isBasicDetailsEditable ? "Volume is required" : false,
-                        min: isBasicDetailsEditable ? {
-                          value: 1,
-                          message: "Volume must be greater than 0",
-                        } : undefined,
+                        required: isBasicDetailsEditable
+                          ? "Volume is required"
+                          : false,
+                        min: isBasicDetailsEditable
+                          ? {
+                              value: 1,
+                              message: "Volume must be greater than 0",
+                            }
+                          : undefined,
                         valueAsNumber: true,
                       })}
                       aria-invalid={!!errors.Volume}
@@ -958,11 +997,15 @@ export default function EditElementType() {
                       placeholder="Mass"
                       disabled={!isBasicDetailsEditable}
                       {...register("Mass", {
-                        required: isBasicDetailsEditable ? "Mass is required" : false,
-                        min: isBasicDetailsEditable ? {
-                          value: 1,
-                          message: "Mass must be greater than 0",
-                        } : undefined,
+                        required: isBasicDetailsEditable
+                          ? "Mass is required"
+                          : false,
+                        min: isBasicDetailsEditable
+                          ? {
+                              value: 1,
+                              message: "Mass must be greater than 0",
+                            }
+                          : undefined,
                         valueAsNumber: true,
                       })}
                       aria-invalid={!!errors.Mass}
@@ -980,11 +1023,15 @@ export default function EditElementType() {
                       placeholder="Width"
                       disabled={!isBasicDetailsEditable}
                       {...register("Width", {
-                        required: isBasicDetailsEditable ? "Width is required" : false,
-                        min: isBasicDetailsEditable ? {
-                          value: 1,
-                          message: "Width must be greater than 0",
-                        } : undefined,
+                        required: isBasicDetailsEditable
+                          ? "Width is required"
+                          : false,
+                        min: isBasicDetailsEditable
+                          ? {
+                              value: 1,
+                              message: "Width must be greater than 0",
+                            }
+                          : undefined,
                         valueAsNumber: true,
                       })}
                       aria-invalid={!!errors.Width}
@@ -1029,14 +1076,12 @@ export default function EditElementType() {
                   <Button
                     variant="outline"
                     type="button"
-                    onClick={() => navigate(-1)}
-                  >
+                    onClick={() => navigate(-1)}>
                     Cancel
                   </Button>
                   <Button
                     type="button"
-                    onClick={() => handleNextTab("structure")}
-                  >
+                    onClick={() => handleNextTab("structure")}>
                     Next
                   </Button>
                 </div>
@@ -1047,7 +1092,9 @@ export default function EditElementType() {
             <TabsContent value="structure">
               <div className="grid gap-4 mt-4">
                 <div className="flex items-center justify-between">
-                  <Label className="text-lg font-semibold">Structure Quantities</Label>
+                  <Label className="text-lg font-semibold">
+                    Structure Quantities
+                  </Label>
                   <div className="flex items-center gap-2">
                     <Label>Edit Mode</Label>
                     <Switch
@@ -1060,28 +1107,32 @@ export default function EditElementType() {
                 {selectedStructures.length > 0 ? (
                   <div>
                     <p className="text-sm text-muted-foreground mb-4">
-                      Edit quantities for the assigned floors. Adding or removing floors is not allowed.
+                      Edit quantities for the assigned floors. Adding or
+                      removing floors is not allowed.
                     </p>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-center">
                       {selectedStructures.map((struc, index) => (
                         <Card
                           key={struc.id}
-                          className="p-3 border rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
-                        >
+                          className="p-3 border rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
                           <Input
                             type="hidden"
                             {...register(
                               `hierarchy_quantity.${index}.hierarchy_id`,
                               {
                                 setValueAs: (value) => Number(value),
-                              }
+                              },
                             )}
                             value={struc.id}
                           />
 
                           <div className="mb-2">
-                            <span className="text-xs text-muted-foreground">Floor</span>
-                            <p className="font-medium truncate text-sm" title={struc.name}>
+                            <span className="text-xs text-muted-foreground">
+                              Floor
+                            </span>
+                            <p
+                              className="font-medium truncate text-sm"
+                              title={struc.name}>
                               {struc.name}
                             </p>
                           </div>
@@ -1099,16 +1150,20 @@ export default function EditElementType() {
                               {...register(
                                 `hierarchy_quantity.${index}.quantity`,
                                 {
-                                  required: isStructureEditable ? "Quantity is required" : false,
-                                  min: isStructureEditable ? {
-                                    value: 1,
-                                    message: "Quantity must be at least 1",
-                                  } : undefined,
+                                  required: isStructureEditable
+                                    ? "Quantity is required"
+                                    : false,
+                                  min: isStructureEditable
+                                    ? {
+                                        value: 1,
+                                        message: "Quantity must be at least 1",
+                                      }
+                                    : undefined,
                                   setValueAs: (value) =>
                                     value === ""
                                       ? 0
                                       : Number.parseInt(value, 10),
-                                }
+                                },
                               )}
                               aria-invalid={
                                 !!errors.hierarchy_quantity?.[index]?.quantity
@@ -1116,7 +1171,10 @@ export default function EditElementType() {
                             />
                             {errors.hierarchy_quantity?.[index]?.quantity && (
                               <p className="text-destructive min-h-[20px]">
-                                {errors.hierarchy_quantity?.[index]?.quantity?.message}
+                                {
+                                  errors.hierarchy_quantity?.[index]?.quantity
+                                    ?.message
+                                }
                               </p>
                             )}
                           </div>
@@ -1140,8 +1198,7 @@ export default function EditElementType() {
                   <Button
                     variant="outline"
                     type="button"
-                    onClick={() => setActiveTab("element-info")}
-                  >
+                    onClick={() => setActiveTab("element-info")}>
                     Previous
                   </Button>
                   <Button type="button" onClick={() => handleNextTab("bom")}>
@@ -1155,7 +1212,9 @@ export default function EditElementType() {
             <TabsContent value="bom">
               <div className="grid gap-4 mt-4">
                 <div className="flex items-center justify-between">
-                  <Label className="text-lg font-semibold">Products (BOM)</Label>
+                  <Label className="text-lg font-semibold">
+                    Products (BOM)
+                  </Label>
                   <div className="flex items-center gap-2">
                     <Label>Edit Mode</Label>
                     <Switch
@@ -1187,16 +1246,16 @@ export default function EditElementType() {
                       {selectedBom.map((product, index) => (
                         <Card
                           key={product.bom_id}
-                          className="relative p-3 border rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
-                        >
+                          className="relative p-3 border rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
                           {isProductsEditable && (
                             <Button
                               type="button"
                               variant="ghost"
                               size="icon"
                               className="absolute top-1 right-1 h-6 w-6 rounded-full hover:bg-destructive/10 hover:text-destructive"
-                              onClick={() => handleRemoveProduct(product.bom_id)}
-                            >
+                              onClick={() =>
+                                handleRemoveProduct(product.bom_id)
+                              }>
                               <X className="h-4 w-4" />
                             </Button>
                           )}
@@ -1223,11 +1282,15 @@ export default function EditElementType() {
                               placeholder="Quantity"
                               disabled={!isProductsEditable}
                               {...register(`products.${index}.quantity`, {
-                                required: isProductsEditable ? "Quantity is required" : false,
-                                min: isProductsEditable ? {
-                                  value: 1,
-                                  message: "Quantity must be at least 1",
-                                } : undefined,
+                                required: isProductsEditable
+                                  ? "Quantity is required"
+                                  : false,
+                                min: isProductsEditable
+                                  ? {
+                                      value: 1,
+                                      message: "Quantity must be at least 1",
+                                    }
+                                  : undefined,
                                 valueAsNumber: true,
                               })}
                               aria-invalid={
@@ -1264,14 +1327,12 @@ export default function EditElementType() {
                   <Button
                     variant="outline"
                     type="button"
-                    onClick={() => setActiveTab("structure")}
-                  >
+                    onClick={() => setActiveTab("structure")}>
                     Previous
                   </Button>
                   <Button
                     type="button"
-                    onClick={() => handleNextTab("drawings")}
-                  >
+                    onClick={() => handleNextTab("drawings")}>
                     Next
                   </Button>
                 </div>
@@ -1282,7 +1343,9 @@ export default function EditElementType() {
             <TabsContent value="drawings">
               <div className="grid gap-4 mt-4">
                 <div className="flex items-center justify-between">
-                  <Label className="text-lg font-semibold">Drawings & Stages</Label>
+                  <Label className="text-lg font-semibold">
+                    Drawings & Stages
+                  </Label>
                   <div className="flex items-center gap-2">
                     <Label>Edit Mode</Label>
                     <Switch
@@ -1307,28 +1370,31 @@ export default function EditElementType() {
                           htmlFor={`stage-${stage.name}`}
                           className={cn(
                             "cursor-pointer",
-                            !isDrawingsEditable && "opacity-60"
-                          )}
-                        >
+                            !isDrawingsEditable && "opacity-60",
+                          )}>
                           {stage.name}
                         </Label>
                       </div>
                     ))}
                   </div>
-                  {attemptedTabs.drawings && isDrawingsEditable && selectedStages.length === 0 && (
-                    <p className="text-destructive min-h-[20px]">
-                      Select at least one stage
-                    </p>
-                  )}
+                  {attemptedTabs.drawings &&
+                    isDrawingsEditable &&
+                    selectedStages.length === 0 && (
+                      <p className="text-destructive min-h-[20px]">
+                        Select at least one stage
+                      </p>
+                    )}
                 </div>
 
                 <Separator />
 
-                {attemptedTabs.drawings && isDrawingsEditable && !hasAnyCompleteDrawing && (
-                  <p className="text-destructive min-h-[20px]">
-                    Upload at least one complete drawing (version + file)
-                  </p>
-                )}
+                {attemptedTabs.drawings &&
+                  isDrawingsEditable &&
+                  !hasAnyCompleteDrawing && (
+                    <p className="text-destructive min-h-[20px]">
+                      Upload at least one complete drawing (version + file)
+                    </p>
+                  )}
 
                 {allDrawingTypes.length > 0 ? (
                   <div className="grid gap-4">
@@ -1356,7 +1422,7 @@ export default function EditElementType() {
                                   `drawings.${index}.drawing_type_id`,
                                   {
                                     setValueAs: (value) => Number(value),
-                                  }
+                                  },
                                 )}
                                 value={type.drawings_type_id}
                               />
@@ -1384,7 +1450,7 @@ export default function EditElementType() {
                                         }
                                         return true;
                                       },
-                                    }
+                                    },
                                   )}
                                   aria-invalid={
                                     !!errors.drawings?.[index]?.current_version
@@ -1421,9 +1487,8 @@ export default function EditElementType() {
                                   className={cn(
                                     "flex items-center justify-between gap-3 w-full border border-dashed rounded-md bg-background hover:bg-accent cursor-pointer transition-colors",
                                     uploadingFiles[index] &&
-                                      "opacity-60 cursor-not-allowed"
-                                  )}
-                                >
+                                      "opacity-60 cursor-not-allowed",
+                                  )}>
                                   <div className="flex items-center gap-3 p-3 min-w-0">
                                     {uploadingFiles[index] ? (
                                       <Loader2 className="animate-spin text-primary" />
@@ -1436,8 +1501,8 @@ export default function EditElementType() {
                                       {uploadingFiles[index]
                                         ? "Uploading..."
                                         : uploadedFile
-                                        ? uploadedFile
-                                        : "Click to upload"}
+                                          ? uploadedFile
+                                          : "Click to upload"}
                                     </div>
                                   </div>
                                   <div className="p-3">
@@ -1461,8 +1526,7 @@ export default function EditElementType() {
                                       href={fileUrl}
                                       target="_blank"
                                       rel="noopener noreferrer"
-                                      className="text-primary hover:underline"
-                                    >
+                                      className="text-primary hover:underline">
                                       View Drawing
                                     </a>
                                   ) : (
@@ -1473,7 +1537,8 @@ export default function EditElementType() {
                                 </div>
                               )}
 
-                              {(showImage || (uploadedFile && !isDrawingsEditable)) && (
+                              {(showImage ||
+                                (uploadedFile && !isDrawingsEditable)) && (
                                 <div className="rounded-md border bg-muted/20 overflow-hidden">
                                   {showImage ? (
                                     <img
@@ -1492,8 +1557,7 @@ export default function EditElementType() {
                                           variant="outline"
                                           onClick={() =>
                                             window.open(fileUrl, "_blank")
-                                          }
-                                        >
+                                          }>
                                           View
                                         </Button>
                                       ) : null}
@@ -1522,8 +1586,7 @@ export default function EditElementType() {
                     <Button
                       variant="outline"
                       type="button"
-                      onClick={() => setActiveTab("bom")}
-                    >
+                      onClick={() => setActiveTab("bom")}>
                       Previous
                     </Button>
                   </div>

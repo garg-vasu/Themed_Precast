@@ -52,16 +52,33 @@ export type Paper = {
   name: string;
 };
 
-const schema = z.object({
-  name: z.string().min(1, "Stage name is required"),
-  completion_stage: z.boolean().default(false),
-  assigned_to: z.number().min(1, "Assigned to is required"),
-  paper_id: z.number().min(1, "Paper ID is required"),
-  order: z.number().min(1, "Order is required"),
-  qc_id: z.number().min(1, "QC ID is required"),
-  qc_assign: z.boolean().default(false),
-  inventory_deduction: z.boolean().default(false),
-});
+const schema = z
+  .object({
+    name: z.string().min(1, "Stage name is required"),
+    completion_stage: z.boolean().default(false),
+    assigned_to: z.number().min(1, "Assigned to is required"),
+    paper_id: z.number().default(0),
+    order: z.number().min(1, "Order is required"),
+    qc_id: z.number().default(0),
+    qc_assign: z.boolean().default(false),
+    inventory_deduction: z.boolean().default(false),
+  })
+  .superRefine((data, ctx) => {
+    if (data.qc_assign && (!data.paper_id || data.paper_id < 1)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Paper ID is required when QC Assign is enabled",
+        path: ["paper_id"],
+      });
+    }
+    if (data.qc_assign && (!data.qc_id || data.qc_id < 1)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "QC is required when QC Assign is enabled",
+        path: ["qc_id"],
+      });
+    }
+  });
 type FormData = z.infer<typeof schema>;
 
 const getErrorMessage = (error: AxiosError | unknown, data: string): string => {
@@ -144,6 +161,7 @@ export default function EditStage({
   });
 
   const qcAssign = watch("qc_assign");
+  console.log(errors);
 
   useEffect(() => {
     const defaultValues = getDefaultValues();
@@ -156,13 +174,17 @@ export default function EditStage({
         name: data.name,
         completion_stage: data.completion_stage,
         assigned_to: data.assigned_to,
-        paper_id: data.paper_id,
         order: data.order,
-        qc_id: data.qc_id,
         qc_assign: data.qc_assign,
         inventory_deduction: data.inventory_deduction,
         project_id: projectId ? Number(projectId) : 0,
       };
+
+      // Only include paper_id and qc_id when qc_assign is true
+      if (data.qc_assign) {
+        payload.paper_id = data.paper_id;
+        payload.qc_id = data.qc_id;
+      }
 
       if (isEditMode) {
         // Update existing drawing type
@@ -177,6 +199,7 @@ export default function EditStage({
         );
         if (response.status === 200 || response.status === 201) {
           toast.success("Stage updated successfully!");
+          markSetupStepDone("is_stage_member");
           if (onClose) {
             onClose();
           } else {
@@ -265,12 +288,12 @@ export default function EditStage({
     };
   }, []);
   return (
-    <div className="flex flex-col gap-2 py-4 px-4">
+    <div className="flex flex-col">
       <form onSubmit={handleSubmit(onSubmit)}>
         {/* 2 row layout  */}
         <div>
           {/* two grid layout */}
-          <div className="grid grid-cols-1 gap-2 mt-4">
+          <div className="grid grid-cols-1 mt-2">
             {/* name */}
             <div className="grid w-full items-center gap-1.5">
               <Label htmlFor="name">
@@ -303,44 +326,44 @@ export default function EditStage({
                 {errors.order?.message || "\u00A0"}
               </p>
             </div>
-            {/* paper selector  */}
-            <div className="grid w-full items-center gap-1.5">
-              <Label htmlFor="paper">
-                Paper <span className="text-red-500">*</span>
-              </Label>
-              <Controller
-                control={control}
-                name="paper_id"
-                render={({ field }) => (
-                  <Select
-                    value={field.value ? field.value.toString() : ""}
-                    onValueChange={(value) =>
-                      field.onChange(Number(value) || 0)
-                    }
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select Paper" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        <SelectLabel>Papers</SelectLabel>
-                        {papers.map((paper) => (
-                          <SelectItem
-                            key={paper.id}
-                            value={paper.id.toString()}
-                          >
-                            {paper.name}
-                          </SelectItem>
-                        ))}
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                )}
-              />
-              <p className="text-sm text-red-600 min-h-[20px]">
-                {errors.paper_id?.message || "\u00A0"}
-              </p>
-            </div>
+            {/* paper selector - only when QC Assign is true */}
+            {qcAssign && (
+              <div className="grid w-full items-center gap-1.5">
+                <Label htmlFor="paper">
+                  Paper <span className="text-red-500">*</span>
+                </Label>
+                <Controller
+                  control={control}
+                  name="paper_id"
+                  render={({ field }) => (
+                    <Select
+                      value={field.value ? field.value.toString() : ""}
+                      onValueChange={(value) =>
+                        field.onChange(Number(value) || 0)
+                      }>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select Paper" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          <SelectLabel>Papers</SelectLabel>
+                          {papers.map((paper) => (
+                            <SelectItem
+                              key={paper.id}
+                              value={paper.id.toString()}>
+                              {paper.name}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+                <p className="text-sm text-red-600 min-h-[20px]">
+                  {errors.paper_id?.message || "\u00A0"}
+                </p>
+              </div>
+            )}
             {/* assign to selector  */}
 
             <div className="grid w-full items-center gap-1.5">
@@ -355,8 +378,7 @@ export default function EditStage({
                     value={field.value ? field.value.toString() : ""}
                     onValueChange={(value) =>
                       field.onChange(Number(value) || 0)
-                    }
-                  >
+                    }>
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Select Assign To" />
                     </SelectTrigger>
@@ -366,8 +388,7 @@ export default function EditStage({
                         {users.map((user) => (
                           <SelectItem
                             key={user.user_id}
-                            value={user.user_id.toString()}
-                          >
+                            value={user.user_id.toString()}>
                             {user.first_name} {user.last_name}
                           </SelectItem>
                         ))}
@@ -382,7 +403,7 @@ export default function EditStage({
             </div>
 
             {/* QC Assign / Inventory Deduction / Completion Stage */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-1">
               <div className="flex items-center space-x-2">
                 <Controller
                   control={control}
@@ -443,8 +464,7 @@ export default function EditStage({
                       value={field.value ? field.value.toString() : ""}
                       onValueChange={(value) =>
                         field.onChange(Number(value) || 0)
-                      }
-                    >
+                      }>
                       <SelectTrigger className="w-full">
                         <SelectValue placeholder="Select QC" />
                       </SelectTrigger>
@@ -454,8 +474,7 @@ export default function EditStage({
                           {users.map((user) => (
                             <SelectItem
                               key={user.user_id}
-                              value={user.user_id.toString()}
-                            >
+                              value={user.user_id.toString()}>
                               {user.first_name} {user.last_name}
                             </SelectItem>
                           ))}
@@ -473,26 +492,23 @@ export default function EditStage({
         </div>
 
         {/* Submit Button */}
-        <div className="flex justify-end gap-3 mt-6 pt-4 border-t">
+        <div className="flex justify-end gap-2 mt-2">
           <Button
             type="button"
             variant="outline"
             onClick={() => {
               if (onClose) {
                 onClose();
-              } else {
-                navigate("/categories");
               }
-            }}
-          >
+            }}>
             Cancel
           </Button>
           <Button type="submit" disabled={isSubmitting}>
             {isSubmitting
               ? "Saving..."
               : isEditMode
-                ? "Update Drawing Type"
-                : "Create Drawing Type"}
+                ? "Update Stage"
+                : "Create Stage"}
           </Button>
         </div>
       </form>
