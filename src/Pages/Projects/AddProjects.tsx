@@ -61,7 +61,7 @@ const roleSchema = z.object({
   role_id: z.number(),
   quantity: z.number().min(1, "Quantity must be at least 1"),
 });
-const schema = z.object({
+const baseSchema = z.object({
   name: z.string().min(1),
   description: z.string().optional(),
   budget: z.string().min(1),
@@ -75,7 +75,7 @@ const schema = z.object({
   logo: z.string().optional(),
   user_no: z.string().optional(),
   client_id: z.number().min(1),
-  roles: z.array(roleSchema).min(1, "Roles must be at least 1"),
+  roles: z.array(roleSchema),
   template_id: z.number().min(1),
   hra: z.boolean().default(false),
   work_order: z.boolean().default(false),
@@ -84,7 +84,7 @@ const schema = z.object({
   stockyards: z.array(z.number()).min(1, "Stockyards must be at least 1"),
 });
 
-type FormData = z.infer<typeof schema>;
+type FormData = z.infer<typeof baseSchema>;
 
 // status will be Critical, Cancelled, Completed, Ongoing, Inactive
 const statuses = [
@@ -199,6 +199,15 @@ type UserFormProps = {
 export default function AddProjects({ user }: UserFormProps) {
   const navigate = useNavigate();
   const isEditMode = !!user;
+  const schema = baseSchema.superRefine((data, ctx) => {
+    if (!isEditMode && data.roles.length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["roles"],
+        message: "Roles must be at least 1",
+      });
+    }
+  });
   const [oldroledata, setoldroledata] = useState<EditRole[]>([]);
   const [templates, setTemplates] = useState<Template[]>([]);
   const [openStartDate, setOpenStartDate] = useState(false);
@@ -1193,7 +1202,8 @@ export default function AddProjects({ user }: UserFormProps) {
 
                 <div className="grid w-full items-center gap-1">
                   <Label>
-                    Roles <span className="text-red-500">*</span>
+                    Roles{" "}
+                    {!isEditMode && <span className="text-red-500">*</span>}
                   </Label>
                   <MultiRole
                     users={roles}

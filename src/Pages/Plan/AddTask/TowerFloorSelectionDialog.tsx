@@ -27,10 +27,14 @@ import type { SelectedItem, ElementType, ApiResponse } from "./types";
 
 interface Stockyard {
   id: number;
+  project_id: number;
+  stockyard_id: number;
+  user_id: number;
+  created_at: string;
+  updated_at: string;
+  project_name: string;
   yard_name: string;
-  location: string;
-  capacity: number;
-  current_stock: number;
+  user_name: string;
 }
 
 type CompositeKey = `${number}-${number}`;
@@ -159,7 +163,7 @@ export default function TowerFloorSelectionDialog({
           apiClient.get(`/get_element_type_quantity/${projectId}`, {
             cancelToken: source.token,
           }),
-          apiClient.get(`/stockyards`, {
+          apiClient.get(`/projects/${projectId}/stockyards`, {
             cancelToken: source.token,
           }),
         ]);
@@ -169,7 +173,7 @@ export default function TowerFloorSelectionDialog({
           stockyardsResponse.status === 200
         ) {
           setData(elementsResponse.data);
-          setStockyards(stockyardsResponse.data);
+          setStockyards(stockyardsResponse.data.data);
         } else {
           const errorMsg = "Failed to fetch data";
           setError(errorMsg);

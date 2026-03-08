@@ -52,7 +52,6 @@ export default function ProjectRoleRoute({
   }
 
   const { permissions, loading, error } = projectCtx;
-  console.log("[ProjectRoleRoute] State:", { loading, error, permissions, allowedPermissions });
 
   const isAllowed = useMemo(() => {
     if (!permissions || permissions.length === 0) {
@@ -67,7 +66,7 @@ export default function ProjectRoleRoute({
 
   // Show access denied screen after loading completes and user doesn't have permission
   useEffect(() => {
-    if (!loading && !error && !isAllowed && permissions.length > 0) {
+    if (!loading && !error && !isAllowed) {
       setShowAccessDenied(true);
     }
   }, [loading, error, isAllowed, permissions]);
@@ -101,7 +100,7 @@ export default function ProjectRoleRoute({
   }
 
   // Access denied state with improved UX
-  if (showAccessDenied || (!isAllowed && permissions.length > 0)) {
+  if (showAccessDenied || !isAllowed) {
     return (
       <div className="flex items-center justify-center w-full min-h-screen bg-background p-4">
         <Card className="w-full max-w-lg shadow-lg border-destructive/20">
@@ -184,15 +183,6 @@ export default function ProjectRoleRoute({
             </Button>
           </CardFooter>
         </Card>
-      </div>
-    );
-  }
-
-  // No permissions loaded yet - show loading
-  if (permissions.length === 0) {
-    return (
-      <div className="flex items-center justify-center w-full min-h-screen bg-background">
-        <LoadingState label="Loading permissions..." className="py-8" />
       </div>
     );
   }

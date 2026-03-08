@@ -7,7 +7,7 @@ import {
   DialogDescription,
   DialogHeader,
 } from "@/components/ui/dialog";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import PermissionForm from "./AddPermission";
 import RoleForm from "./AddRoles";
 import AddRolePermission from "./AddRolePermission";
@@ -60,6 +60,7 @@ export default function RolePermission() {
   const [rolePermissionCounts, setRolePermissionCounts] = useState<{
     [roleId: number]: number;
   }>({});
+  const latestPermissionRequestRef = useRef(0);
 
   const fetchPermissionCount = async (roleId: number) => {
     try {
@@ -98,9 +99,18 @@ export default function RolePermission() {
   }, []);
 
   const fetchPermissions = async (roleId: number) => {
+    const requestId = ++latestPermissionRequestRef.current;
     setPermissionLoading(true);
+    setPermissions({
+      permissions: [],
+      project_id: "",
+      role_id: roleId.toString(),
+    });
+
     try {
       const response = await apiClient.get(`/role-permissions/${roleId}`);
+      if (requestId !== latestPermissionRequestRef.current) return;
+
       if (response.data.permissions) {
         setPermissions(response.data);
       } else {
@@ -111,12 +121,21 @@ export default function RolePermission() {
         });
       }
     } catch (error: any) {
+      if (requestId !== latestPermissionRequestRef.current) return;
+
       console.error("Error fetching permissions:", error);
+      setPermissions({
+        permissions: [],
+        project_id: "",
+        role_id: roleId.toString(),
+      });
       toast.error(
         error.response?.data?.message || "Failed to load permissions.",
       );
     } finally {
-      setPermissionLoading(false);
+      if (requestId === latestPermissionRequestRef.current) {
+        setPermissionLoading(false);
+      }
     }
   };
 

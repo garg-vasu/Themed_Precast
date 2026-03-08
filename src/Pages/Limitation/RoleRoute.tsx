@@ -61,11 +61,14 @@ export default function RoleRoute({
 
   const { user, loading, error } = userCtx;
 
+  const normalizeRoleName = (role: string | undefined) =>
+    role?.toLowerCase().replace(/_/g, "");
+
   // Case-insensitive role matching
   const isAllowed = useMemo(() => {
-    const roleName = user?.role_name?.toLowerCase();
+    const roleName = normalizeRoleName(user?.role_name);
     return roleName
-      ? allowedRoles.map((r) => r.toLowerCase()).includes(roleName)
+      ? allowedRoles.map((r) => normalizeRoleName(r)).includes(roleName)
       : false;
   }, [user, allowedRoles]);
 

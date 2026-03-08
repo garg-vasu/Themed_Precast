@@ -20,7 +20,7 @@ import { Switch } from "@/components/ui/switch";
 
 // Custom Components
 import MultiBom, { type Product } from "@/components/Multibom/MultiBom";
-import { type Structure } from "@/components/MultiFloor/MultiFloor";
+import MultiFloor, { type Structure } from "@/components/MultiFloor/MultiFloor";
 import { toast } from "sonner";
 
 /* ------------------------------------------------------------------
@@ -183,6 +183,7 @@ export default function EditElementType() {
   const [activeTab, setActiveTab] = useState("element-info");
   const [selectedStages, setSelectedStages] = useState<string[]>([]);
   const [allDrawingTypes, setAllDrawingTypes] = useState<DrawingType[]>([]);
+  const [structureData, setStructureData] = useState<Structure[]>([]);
   const [selectedStructures, setSelectedStructures] = useState<Structure[]>([]);
   const [bomData, setBomData] = useState<Product[]>([]);
   const [selectedBom, setSelectedBom] = useState<Product[]>([]);
@@ -344,6 +345,7 @@ export default function EditElementType() {
 
     Promise.all([
       fetchExistingElementType(etId, fId),
+      fetchStructureData(pid),
       fetchBomData(pid),
       fetchAllDrawingTypes(pid),
       fetchColumn(pid),
@@ -435,6 +437,19 @@ export default function EditElementType() {
       }
     } catch (error) {
       console.error("Error fetching stages:", error);
+    }
+  };
+
+  const fetchStructureData = async (pid: number) => {
+    try {
+      const res = await apiClient.get<ApiResponse<Structure[]>>(
+        `/get_precast_project/${pid}`,
+      );
+      const payload = (res.data as any)?.data ?? res.data;
+      setStructureData(Array.isArray(payload) ? payload : []);
+    } catch (error) {
+      console.error("Error fetching structure data:", error);
+      setStructureData([]);
     }
   };
 
@@ -598,6 +613,10 @@ export default function EditElementType() {
   /* ------------------------------------------------------------------
      Remove Handlers
   -------------------------------------------------------------------*/
+  const handleRemoveStructure = (id: number) => {
+    setSelectedStructures((prev) => prev.filter((s) => s.id !== id));
+  };
+
   const handleRemoveProduct = (id: number) => {
     setSelectedBom((prev) => prev.filter((p) => p.bom_id !== id));
     const currentProducts = getValues("products") || [];
@@ -610,6 +629,29 @@ export default function EditElementType() {
   /* ------------------------------------------------------------------
      BOM Data Synchronization
   -------------------------------------------------------------------*/
+  useEffect(() => {
+    const currentHierarchy = getValues("hierarchy_quantity") || [];
+    const mergedHierarchy = selectedStructures.map((structure) => {
+      const existing = currentHierarchy.find(
+        (item: any) => item.hierarchy_id === structure.id,
+      );
+      const existingFromData = existingData?.hierarchy_quantity?.find(
+        (item) => item.hierarchy_id === structure.id,
+      );
+
+      return {
+        hierarchy_id: structure.id,
+        quantity: existing?.quantity ?? existingFromData?.quantity ?? 0,
+      };
+    });
+
+    setValue("hierarchy_quantity", mergedHierarchy);
+
+    if (selectedStructures.length > 0) {
+      clearErrors("hierarchy_quantity");
+    }
+  }, [selectedStructures, setValue, getValues, existingData, clearErrors]);
+
   useEffect(() => {
     const currentProducts = getValues("products") || [];
     const mergedProducts = selectedBom.map((product) => {
@@ -719,14 +761,23 @@ export default function EditElementType() {
       );
 
       if (response.status === 200) {
-        toast.success("Element Type Updated Successfully");
-        const wantsToAdjust = window.confirm(
-          "Element type updated successfully. Do you want to adjust?",
-        );
-        if (wantsToAdjust) {
-          navigate(`/project/${projectId}/adjustment/${elementTypeId}`);
-        } else {
+        const isInProduction = (response.data as any)?.production === true;
+        const successMessage =
+          (response.data as any)?.message || "Element Type Updated Successfully";
+
+        if (!isInProduction) {
+          window.alert(successMessage);
           navigate(`/project/${projectId}/element-type`);
+        } else {
+          toast.success(successMessage);
+          const wantsToAdjust = window.confirm(
+            "Element type updated successfully. Do you want to adjust?",
+          );
+          if (wantsToAdjust) {
+            navigate(`/project/${projectId}/adjustment/${elementTypeId}`);
+          } else {
+            navigate(`/project/${projectId}/element-type`);
+          }
         }
       } else {
         toast.error("Failed to update element type");
@@ -1104,17 +1155,44 @@ export default function EditElementType() {
                   </div>
                 </div>
 
+                <div className="grid gap-2">
+                  <Label>Select Floors</Label>
+                  {isStructureEditable ? (
+                    <MultiFloor
+                      options={structureData}
+                      selectedOptions={selectedStructures}
+                      onSelectionChange={setSelectedStructures}
+                      placeholder="Search structure..."
+                    />
+                  ) : (
+                    <div className="p-3 border rounded-md bg-muted/30 text-muted-foreground">
+                      Enable edit mode to modify floor selection
+                    </div>
+                  )}
+                </div>
+
                 {selectedStructures.length > 0 ? (
                   <div>
                     <p className="text-sm text-muted-foreground mb-4">
-                      Edit quantities for the assigned floors. Adding or
-                      removing floors is not allowed.
+                      {isStructureEditable
+                        ? "Existing floors are prefilled. You can add, remove, or update quantities."
+                        : "Review the assigned floors and enable edit mode to modify them."}
                     </p>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-center">
                       {selectedStructures.map((struc, index) => (
                         <Card
                           key={struc.id}
-                          className="p-3 border rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
+                          className="relative p-3 border rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
+                          {isStructureEditable && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="absolute top-1 right-1 h-6 w-6 rounded-full hover:bg-destructive/10 hover:text-destructive"
+                              onClick={() => handleRemoveStructure(struc.id)}>
+                              <X className="h-4 w-4" />
+                            </Button>
+                          )}
                           <Input
                             type="hidden"
                             {...register(
@@ -1126,7 +1204,7 @@ export default function EditElementType() {
                             value={struc.id}
                           />
 
-                          <div className="mb-2">
+                          <div className={cn("mb-2", isStructureEditable && "pr-6")}>
                             <span className="text-xs text-muted-foreground">
                               Floor
                             </span>
@@ -1186,11 +1264,20 @@ export default function EditElementType() {
                   <div className="grid gap-2">
                     <Alert>
                       <Info className="h-4 w-4" />
-                      <AlertTitle>No floors assigned</AlertTitle>
+                      <AlertTitle>
+                        {isStructureEditable
+                          ? "No floors selected"
+                          : "No floors assigned"}
+                      </AlertTitle>
                       <AlertDescription>
-                        This element type has no floors assigned to it.
+                        {isStructureEditable
+                          ? "Select at least one floor."
+                          : "This element type has no floors assigned to it."}
                       </AlertDescription>
                     </Alert>
+                    <p className="text-destructive min-h-[20px]">
+                      {(errors.hierarchy_quantity as any)?.message || "\u00A0"}
+                    </p>
                   </div>
                 )}
 

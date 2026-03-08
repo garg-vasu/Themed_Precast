@@ -68,6 +68,7 @@ export default function AddRolePermission({
       );
     } catch (error: any) {
       console.error("Error fetching role permissions:", error);
+      setRolePermissions(new Set());
       setError(
         error.response?.data?.message || "Failed to load role permissions.",
       );
@@ -113,13 +114,22 @@ export default function AddRolePermission({
   };
 
   const handleMoveAll = (toAssigned: boolean) => {
-    if (toAssigned) {
-      setRolePermissions(
-        new Set(filteredPermissions.map((p) => p.permission_id)),
+    setRolePermissions((prev) => {
+      const updated = new Set(prev);
+      const visibleIds = (toAssigned ? availablePermissions : assignedPermissions).map(
+        (permission) => permission.permission_id,
       );
-    } else {
-      setRolePermissions(new Set());
-    }
+
+      visibleIds.forEach((id) => {
+        if (toAssigned) {
+          updated.add(id);
+        } else {
+          updated.delete(id);
+        }
+      });
+
+      return updated;
+    });
     setSelectedAvailable(new Set());
     setSelectedAssigned(new Set());
   };
@@ -161,6 +171,11 @@ export default function AddRolePermission({
   useEffect(() => {
     setLoading(true);
     setError(null);
+    setPermissions([]);
+    setRolePermissions(new Set());
+    setSelectedAvailable(new Set());
+    setSelectedAssigned(new Set());
+    setSearchTerm("");
     Promise.all([fetchPermissions(), fetchRolePermission()])
       .catch((error) => console.error("Error during initial fetch:", error))
       .finally(() => setLoading(false));
