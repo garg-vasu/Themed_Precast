@@ -186,6 +186,17 @@ export const getColumns = (
   },
 ];
 
+const COLUMN_LABELS: Record<string, string> = {
+  element_name: "Element Name",
+  element_type_version: "Element Revision",
+  status_text: "Status",
+  created_at: "Created At",
+};
+
+const getColumnDisplayName = (columnId: string): string =>
+  COLUMN_LABELS[columnId] ??
+  columnId.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+
 const getErrorMessage = (error: AxiosError | unknown, data: string): string => {
   if (axios.isAxiosError(error)) {
     if (error.response?.status === 401) {
@@ -431,20 +442,16 @@ export function RetificationTable() {
             />
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-center">
               {table.getFilteredSelectedRowModel().rows.length > 0 && (
-                <Button
-                  variant="default"
-                  className="w-full sm:w-auto"
-                  onClick={handleDownloadPDF}
-                >
-                  <Download className="mr-2 h-4 w-4" />
+                <Button variant="default" size="sm" onClick={handleDownloadPDF}>
+                  <Download className="" />
                   Download PDF (
                   {table.getFilteredSelectedRowModel().rows.length})
                 </Button>
               )}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="w-full sm:w-auto">
-                    Columns <ChevronDown className="ml-1 h-4 w-4" />
+                  <Button variant="outline" size="sm">
+                    Columns <ChevronDown className="" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
@@ -461,7 +468,7 @@ export function RetificationTable() {
                             column.toggleVisibility(!!value)
                           }
                         >
-                          {column.id}
+                          {getColumnDisplayName(column.id)}
                         </DropdownMenuCheckboxItem>
                       );
                     })}

@@ -33,6 +33,7 @@ export type ListView = {
 
 export type Task = {
   task_id: number;
+  element_type_name: string;
   id: number;
   project_id: number;
   name: string;
@@ -207,7 +208,7 @@ const TableView = () => {
   const getStageStatus = (
     activity: Task,
     stage: string,
-    stageNames: string[]
+    stageNames: string[],
   ) => {
     const currentStageIndex = stageNames.indexOf(activity.stage_name);
     const thisStageIndex = stageNames.indexOf(stage);
@@ -367,7 +368,7 @@ const TableView = () => {
         {tasks.map((listView, index) => {
           const stageNames = [
             ...new Set(
-              listView.activities?.flatMap((activity) => activity.stages)
+              listView.activities?.flatMap((activity) => activity.stages),
             ),
           ];
 
@@ -427,7 +428,9 @@ const TableView = () => {
                         >
                           <td className="px-2 py-1 min-w-[110px] whitespace-nowrap font-medium">
                             <div className="flex items-center gap-1">
-                              <span className="truncate">{activity.name}</span>
+                              <span className="truncate">
+                                {activity.element_type_name}
+                              </span>
                               <span className="text-xs text-muted-foreground">
                                 #{activity.element_id}
                               </span>
@@ -454,12 +457,12 @@ const TableView = () => {
                           </td>
                           {stageNames.map((stage) => {
                             const stageData = activity.stages.find(
-                              (s) => s === stage
+                              (s) => s === stage,
                             );
                             const stageStatus = getStageStatus(
                               activity,
                               stage,
-                              stageNames
+                              stageNames,
                             );
                             let status, qc_status;
                             if (stage === "Mesh & Mould") {
@@ -482,7 +485,7 @@ const TableView = () => {
                                     <span
                                       className={`w-2 h-2 rounded-full ${getStatusColor(
                                         status || "",
-                                        qc_status
+                                        qc_status,
                                       )}`}
                                     ></span>
                                     <span className="text-xs whitespace-nowrap">
@@ -509,16 +512,16 @@ const TableView = () => {
       </div>
 
       <Dialog open={qrPreview.isOpen} onOpenChange={closeQrPreview}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent>
           <DialogHeader>
             <DialogTitle>QR Code Preview</DialogTitle>
           </DialogHeader>
-          <div className="flex flex-col items-center justify-center p-4">
+          <div className="flex flex-col items-center justify-center  ">
             {qrPreview.qrUrl && (
               <img
                 src={qrPreview.qrUrl}
                 alt="QR Code"
-                className="max-w-[200px] max-h-[200px] object-contain"
+                className="max-w-[600px] max-h-[600px] object-contain"
               />
             )}
           </div>

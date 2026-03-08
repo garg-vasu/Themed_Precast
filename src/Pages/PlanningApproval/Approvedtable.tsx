@@ -97,7 +97,7 @@ export const getColumns = (permissions: string[]): ColumnDef<Approved>[] => [
             if (isDisabled) return;
             if (permissions?.includes("ViewElementDetail")) {
               navigate(
-                `/project/${projectId}/element-detail/${row.original.element_id}`
+                `/project/${projectId}/element-detail/${row.original.element_id}`,
               );
             }
           }}
@@ -166,6 +166,20 @@ export const getColumns = (permissions: string[]): ColumnDef<Approved>[] => [
   },
 ];
 
+const COLUMN_LABELS: Record<string, string> = {
+  name: "Name",
+  element_type: "Element Type",
+  element_type_name: "Element Type Name",
+  weight: "Weight",
+  floor_name: "Floor Name",
+  tower_name: "Tower Name",
+  status: "Status",
+};
+
+const getColumnDisplayName = (columnId: string): string =>
+  COLUMN_LABELS[columnId] ??
+  columnId.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+
 const getErrorMessage = (error: AxiosError | unknown, data: string): string => {
   if (axios.isAxiosError(error)) {
     if (error.response?.status === 401) {
@@ -203,14 +217,15 @@ export function ApprovedTable() {
           `/erection_orders/approved/${projectId}`,
           {
             cancelToken: source.token,
-          }
+          },
         );
 
         if (response.status === 200) {
           setData(response.data);
         } else {
           toast.error(
-            response.data?.message || "Failed to fetch approved erection orders"
+            response.data?.message ||
+              "Failed to fetch approved erection orders",
           );
         }
       } catch (err: unknown) {
@@ -307,7 +322,7 @@ export function ApprovedTable() {
       doc.save(fileName);
 
       toast.success(
-        `PDF downloaded successfully with ${selectedRows.length} approved erection order(s)`
+        `PDF downloaded successfully with ${selectedRows.length} approved erection order(s)`,
       );
     } catch (error) {
       console.error("Error generating PDF:", error);
@@ -342,8 +357,8 @@ export function ApprovedTable() {
           )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="w-full sm:w-auto">
-                Columns <ChevronDown className="ml-1 h-4 w-4" />
+              <Button variant="outline" size="sm">
+                Columns <ChevronDown className="" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -360,7 +375,7 @@ export function ApprovedTable() {
                         column.toggleVisibility(!!value)
                       }
                     >
-                      {column.id}
+                      {getColumnDisplayName(column.id)}
                     </DropdownMenuCheckboxItem>
                   );
                 })}
@@ -381,7 +396,7 @@ export function ApprovedTable() {
                         ? null
                         : flexRender(
                             header.column.columnDef.header,
-                            header.getContext()
+                            header.getContext(),
                           )}
                     </TableHead>
                   );
@@ -410,7 +425,7 @@ export function ApprovedTable() {
                       >
                         {flexRender(
                           cell.column.columnDef.cell,
-                          cell.getContext()
+                          cell.getContext(),
                         )}
                       </TableCell>
                     ))}

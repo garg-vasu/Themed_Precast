@@ -32,6 +32,7 @@ export type ListView = {
 
 export type Task = {
   task_id: number;
+  element_type_name: string;
   MeshMold: boolean;
   Other: boolean;
   Reinforcement: boolean;
@@ -204,12 +205,14 @@ export default function PendingTask() {
       {lists.map((list) => (
         <div
           key={list.task_id}
-          className="rounded-lg border overflow-hidden transition-all duration-200 hover:shadow-md">
+          className="rounded-lg border overflow-hidden transition-all duration-200 hover:shadow-md"
+        >
           <div
             className="flex justify-between items-center py-1 px-2 cursor-pointer hover:bg-accent/50 transition-colors"
             onClick={() =>
               list.activities.length > 0 && toggleExpand(list.task_id)
-            }>
+            }
+          >
             <div className="flex items-center gap-2">
               <h3 className="text-sm sm:text-base font-medium">
                 {list.element_type}
@@ -240,7 +243,8 @@ export default function PendingTask() {
                 {list.activities.map((activity) => (
                   <div
                     key={activity.id}
-                    className="border-b hover:bg-accent/50 transition-colors px-2 py-1">
+                    className="border-b hover:bg-accent/50 transition-colors px-2 py-1"
+                  >
                     <div className="space-y-1">
                       <div className="flex justify-between items-center">
                         <span className="text-xs font-medium text-muted-foreground">
@@ -268,7 +272,8 @@ export default function PendingTask() {
                               onClick={() => {
                                 setSelectedActivity(activity);
                                 setIsOpen(true);
-                              }}>
+                              }}
+                            >
                               {activity.qc_status || "InProgress"}
                             </Button>
                           ) : (
@@ -304,7 +309,8 @@ export default function PendingTask() {
                                   : activity.stage_name === "Reinforcement"
                                     ? activity.reinforcement_status
                                     : activity.status
-                              }>
+                              }
+                            >
                               <SelectTrigger className="w-full h-8 text-xs">
                                 <SelectValue placeholder="Select status" />
                               </SelectTrigger>
@@ -338,9 +344,10 @@ export default function PendingTask() {
                 {list.activities.map((activity) => (
                   <div
                     key={activity.id}
-                    className="grid grid-cols-4 py-1 px-2 border-t hover:bg-accent/50 transition-colors items-center">
+                    className="grid grid-cols-4 py-1 px-2 border-t hover:bg-accent/50 transition-colors items-center"
+                  >
                     <div className="text-sm font-medium">
-                      {activity.element_id}
+                      {activity.element_type_name} ({activity.element_id})
                     </div>
                     <div className="text-sm">{activity.stage_name}</div>
                     <div className="text-sm">
@@ -351,7 +358,8 @@ export default function PendingTask() {
                           onClick={() => {
                             setSelectedActivity(activity);
                             setIsOpen(true);
-                          }}>
+                          }}
+                        >
                           {activity.qc_status || "InProgress"}
                         </Button>
                       ) : (
@@ -382,7 +390,8 @@ export default function PendingTask() {
                               : activity.Reinforcement === true
                                 ? activity.reinforcement_status
                                 : activity.status
-                          }>
+                          }
+                        >
                           <SelectTrigger className="w-full h-8 text-sm">
                             <SelectValue placeholder="Select status" />
                           </SelectTrigger>
@@ -411,7 +420,8 @@ export default function PendingTask() {
           if (!open) {
             setSelectedActivity(null);
           }
-        }}>
+        }}
+      >
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>QC Questions</DialogTitle>
@@ -442,7 +452,8 @@ export default function PendingTask() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setConfirmModalOpen(false)}>
+              onClick={() => setConfirmModalOpen(false)}
+            >
               Cancel
             </Button>
             <Button
@@ -456,7 +467,8 @@ export default function PendingTask() {
                   );
                 }
                 setConfirmModalOpen(false);
-              }}>
+              }}
+            >
               Yes
             </Button>
           </div>

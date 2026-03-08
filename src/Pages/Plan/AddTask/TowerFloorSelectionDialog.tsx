@@ -637,8 +637,8 @@ export default function TowerFloorSelectionDialog({
                                         )
                                         .map((yard) => (
                                           <SelectItem
-                                            key={yard.id}
-                                            value={yard.id.toString()}
+                                            key={yard.stockyard_id}
+                                            value={yard.stockyard_id.toString()}
                                           >
                                             {yard.yard_name}
                                           </SelectItem>

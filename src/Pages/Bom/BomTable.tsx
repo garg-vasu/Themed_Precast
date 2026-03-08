@@ -196,6 +196,18 @@ export const getColumns = (
   },
 ];
 
+const COLUMN_LABELS: Record<string, string> = {
+  bom_name: "Material Name",
+  bom_type: "Material Type",
+  unit: "Unit",
+  created_at: "Created At",
+  updated_at: "Updated At",
+};
+
+const getColumnDisplayName = (columnId: string): string =>
+  COLUMN_LABELS[columnId] ??
+  columnId.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+
 const getErrorMessage = (error: AxiosError | unknown, data: string): string => {
   if (axios.isAxiosError(error)) {
     if (error.response?.status === 401) {
@@ -423,8 +435,8 @@ export function BomTable({ refresh }: { refresh: () => void }) {
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="w-full sm:w-auto">
-                    Columns <ChevronDown className="ml-1 h-4 w-4" />
+                  <Button variant="outline" size="sm">
+                    Columns <ChevronDown className="" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
@@ -441,7 +453,7 @@ export function BomTable({ refresh }: { refresh: () => void }) {
                             column.toggleVisibility(!!value)
                           }
                         >
-                          {column.id}
+                          {getColumnDisplayName(column.id)}
                         </DropdownMenuCheckboxItem>
                       );
                     })}

@@ -92,6 +92,7 @@ const TagsTable = lazy(() =>
   })),
 );
 const MixPlan = lazy(() => import("./Pages/Plan/MixPlan"));
+const BirdEyeView = lazy(() => import("./Pages/Plan/BirdEyeView"));
 const AddTask = lazy(() => import("./Pages/Plan/AddTask/AddTask"));
 const ProjectSummary = lazy(
   () => import("./Pages/ProjectReport/ProjectSummary"),
@@ -548,6 +549,10 @@ const projectChildren: RouteObject[] = [
   {
     path: "plan",
     element: projectRoleGuard(["ViewPlan"], withSuspense(<MixPlan />), "/"),
+  },
+  {
+    path: "bird-eye-view",
+    element: projectRoleGuard(["ViewPlan"], withSuspense(<BirdEyeView />), "/"),
   },
   {
     path: "add-task",
