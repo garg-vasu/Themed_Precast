@@ -149,7 +149,7 @@ export const getColumns = (permissions: string[]): ColumnDef<Elementtype>[] => [
           onClick={() => {
             if (permissions?.includes("ViewElementTypeDetail")) {
               navigate(
-                `/project/${projectId}/element-type-detail/${row.original.element_type_id}/${row.original.hierarchy_id}`
+                `/project/${projectId}/element-type-detail/${row.original.element_type_id}/${row.original.hierarchy_id}`,
               );
             }
           }}
@@ -290,7 +290,7 @@ export const getColumns = (permissions: string[]): ColumnDef<Elementtype>[] => [
               <DropdownMenuItem
                 onClick={() =>
                   navigate(
-                    `/project/${projectId}/edit-element-type/${row.original.element_type_id}/${row.original.hierarchy_id}`
+                    `/project/${projectId}/edit-element-type/${row.original.element_type_id}/${row.original.hierarchy_id}`,
                   )
                 }
               >
@@ -301,7 +301,7 @@ export const getColumns = (permissions: string[]): ColumnDef<Elementtype>[] => [
               <DropdownMenuItem
                 onClick={() =>
                   navigate(
-                    `/project/${projectId}/element-type-detail/${row.original.element_type_id}/${row.original.hierarchy_id}`
+                    `/project/${projectId}/element-type-detail/${row.original.element_type_id}/${row.original.hierarchy_id}`,
                   )
                 }
               >
@@ -330,6 +330,25 @@ const getErrorMessage = (error: AxiosError | unknown, data: string): string => {
   }
   return "An unexpected error occurred. Please try again later.";
 };
+
+// Map column ids to display names used in table headers
+const COLUMN_LABELS: Record<string, string> = {
+  name: "Name",
+  element_type_name: "Element Type Name",
+  drawing: "Drawing",
+  quantity: "Quantity",
+  production_count: "Production Count",
+  stockyard_count: "Stockyard Count",
+  in_request_count: "In Request Count",
+  dispatch_count: "Dispatch Count",
+  erection_count: "Erection Count",
+  tower_name: "Tower Name",
+  floor_name: "Floor Name",
+};
+
+const getColumnDisplayName = (columnId: string): string =>
+  COLUMN_LABELS[columnId] ??
+  columnId.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
 export function ElementtypeTable() {
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -364,7 +383,7 @@ export function ElementtypeTable() {
         setCurrentPage(1); // Reset to first page when filters change
       }
     },
-    [filterState]
+    [filterState],
   );
 
   const handleFilterClose = useCallback(() => {
@@ -424,7 +443,7 @@ export function ElementtypeTable() {
           {
             cancelToken: source.token,
             params,
-          }
+          },
         );
 
         if (response.status === 200) {
@@ -549,30 +568,26 @@ export function ElementtypeTable() {
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-center">
           <Button
             variant={hasActiveFilters() ? "default" : "outline"}
-            className="w-full sm:w-auto"
+            size="sm"
             onClick={() => setFilterOpen((prev) => !prev)}
           >
             Advance Filter
           </Button>
           {hasActiveFilters() && (
-            <Button variant="outline" onClick={clearAllFilters}>
+            <Button variant="outline" size="sm" onClick={clearAllFilters}>
               Clear Filters
             </Button>
           )}
           {table.getFilteredSelectedRowModel().rows.length > 0 && (
-            <Button
-              variant="default"
-              className="w-full sm:w-auto"
-              onClick={handleDownloadPDF}
-            >
-              <Download className="mr-2 h-4 w-4" />
+            <Button variant="default" size="sm" onClick={handleDownloadPDF}>
+              <Download className="" />
               Download PDF ({table.getFilteredSelectedRowModel().rows.length})
             </Button>
           )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="w-full sm:w-auto">
-                Columns <ChevronDown className="ml-1 h-4 w-4" />
+              <Button variant="outline" size="sm">
+                Columns <ChevronDown className="" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -589,7 +604,7 @@ export function ElementtypeTable() {
                         column.toggleVisibility(!!value)
                       }
                     >
-                      {column.id}
+                      {getColumnDisplayName(column.id)}
                     </DropdownMenuCheckboxItem>
                   );
                 })}
@@ -616,7 +631,7 @@ export function ElementtypeTable() {
                         ? null
                         : flexRender(
                             header.column.columnDef.header,
-                            header.getContext()
+                            header.getContext(),
                           )}
                     </TableHead>
                   );
@@ -624,7 +639,7 @@ export function ElementtypeTable() {
               </TableRow>
             ))}
           </TableHeader>
-          <TableBody>
+          <TableBody className="[&_td]:py-0.5">
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow
@@ -635,7 +650,7 @@ export function ElementtypeTable() {
                     <TableCell key={cell.id}>
                       {flexRender(
                         cell.column.columnDef.cell,
-                        cell.getContext()
+                        cell.getContext(),
                       )}
                     </TableCell>
                   ))}
@@ -710,7 +725,7 @@ export function ElementtypeTable() {
                 setCurrentPage((prev) =>
                   pagination
                     ? Math.min(pagination.total_pages, prev + 1)
-                    : prev + 1
+                    : prev + 1,
                 )
               }
               disabled={!pagination?.has_next}

@@ -3,6 +3,15 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { ChevronDown, ChevronRight } from "lucide-react";
 
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import PageHeader from "@/components/ui/PageHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -455,16 +464,45 @@ export default function ElementDetailPage() {
           </CardHeader>
           <CardContent>
             {qrUrl ? (
-              <div className="flex flex-col items-center gap-2">
-                <img
-                  src={qrUrl}
-                  alt="QR Code"
-                  className="h-40 w-40 rounded border object-contain"
-                />
-                <div className="text-xs text-muted-foreground">
-                  Scan this QR code for this element.
+              <Dialog>
+                <div className="flex flex-col items-center gap-3">
+                  <DialogTrigger asChild>
+                    <button
+                      type="button"
+                      className="rounded-lg border p-2 transition hover:bg-muted/40"
+                    >
+                      <img
+                        src={qrUrl}
+                        alt="QR Code"
+                        className="h-64 w-64 max-w-full object-contain sm:h-72 sm:w-72"
+                      />
+                    </button>
+                  </DialogTrigger>
+                  <div className="text-center text-xs text-muted-foreground">
+                    Scan this QR code for this element.
+                  </div>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      Open larger QR
+                    </Button>
+                  </DialogTrigger>
                 </div>
-              </div>
+                <DialogContent className="w-[95vw] max-w-3xl">
+                  <DialogHeader>
+                    <DialogTitle>Element QR code</DialogTitle>
+                    <DialogDescription>
+                      Use the larger view for easier scanning.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="flex justify-center">
+                    <img
+                      src={qrUrl}
+                      alt="QR Code large preview"
+                      className="max-h-[75vh] w-full max-w-[520px] rounded-lg border object-contain p-2"
+                    />
+                  </div>
+                </DialogContent>
+              </Dialog>
             ) : (
               <div className="text-muted-foreground">
                 QR code not available.

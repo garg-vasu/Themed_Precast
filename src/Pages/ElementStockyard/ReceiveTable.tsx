@@ -97,6 +97,7 @@ type Element = {
   height?: number;
   mass?: number;
   production_date?: string;
+  stockyard_name: string;
   floor_name?: string;
   tower_name?: string;
   disable?: boolean;
@@ -214,7 +215,7 @@ export function ReceiveTable() {
               column.toggleSorting(column.getIsSorted() === "asc")
             }>
             Thickness
-            <ArrowUpDown className="ml-1 h-4 w-4" />
+            <ArrowUpDown className="" />
           </Button>
         );
       },
@@ -233,7 +234,7 @@ export function ReceiveTable() {
               column.toggleSorting(column.getIsSorted() === "asc")
             }>
             Length
-            <ArrowUpDown className="ml-1 h-4 w-4" />
+            <ArrowUpDown className="" />
           </Button>
         );
       },
@@ -252,7 +253,7 @@ export function ReceiveTable() {
               column.toggleSorting(column.getIsSorted() === "asc")
             }>
             Height
-            <ArrowUpDown className="ml-1 h-4 w-4" />
+            <ArrowUpDown className="" />
           </Button>
         );
       },
@@ -271,7 +272,7 @@ export function ReceiveTable() {
               column.toggleSorting(column.getIsSorted() === "asc")
             }>
             Mass
-            <ArrowUpDown className="ml-1 h-4 w-4" />
+            <ArrowUpDown className="" />
           </Button>
         );
       },
@@ -291,13 +292,20 @@ export function ReceiveTable() {
           size="noPadding"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
           Production Date
-          <ArrowUpDown className="ml-1 h-4 w-4" />
+          <ArrowUpDown className="" />
         </Button>
       ),
       cell: ({ row }) => {
         const raw = row.getValue("production_date") as string | undefined;
         return <div>{formatDisplayDate(raw)}</div>;
       },
+    },
+    {
+      accessorKey: "stockyard_name",
+      header: "Stockyard",
+      cell: ({ row }) => (
+        <div className="capitalize">{row.getValue("stockyard_name")}</div>
+      ),
     },
     {
       accessorKey: "floor_name",

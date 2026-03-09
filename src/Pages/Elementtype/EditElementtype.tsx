@@ -86,10 +86,7 @@ type ExistingElementType = {
   thickness: number;
   length: number;
   height: number;
-  area: number;
   volume: number;
-  mass: number;
-  width: number;
   element_type_id: number;
   project_id: number;
   element_type_version: string;
@@ -375,10 +372,7 @@ export default function EditElementType() {
           height: data.height || 0,
           length: data.length || 0,
           thickness: data.thickness || 0,
-          Area: data.area || 0,
           Volume: data.volume || 0,
-          Mass: data.mass || 0,
-          Width: data.width || 0,
           drawings: [],
           products: [],
           hierarchy_quantity: [],
@@ -763,7 +757,8 @@ export default function EditElementType() {
       if (response.status === 200) {
         const isInProduction = (response.data as any)?.production === true;
         const successMessage =
-          (response.data as any)?.message || "Element Type Updated Successfully";
+          (response.data as any)?.message ||
+          "Element Type Updated Successfully";
 
         if (!isInProduction) {
           window.alert(successMessage);
@@ -845,7 +840,8 @@ export default function EditElementType() {
         <div
           role="status"
           aria-live="polite"
-          className="flex flex-col items-center gap-2">
+          className="flex flex-col items-center gap-2"
+        >
           <Loader2 className="animate-spin text-primary" />
           <span className="text-sm text-muted-foreground">
             Loading element type data...
@@ -889,7 +885,8 @@ export default function EditElementType() {
           <Tabs
             value={activeTab}
             onValueChange={handleTabChange}
-            className="w-full">
+            className="w-full"
+          >
             <TabsList className="grid grid-cols-2 md:grid-cols-4">
               <TabsTrigger value="element-info">Element Info</TabsTrigger>
               <TabsTrigger value="structure">Structure</TabsTrigger>
@@ -989,32 +986,6 @@ export default function EditElementType() {
                   </div>
 
                   <div className="grid w-full items-center gap-1.5">
-                    <Label htmlFor="Area">Area</Label>
-                    <Input
-                      id="Area"
-                      type="number"
-                      placeholder="Area"
-                      disabled={!isBasicDetailsEditable}
-                      {...register("Area", {
-                        required: isBasicDetailsEditable
-                          ? "Area is required"
-                          : false,
-                        min: isBasicDetailsEditable
-                          ? {
-                              value: 1,
-                              message: "Area must be greater than 0",
-                            }
-                          : undefined,
-                        valueAsNumber: true,
-                      })}
-                      aria-invalid={!!errors.Area}
-                    />
-                    <p className="text-destructive min-h-[20px]">
-                      {errors.Area?.message || "\u00A0"}
-                    </p>
-                  </div>
-
-                  <div className="grid w-full items-center gap-1.5">
                     <Label htmlFor="Volume">Volume</Label>
                     <Input
                       id="Volume"
@@ -1037,58 +1008,6 @@ export default function EditElementType() {
                     />
                     <p className="text-destructive min-h-[20px]">
                       {errors.Volume?.message || "\u00A0"}
-                    </p>
-                  </div>
-
-                  <div className="grid w-full items-center gap-1.5">
-                    <Label htmlFor="Mass">Mass</Label>
-                    <Input
-                      id="Mass"
-                      type="number"
-                      placeholder="Mass"
-                      disabled={!isBasicDetailsEditable}
-                      {...register("Mass", {
-                        required: isBasicDetailsEditable
-                          ? "Mass is required"
-                          : false,
-                        min: isBasicDetailsEditable
-                          ? {
-                              value: 1,
-                              message: "Mass must be greater than 0",
-                            }
-                          : undefined,
-                        valueAsNumber: true,
-                      })}
-                      aria-invalid={!!errors.Mass}
-                    />
-                    <p className="text-destructive min-h-[20px]">
-                      {errors.Mass?.message || "\u00A0"}
-                    </p>
-                  </div>
-
-                  <div className="grid w-full items-center gap-1.5">
-                    <Label htmlFor="Width">Width</Label>
-                    <Input
-                      id="Width"
-                      type="number"
-                      placeholder="Width"
-                      disabled={!isBasicDetailsEditable}
-                      {...register("Width", {
-                        required: isBasicDetailsEditable
-                          ? "Width is required"
-                          : false,
-                        min: isBasicDetailsEditable
-                          ? {
-                              value: 1,
-                              message: "Width must be greater than 0",
-                            }
-                          : undefined,
-                        valueAsNumber: true,
-                      })}
-                      aria-invalid={!!errors.Width}
-                    />
-                    <p className="text-destructive min-h-[20px]">
-                      {errors.Width?.message || "\u00A0"}
                     </p>
                   </div>
 
@@ -1127,12 +1046,14 @@ export default function EditElementType() {
                   <Button
                     variant="outline"
                     type="button"
-                    onClick={() => navigate(-1)}>
+                    onClick={() => navigate(-1)}
+                  >
                     Cancel
                   </Button>
                   <Button
                     type="button"
-                    onClick={() => handleNextTab("structure")}>
+                    onClick={() => handleNextTab("structure")}
+                  >
                     Next
                   </Button>
                 </div>
@@ -1182,14 +1103,16 @@ export default function EditElementType() {
                       {selectedStructures.map((struc, index) => (
                         <Card
                           key={struc.id}
-                          className="relative p-3 border rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
+                          className="relative p-3 border rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
+                        >
                           {isStructureEditable && (
                             <Button
                               type="button"
                               variant="ghost"
                               size="icon"
                               className="absolute top-1 right-1 h-6 w-6 rounded-full hover:bg-destructive/10 hover:text-destructive"
-                              onClick={() => handleRemoveStructure(struc.id)}>
+                              onClick={() => handleRemoveStructure(struc.id)}
+                            >
                               <X className="h-4 w-4" />
                             </Button>
                           )}
@@ -1204,13 +1127,19 @@ export default function EditElementType() {
                             value={struc.id}
                           />
 
-                          <div className={cn("mb-2", isStructureEditable && "pr-6")}>
+                          <div
+                            className={cn(
+                              "mb-2",
+                              isStructureEditable && "pr-6",
+                            )}
+                          >
                             <span className="text-xs text-muted-foreground">
                               Floor
                             </span>
                             <p
                               className="font-medium truncate text-sm"
-                              title={struc.name}>
+                              title={struc.name}
+                            >
                               {struc.name}
                             </p>
                           </div>
@@ -1285,7 +1214,8 @@ export default function EditElementType() {
                   <Button
                     variant="outline"
                     type="button"
-                    onClick={() => setActiveTab("element-info")}>
+                    onClick={() => setActiveTab("element-info")}
+                  >
                     Previous
                   </Button>
                   <Button type="button" onClick={() => handleNextTab("bom")}>
@@ -1333,7 +1263,8 @@ export default function EditElementType() {
                       {selectedBom.map((product, index) => (
                         <Card
                           key={product.bom_id}
-                          className="relative p-3 border rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
+                          className="relative p-3 border rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
+                        >
                           {isProductsEditable && (
                             <Button
                               type="button"
@@ -1342,7 +1273,8 @@ export default function EditElementType() {
                               className="absolute top-1 right-1 h-6 w-6 rounded-full hover:bg-destructive/10 hover:text-destructive"
                               onClick={() =>
                                 handleRemoveProduct(product.bom_id)
-                              }>
+                              }
+                            >
                               <X className="h-4 w-4" />
                             </Button>
                           )}
@@ -1414,12 +1346,14 @@ export default function EditElementType() {
                   <Button
                     variant="outline"
                     type="button"
-                    onClick={() => setActiveTab("structure")}>
+                    onClick={() => setActiveTab("structure")}
+                  >
                     Previous
                   </Button>
                   <Button
                     type="button"
-                    onClick={() => handleNextTab("drawings")}>
+                    onClick={() => handleNextTab("drawings")}
+                  >
                     Next
                   </Button>
                 </div>
@@ -1458,7 +1392,8 @@ export default function EditElementType() {
                           className={cn(
                             "cursor-pointer",
                             !isDrawingsEditable && "opacity-60",
-                          )}>
+                          )}
+                        >
                           {stage.name}
                         </Label>
                       </div>
@@ -1575,7 +1510,8 @@ export default function EditElementType() {
                                     "flex items-center justify-between gap-3 w-full border border-dashed rounded-md bg-background hover:bg-accent cursor-pointer transition-colors",
                                     uploadingFiles[index] &&
                                       "opacity-60 cursor-not-allowed",
-                                  )}>
+                                  )}
+                                >
                                   <div className="flex items-center gap-3 p-3 min-w-0">
                                     {uploadingFiles[index] ? (
                                       <Loader2 className="animate-spin text-primary" />
@@ -1613,7 +1549,8 @@ export default function EditElementType() {
                                       href={fileUrl}
                                       target="_blank"
                                       rel="noopener noreferrer"
-                                      className="text-primary hover:underline">
+                                      className="text-primary hover:underline"
+                                    >
                                       View Drawing
                                     </a>
                                   ) : (
@@ -1644,7 +1581,8 @@ export default function EditElementType() {
                                           variant="outline"
                                           onClick={() =>
                                             window.open(fileUrl, "_blank")
-                                          }>
+                                          }
+                                        >
                                           View
                                         </Button>
                                       ) : null}
@@ -1673,7 +1611,8 @@ export default function EditElementType() {
                     <Button
                       variant="outline"
                       type="button"
-                      onClick={() => setActiveTab("bom")}>
+                      onClick={() => setActiveTab("bom")}
+                    >
                       Previous
                     </Button>
                   </div>

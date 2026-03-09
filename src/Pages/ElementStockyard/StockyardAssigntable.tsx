@@ -136,7 +136,8 @@ export const getColumns = (
       <Button
         variant="customPadding"
         size="noPadding"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      >
         Created At
         <ArrowUpDown className="" />
       </Button>
@@ -382,11 +383,8 @@ export function StockyardAssigntable({ refresh }: { refresh: () => void }) {
             />
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-center">
               {table.getFilteredSelectedRowModel().rows.length > 0 && (
-                <Button
-                  variant="default"
-                  className="w-full sm:w-auto"
-                  onClick={handleDownloadPDF}>
-                  <Download className="mr-2 h-4 w-4" />
+                <Button variant="default" size="sm" onClick={handleDownloadPDF}>
+                  <Download className="" />
                   Download PDF (
                   {table.getFilteredSelectedRowModel().rows.length})
                 </Button>
@@ -394,8 +392,8 @@ export function StockyardAssigntable({ refresh }: { refresh: () => void }) {
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="w-full sm:w-auto">
-                    Columns <ChevronDown className="ml-1 h-4 w-4" />
+                  <Button variant="outline" size="sm">
+                    Columns <ChevronDown className="" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
@@ -410,7 +408,8 @@ export function StockyardAssigntable({ refresh }: { refresh: () => void }) {
                           checked={column.getIsVisible()}
                           onCheckedChange={(value) =>
                             column.toggleVisibility(!!value)
-                          }>
+                          }
+                        >
                           {getColumnDisplayName(column.id)}
                         </DropdownMenuCheckboxItem>
                       );
@@ -446,7 +445,8 @@ export function StockyardAssigntable({ refresh }: { refresh: () => void }) {
                       <TableRow
                         key={row.id}
                         data-state={row.getIsSelected() && "selected"}
-                        className="h-8">
+                        className="h-8"
+                      >
                         {row.getVisibleCells().map((cell) => (
                           <TableCell key={cell.id} className="py-2">
                             {flexRender(
@@ -461,7 +461,8 @@ export function StockyardAssigntable({ refresh }: { refresh: () => void }) {
                     <TableRow className="h-12">
                       <TableCell
                         colSpan={table.getAllColumns().length}
-                        className="h-24 text-center py-2">
+                        className="h-24 text-center py-2"
+                      >
                         No results.
                       </TableCell>
                     </TableRow>
@@ -480,14 +481,16 @@ export function StockyardAssigntable({ refresh }: { refresh: () => void }) {
                 variant="outline"
                 size="sm"
                 onClick={() => table.previousPage()}
-                disabled={!table.getCanPreviousPage()}>
+                disabled={!table.getCanPreviousPage()}
+              >
                 Previous
               </Button>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => table.nextPage()}
-                disabled={!table.getCanNextPage()}>
+                disabled={!table.getCanNextPage()}
+              >
                 Next
               </Button>
             </div>
@@ -501,7 +504,8 @@ export function StockyardAssigntable({ refresh }: { refresh: () => void }) {
           if (!open) {
             setEditingAssignMember(null);
           }
-        }}>
+        }}
+      >
         <DialogContent className="max-w-3xl">
           <DialogHeader>
             <DialogTitle>

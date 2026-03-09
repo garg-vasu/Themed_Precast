@@ -142,7 +142,8 @@ export const getColumns = (permissions: string[]): ColumnDef<Element>[] => [
                 `/project/${projectId}/element-detail/${row.original.id}`,
               );
             }
-          }}>
+          }}
+        >
           {row.getValue("element_id")}
         </div>
       );
@@ -219,6 +220,20 @@ export const getColumns = (permissions: string[]): ColumnDef<Element>[] => [
   //   },
   // },
 ];
+
+// Map column ids to display names used in table headers
+const COLUMN_LABELS: Record<string, string> = {
+  name: "Name",
+  element_name: "Element Type Name",
+  status: "Status",
+  drawing: "Drawing",
+  tower: "Tower Name",
+  floor: "Floor Name",
+};
+
+const getColumnDisplayName = (columnId: string): string =>
+  COLUMN_LABELS[columnId] ??
+  columnId.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
 const getErrorMessage = (error: AxiosError | unknown, data: string): string => {
   if (axios.isAxiosError(error)) {
@@ -428,28 +443,26 @@ export function ElementTable() {
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-center">
           <Button
             variant={hasActiveFilters() ? "default" : "outline"}
-            className="w-full sm:w-auto"
-            onClick={() => setFilterOpen((prev) => !prev)}>
+            size="sm"
+            onClick={() => setFilterOpen((prev) => !prev)}
+          >
             Advance Filter
           </Button>
           {hasActiveFilters() && (
-            <Button variant="outline" onClick={clearAllFilters}>
+            <Button variant="outline" size="sm" onClick={clearAllFilters}>
               Clear Filters
             </Button>
           )}
           {table.getFilteredSelectedRowModel().rows.length > 0 && (
-            <Button
-              variant="default"
-              className="w-full sm:w-auto"
-              onClick={handleDownloadPDF}>
-              <Download className="mr-2 h-4 w-4" />
+            <Button variant="default" size="sm" onClick={handleDownloadPDF}>
+              <Download className="" />
               Download PDF ({table.getFilteredSelectedRowModel().rows.length})
             </Button>
           )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="w-full sm:w-auto">
-                Columns <ChevronDown className="ml-1 h-4 w-4" />
+              <Button variant="outline" size="sm">
+                Columns <ChevronDown className="" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -464,8 +477,9 @@ export function ElementTable() {
                       checked={column.getIsVisible()}
                       onCheckedChange={(value) =>
                         column.toggleVisibility(!!value)
-                      }>
-                      {column.id}
+                      }
+                    >
+                      {getColumnDisplayName(column.id)}
                     </DropdownMenuCheckboxItem>
                   );
                 })}
@@ -500,12 +514,13 @@ export function ElementTable() {
               </TableRow>
             ))}
           </TableHeader>
-          <TableBody>
+          <TableBody className="[&_td]:py-0.5">
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
-                  data-state={row.getIsSelected() && "selected"}>
+                  data-state={row.getIsSelected() && "selected"}
+                >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
                       {flexRender(
@@ -520,7 +535,8 @@ export function ElementTable() {
               <TableRow>
                 <TableCell
                   colSpan={getColumns(permissions).length}
-                  className="h-24 text-center">
+                  className="h-24 text-center"
+                >
                   No results.
                 </TableCell>
               </TableRow>
@@ -548,7 +564,8 @@ export function ElementTable() {
               onValueChange={(value) => {
                 setLimit(Number(value));
                 setCurrentPage(1);
-              }}>
+              }}
+            >
               <SelectTrigger className="w-[70px]">
                 <SelectValue />
               </SelectTrigger>
@@ -572,7 +589,8 @@ export function ElementTable() {
               variant="outline"
               size="sm"
               onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
-              disabled={!pagination?.has_prev}>
+              disabled={!pagination?.has_prev}
+            >
               Previous
             </Button>
             <Button
@@ -585,7 +603,8 @@ export function ElementTable() {
                     : prev + 1,
                 )
               }
-              disabled={!pagination?.has_next}>
+              disabled={!pagination?.has_next}
+            >
               Next
             </Button>
           </div>
