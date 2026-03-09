@@ -23,6 +23,7 @@ import {
   ClipboardList,
   PieChart,
   UserCheck,
+  Clock,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -263,6 +264,12 @@ export default function ProjectSidebar({
       name: "Plan",
       href: `/project/${projectId}/plan`,
       icon: Calendar,
+      permissions: ["ViewPlan"],
+    },
+    {
+      name: "Shop Floor Status",
+      href: `/project/${projectId}/mix-stagewise`,
+      icon: Clock,
       permissions: ["ViewPlan"],
     },
     {

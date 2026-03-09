@@ -57,6 +57,7 @@ import { formatDisplayDate } from "@/utils/formatdate";
 import { useNavigate, useParams } from "react-router";
 import { ProjectContext, useProject } from "@/Provider/ProjectProvider";
 import { generatePDFFromTable } from "@/utils/pdfGenerator";
+import { Label } from "@/components/ui/label";
 
 export type Stockyard = {
   id: number;
@@ -130,6 +131,7 @@ export function ReceiveTable() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedElement, setSelectedElement] = useState<Element | null>(null);
   const [selectedStockyardId, setSelectedStockyardId] = useState<string>("");
+  const [rackNumber, setRackNumber] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -314,7 +316,7 @@ export function ReceiveTable() {
     {
       id: "actions",
       enableHiding: false,
-      header: "Actions",
+      header: "Action",
       cell: ({ row }) => {
         const element = row.original;
         const isDisabled = element.disable;
@@ -322,15 +324,17 @@ export function ReceiveTable() {
           <div>
             {permissions?.includes("ApproveStockyard") && (
               <Button
-                variant="outline"
+                variant="customPadding"
+                size="noPadding"
                 disabled={isDisabled}
                 onClick={() => {
                   if (isDisabled) return;
                   setSelectedElement(element);
                   setSelectedStockyardId("");
+                  setRackNumber("");
                   setIsDialogOpen(true);
                 }}>
-                Approve
+                Receive
               </Button>
             )}
           </div>
@@ -516,6 +520,11 @@ export function ReceiveTable() {
       return;
     }
 
+    if (!rackNumber) {
+      toast.error("Please enter a rack number");
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -523,6 +532,7 @@ export function ReceiveTable() {
         `/projects/${projectId}/assign-stockyard/${selectedElement.element_id}`,
         {
           stockyard_id: Number(selectedStockyardId),
+          rack_number: rackNumber,
         },
       );
 
@@ -531,6 +541,7 @@ export function ReceiveTable() {
         setIsDialogOpen(false);
         setSelectedElement(null);
         setSelectedStockyardId("");
+        setRackNumber("");
         setRefreshKey((prev) => prev + 1);
       } else {
         toast.error(response.data?.message || "Failed to approve stockyard");
@@ -677,9 +688,9 @@ export function ReceiveTable() {
         <DialogContent className="sm:max-w-[425px]">
           <form onSubmit={handleApproveStockyard}>
             <DialogHeader>
-              <DialogTitle>Approve Stockyard</DialogTitle>
+              <DialogTitle>Select Stockyard</DialogTitle>
               <DialogDescription>
-                Select a stockyard to assign for this element.
+                Select a stockyard to receive for this element.
               </DialogDescription>
             </DialogHeader>
             <div className="w-full py-4">
@@ -716,6 +727,18 @@ export function ReceiveTable() {
                   No stockyards available
                 </div>
               )}
+              <div className="grid w-full items-center gap-1 mt-4">
+                <Label htmlFor="rack_number" className="text-xs font-medium">
+                  Rack Number <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="rack_number"
+                  placeholder="Rack Number"
+                  value={rackNumber}
+                  onChange={(e) => setRackNumber(e.target.value)}
+                  required
+                />
+              </div>
             </div>
             <DialogFooter>
               <DialogClose asChild>
@@ -728,10 +751,11 @@ export function ReceiveTable() {
                 disabled={
                   isSubmitting ||
                   !selectedStockyardId ||
+                  !rackNumber ||
                   !userStockyards ||
                   userStockyards.length === 0
                 }>
-                {isSubmitting ? "Saving..." : "Save changes"}
+                {isSubmitting ? "Saving..." : "Submit"}
               </Button>
             </DialogFooter>
           </form>

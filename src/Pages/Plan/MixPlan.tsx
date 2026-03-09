@@ -53,14 +53,14 @@ export default function MixPlan() {
 
     tabs.push({
       id: "1",
-      label: "Completed Tasks",
+      label: "Completed",
       number: 1,
       icon: ListChecks,
     });
 
     tabs.push({
       id: "2",
-      label: "Pending Tasks",
+      label: "Pending",
       number: 24,
       // task icon
       icon: ListTodo,
@@ -68,7 +68,7 @@ export default function MixPlan() {
 
     tabs.push({
       id: "3",
-      label: "Bird Eye View",
+      label: "Bird View",
       number: 3,
       icon: Eye,
     });

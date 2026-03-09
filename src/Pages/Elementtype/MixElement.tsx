@@ -501,8 +501,7 @@ export default function MixElement() {
                     className="gap-2 mr-2"
                     onClick={() =>
                       navigate(`/project/${projectId}/add-element-type`)
-                    }
-                  >
+                    }>
                     <Plus className="w-4 h-4" />
                     Create Your First Element Type
                   </Button>
@@ -511,22 +510,19 @@ export default function MixElement() {
                       className="gap-2 mr-2"
                       onClick={() =>
                         navigate(`/project/${projectId}/upload-elementtype`)
-                      }
-                    >
+                      }>
                       <Plus className="w-4 h-4" />
                       Upload Your First Job
                     </Button>
                     {permissions?.includes("DownloadElementtypeTemplate") && (
                       <Dialog
                         open={downloadDialogOpen}
-                        onOpenChange={handleDownloadDialogChange}
-                      >
+                        onOpenChange={handleDownloadDialogChange}>
                         <DialogTrigger asChild>
                           <Button
                             variant="link"
                             size="sm"
-                            className="flex gap-2 items-center text-xs sm:text-sm"
-                          >
+                            className="flex gap-2 items-center text-xs sm:text-sm">
                             <Download className="h-4 w-4" />
                             Template
                           </Button>
@@ -558,8 +554,7 @@ export default function MixElement() {
                                 {selectedBoms.length > 0 && (
                                   <Badge
                                     variant="secondary"
-                                    className="ml-auto"
-                                  >
+                                    className="ml-auto">
                                     {selectedBoms.length} selected
                                   </Badge>
                                 )}
@@ -572,6 +567,24 @@ export default function MixElement() {
                                     <span className="text-sm text-muted-foreground">
                                       Available ({bomList.length})
                                     </span>
+                                    {bomList.length > 0 && (
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="h-7 text-xs text-muted-foreground hover:text-primary"
+                                        onClick={() => {
+                                          setSelectedBoms((prev) =>
+                                            [...prev, ...bomList].sort((a, b) =>
+                                              a.bom_name.localeCompare(
+                                                b.bom_name,
+                                              ),
+                                            ),
+                                          );
+                                          setBomList([]);
+                                        }}>
+                                        Select all
+                                      </Button>
+                                    )}
                                   </div>
                                   <div className="relative">
                                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -607,8 +620,9 @@ export default function MixElement() {
                                           <div
                                             key={bom.bom_id}
                                             className="flex items-center gap-3 p-3 hover:bg-muted/50 cursor-pointer transition-colors group"
-                                            onClick={() => handleBomSelect(bom)}
-                                          >
+                                            onClick={() =>
+                                              handleBomSelect(bom)
+                                            }>
                                             <div className="w-4 h-4 rounded border border-muted-foreground/30 group-hover:border-primary transition-colors" />
                                             <div className="flex-1 min-w-0">
                                               <p className="text-sm font-medium truncate">
@@ -647,8 +661,7 @@ export default function MixElement() {
                                             ),
                                           );
                                           setSelectedBoms([]);
-                                        }}
-                                      >
+                                        }}>
                                         Clear all
                                       </Button>
                                     )}
@@ -669,8 +682,7 @@ export default function MixElement() {
                                             className="flex items-center gap-3 p-3 hover:bg-green-100/50 cursor-pointer transition-colors group"
                                             onClick={() =>
                                               handleBomDeselect(bom)
-                                            }
-                                          >
+                                            }>
                                             <Check className="h-4 w-4 text-green-600" />
                                             <div className="flex-1 min-w-0">
                                               <p className="text-sm font-medium truncate">
@@ -698,8 +710,7 @@ export default function MixElement() {
                                     selectedBoms.length > 0
                                       ? "bg-primary text-white"
                                       : "bg-muted text-muted-foreground"
-                                  }`}
-                                >
+                                  }`}>
                                   2
                                 </div>
                                 <div className="flex items-center gap-2">
@@ -711,8 +722,7 @@ export default function MixElement() {
                                 {selectedTowerIds.length > 0 && (
                                   <Badge
                                     variant="secondary"
-                                    className="ml-auto"
-                                  >
+                                    className="ml-auto">
                                     {selectedTowerIds.length} tower(s),{" "}
                                     {
                                       Object.values(
@@ -820,8 +830,7 @@ export default function MixElement() {
                                                       },
                                                     );
                                                   }
-                                                }}
-                                              >
+                                                }}>
                                                 <Checkbox
                                                   checked={isTowerSelected}
                                                 />
@@ -833,8 +842,7 @@ export default function MixElement() {
                                                   undefined && (
                                                   <Badge
                                                     variant="outline"
-                                                    className="ml-auto text-xs"
-                                                  >
+                                                    className="ml-auto text-xs">
                                                     {t.child_count} floors
                                                   </Badge>
                                                 )}
@@ -891,8 +899,7 @@ export default function MixElement() {
                                                                 }),
                                                               );
                                                             }
-                                                          }}
-                                                        >
+                                                          }}>
                                                           {allFloorsSelected
                                                             ? "Deselect all"
                                                             : "Select all"}
@@ -945,8 +952,7 @@ export default function MixElement() {
                                                                       };
                                                                     },
                                                                   );
-                                                                }}
-                                                              >
+                                                                }}>
                                                                 <Checkbox
                                                                   checked={
                                                                     checked
@@ -986,8 +992,7 @@ export default function MixElement() {
                                     ).flat().length > 0
                                       ? "bg-primary text-white"
                                       : "bg-muted text-muted-foreground"
-                                  }`}
-                                >
+                                  }`}>
                                   3
                                 </div>
                                 <div className="flex items-center gap-2">
@@ -1022,22 +1027,19 @@ export default function MixElement() {
                                       <div className="flex flex-wrap gap-2">
                                         <Badge
                                           variant="outline"
-                                          className="gap-1"
-                                        >
+                                          className="gap-1">
                                           <Package className="h-3 w-3" />
                                           {selectedBoms.length} BOM(s)
                                         </Badge>
                                         <Badge
                                           variant="outline"
-                                          className="gap-1"
-                                        >
+                                          className="gap-1">
                                           <Building2 className="h-3 w-3" />
                                           {selectedTowerIds.length} Tower(s)
                                         </Badge>
                                         <Badge
                                           variant="outline"
-                                          className="gap-1"
-                                        >
+                                          className="gap-1">
                                           <Layers className="h-3 w-3" />
                                           {
                                             Object.values(
@@ -1055,8 +1057,7 @@ export default function MixElement() {
                                         variant="outline"
                                         className="h-auto py-4 flex flex-col items-center gap-2 hover:bg-green-50 hover:border-green-300 transition-all"
                                         onClick={() => handleDownload("excel")}
-                                        disabled={downloading}
-                                      >
+                                        disabled={downloading}>
                                         {downloading ? (
                                           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                                         ) : (
@@ -1073,8 +1074,7 @@ export default function MixElement() {
                                         variant="outline"
                                         className="h-auto py-4 flex flex-col items-center gap-2 hover:bg-blue-50 hover:border-blue-300 transition-all"
                                         onClick={() => handleDownload("csv")}
-                                        disabled={downloading}
-                                      >
+                                        disabled={downloading}>
                                         {downloading ? (
                                           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                                         ) : (
@@ -1103,8 +1103,7 @@ export default function MixElement() {
             {!projectCtx?.projectDetails?.is_hierachy && (
               <Button
                 className="gap-2 mr-2"
-                onClick={() => navigate(`/project/${projectId}/hierarchy`)}
-              >
+                onClick={() => navigate(`/project/${projectId}/hierarchy`)}>
                 <Plus className="w-4 h-4" />
                 Add Hierachy
               </Button>
@@ -1113,8 +1112,7 @@ export default function MixElement() {
             {!projectCtx?.projectDetails?.is_bom && (
               <Button
                 className="gap-2 mr-2"
-                onClick={() => navigate(`/project/${projectId}/large-import`)}
-              >
+                onClick={() => navigate(`/project/${projectId}/large-import`)}>
                 <Plus className="w-4 h-4" />
                 Add BOM
               </Button>
@@ -1123,8 +1121,7 @@ export default function MixElement() {
             {!projectCtx?.projectDetails?.is_drawingtype && (
               <Button
                 className="gap-2 mr-2"
-                onClick={() => navigate(`/project/${projectId}/drawing`)}
-              >
+                onClick={() => navigate(`/project/${projectId}/drawing`)}>
                 <Plus className="w-4 h-4" />
                 Add Drawing Type
               </Button>
@@ -1156,14 +1153,12 @@ export default function MixElement() {
             {permissions?.includes("DownloadElementtypeTemplate") && (
               <Dialog
                 open={downloadDialogOpen}
-                onOpenChange={handleDownloadDialogChange}
-              >
+                onOpenChange={handleDownloadDialogChange}>
                 <DialogTrigger asChild>
                   <Button
                     variant="outline"
                     size="sm"
-                    className="flex gap-2 items-center text-xs sm:text-sm"
-                  >
+                    className="flex gap-2 items-center text-xs sm:text-sm">
                     <Download className="h-4 w-4" />
                     Template
                   </Button>
@@ -1205,6 +1200,22 @@ export default function MixElement() {
                             <span className="text-sm text-muted-foreground">
                               Available ({bomList.length})
                             </span>
+                            {bomList.length > 0 && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 text-xs text-muted-foreground hover:text-primary"
+                                onClick={() => {
+                                  setSelectedBoms((prev) =>
+                                    [...prev, ...bomList].sort((a, b) =>
+                                      a.bom_name.localeCompare(b.bom_name),
+                                    ),
+                                  );
+                                  setBomList([]);
+                                }}>
+                                Select all
+                              </Button>
+                            )}
                           </div>
                           <div className="relative">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -1238,8 +1249,7 @@ export default function MixElement() {
                                   <div
                                     key={bom.bom_id}
                                     className="flex items-center gap-3 p-3 hover:bg-muted/50 cursor-pointer transition-colors group"
-                                    onClick={() => handleBomSelect(bom)}
-                                  >
+                                    onClick={() => handleBomSelect(bom)}>
                                     <div className="w-4 h-4 rounded border border-muted-foreground/30 group-hover:border-primary transition-colors" />
                                     <div className="flex-1 min-w-0">
                                       <p className="text-sm font-medium truncate">
@@ -1275,8 +1285,7 @@ export default function MixElement() {
                                     ),
                                   );
                                   setSelectedBoms([]);
-                                }}
-                              >
+                                }}>
                                 Clear all
                               </Button>
                             )}
@@ -1295,8 +1304,7 @@ export default function MixElement() {
                                   <div
                                     key={bom.bom_id}
                                     className="flex items-center gap-3 p-3 hover:bg-green-100/50 cursor-pointer transition-colors group"
-                                    onClick={() => handleBomDeselect(bom)}
-                                  >
+                                    onClick={() => handleBomDeselect(bom)}>
                                     <Check className="h-4 w-4 text-green-600" />
                                     <div className="flex-1 min-w-0">
                                       <p className="text-sm font-medium truncate">
@@ -1324,8 +1332,7 @@ export default function MixElement() {
                             selectedBoms.length > 0
                               ? "bg-primary text-white"
                               : "bg-muted text-muted-foreground"
-                          }`}
-                        >
+                          }`}>
                           2
                         </div>
                         <div className="flex items-center gap-2">
@@ -1426,8 +1433,7 @@ export default function MixElement() {
                                               },
                                             );
                                           }
-                                        }}
-                                      >
+                                        }}>
                                         <Checkbox checked={isTowerSelected} />
                                         <Building2 className="h-4 w-4 text-muted-foreground" />
                                         <span className="font-medium text-sm">
@@ -1436,8 +1442,7 @@ export default function MixElement() {
                                         {t.child_count !== undefined && (
                                           <Badge
                                             variant="outline"
-                                            className="ml-auto text-xs"
-                                          >
+                                            className="ml-auto text-xs">
                                             {t.child_count} floors
                                           </Badge>
                                         )}
@@ -1491,8 +1496,7 @@ export default function MixElement() {
                                                         }),
                                                       );
                                                     }
-                                                  }}
-                                                >
+                                                  }}>
                                                   {allFloorsSelected
                                                     ? "Deselect all"
                                                     : "Select all"}
@@ -1534,8 +1538,7 @@ export default function MixElement() {
                                                             };
                                                           },
                                                         );
-                                                      }}
-                                                    >
+                                                      }}>
                                                       <Checkbox
                                                         checked={checked}
                                                         className="h-3 w-3"
@@ -1571,8 +1574,7 @@ export default function MixElement() {
                               .length > 0
                               ? "bg-primary text-white"
                               : "bg-muted text-muted-foreground"
-                          }`}
-                        >
+                          }`}>
                           3
                         </div>
                         <div className="flex items-center gap-2">
@@ -1629,8 +1631,7 @@ export default function MixElement() {
                                 variant="outline"
                                 className="h-auto py-4 flex flex-col items-center gap-2 hover:bg-green-50 hover:border-green-300 transition-all"
                                 onClick={() => handleDownload("excel")}
-                                disabled={downloading}
-                              >
+                                disabled={downloading}>
                                 {downloading ? (
                                   <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                                 ) : (
@@ -1647,8 +1648,7 @@ export default function MixElement() {
                                 variant="outline"
                                 className="h-auto py-4 flex flex-col items-center gap-2 hover:bg-blue-50 hover:border-blue-300 transition-all"
                                 onClick={() => handleDownload("csv")}
-                                disabled={downloading}
-                              >
+                                disabled={downloading}>
                                 {downloading ? (
                                   <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                                 ) : (
@@ -1675,8 +1675,7 @@ export default function MixElement() {
                 onClick={() =>
                   navigate(`/project/${projectId}/add-element-type`)
                 }
-                className="flex gap-2 items-center text-xs sm:text-sm"
-              >
+                className="flex gap-2 items-center text-xs sm:text-sm">
                 Add Element Type
               </Button>
             )}
@@ -1687,8 +1686,7 @@ export default function MixElement() {
                 onClick={() =>
                   navigate(`/project/${projectId}/upload-elementtype`)
                 }
-                className="flex gap-2 items-center text-xs sm:text-sm"
-              >
+                className="flex gap-2 items-center text-xs sm:text-sm">
                 Upload Element Type
               </Button>
             )}

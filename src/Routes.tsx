@@ -176,6 +176,9 @@ const NotificationPage = lazy(
   () => import("./Pages/Notification/Notification"),
 );
 const ModelViewer = lazy(() => import("./Pages/ModelViewer/ModelViewer"));
+const MixStagewiseElement = lazy(
+  () => import("./Pages/Plan/Dashboards/MixStagewiseElement"),
+);
 
 const routeLoadingFallback = (
   <div className="route-loading" role="status" aria-live="polite">
@@ -664,6 +667,14 @@ const projectChildren: RouteObject[] = [
   {
     path: "adjustment/:element_type_id",
     element: withSuspense(<AdjustmentPage />),
+  },
+  {
+    path: "mix-stagewise",
+    element: projectRoleGuard(
+      ["ViewPlan"],
+      withSuspense(<MixStagewiseElement />),
+      "/",
+    ),
   },
 ];
 

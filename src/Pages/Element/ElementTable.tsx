@@ -139,11 +139,10 @@ export const getColumns = (permissions: string[]): ColumnDef<Element>[] => [
           onClick={() => {
             if (permissions?.includes("ViewElementDetail")) {
               navigate(
-                `/project/${projectId}/element-detail/${row.original.id}`
+                `/project/${projectId}/element-detail/${row.original.id}`,
               );
             }
-          }}
-        >
+          }}>
           {row.getValue("element_id")}
         </div>
       );
@@ -269,7 +268,7 @@ export function ElementTable() {
         setCurrentPage(1); // Reset to first page when filters change
       }
     },
-    [filterState]
+    [filterState],
   );
 
   const handleFilterClose = useCallback(() => {
@@ -430,8 +429,7 @@ export function ElementTable() {
           <Button
             variant={hasActiveFilters() ? "default" : "outline"}
             className="w-full sm:w-auto"
-            onClick={() => setFilterOpen((prev) => !prev)}
-          >
+            onClick={() => setFilterOpen((prev) => !prev)}>
             Advance Filter
           </Button>
           {hasActiveFilters() && (
@@ -443,8 +441,7 @@ export function ElementTable() {
             <Button
               variant="default"
               className="w-full sm:w-auto"
-              onClick={handleDownloadPDF}
-            >
+              onClick={handleDownloadPDF}>
               <Download className="mr-2 h-4 w-4" />
               Download PDF ({table.getFilteredSelectedRowModel().rows.length})
             </Button>
@@ -467,8 +464,7 @@ export function ElementTable() {
                       checked={column.getIsVisible()}
                       onCheckedChange={(value) =>
                         column.toggleVisibility(!!value)
-                      }
-                    >
+                      }>
                       {column.id}
                     </DropdownMenuCheckboxItem>
                   );
@@ -496,7 +492,7 @@ export function ElementTable() {
                         ? null
                         : flexRender(
                             header.column.columnDef.header,
-                            header.getContext()
+                            header.getContext(),
                           )}
                     </TableHead>
                   );
@@ -509,13 +505,12 @@ export function ElementTable() {
               table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
-                >
+                  data-state={row.getIsSelected() && "selected"}>
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
                       {flexRender(
                         cell.column.columnDef.cell,
-                        cell.getContext()
+                        cell.getContext(),
                       )}
                     </TableCell>
                   ))}
@@ -525,8 +520,7 @@ export function ElementTable() {
               <TableRow>
                 <TableCell
                   colSpan={getColumns(permissions).length}
-                  className="h-24 text-center"
-                >
+                  className="h-24 text-center">
                   No results.
                 </TableCell>
               </TableRow>
@@ -554,8 +548,7 @@ export function ElementTable() {
               onValueChange={(value) => {
                 setLimit(Number(value));
                 setCurrentPage(1);
-              }}
-            >
+              }}>
               <SelectTrigger className="w-[70px]">
                 <SelectValue />
               </SelectTrigger>
@@ -579,8 +572,7 @@ export function ElementTable() {
               variant="outline"
               size="sm"
               onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
-              disabled={!pagination?.has_prev}
-            >
+              disabled={!pagination?.has_prev}>
               Previous
             </Button>
             <Button
@@ -590,11 +582,10 @@ export function ElementTable() {
                 setCurrentPage((prev) =>
                   pagination
                     ? Math.min(pagination.total_pages, prev + 1)
-                    : prev + 1
+                    : prev + 1,
                 )
               }
-              disabled={!pagination?.has_next}
-            >
+              disabled={!pagination?.has_next}>
               Next
             </Button>
           </div>

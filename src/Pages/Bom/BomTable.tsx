@@ -52,16 +52,15 @@ import { useContext, useEffect, useState } from "react";
 import axios, { AxiosError } from "axios";
 import { apiClient } from "@/utils/apiClient";
 import { toast } from "sonner";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
+
 import { useNavigate, useParams } from "react-router";
 import PageHeader from "@/components/ui/PageHeader";
 import { formatDisplayDate } from "@/utils/formatdate";
 import AddBom from "./AddBom";
-import { Label } from "@/components/ui/label";
+
 import UploadDialog from "./Upload";
 import { generatePDFFromTable } from "@/utils/pdfGenerator";
-import { UserContext } from "@/Provider/UserProvider";
+
 import { useProject } from "@/Provider/ProjectProvider";
 import { ProjectSetupGuide } from "@/components/ProjectSetupGuide";
 
@@ -130,8 +129,7 @@ export const getColumns = (
     header: ({ column }) => (
       <Button
         variant="ghost"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
         Created At
         <ArrowUpDown className="ml-1 h-4 w-4" />
       </Button>
@@ -146,8 +144,7 @@ export const getColumns = (
     header: ({ column }) => (
       <Button
         variant="ghost"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
         Updated At
         <ArrowUpDown className="ml-1 h-4 w-4" />
       </Button>
@@ -361,21 +358,18 @@ export function BomTable({ refresh }: { refresh: () => void }) {
               <Button
                 variant="outline"
                 className="w-full sm:w-auto"
-                onClick={() => navigate(`/project/${projectId}/large-import`)}
-              >
+                onClick={() => navigate(`/project/${projectId}/large-import`)}>
                 Add BOM
               </Button>
             )}
             {permissions?.includes("ImportBom") && (
               <Dialog
                 open={isImportDialogOpen}
-                onOpenChange={setIsImportDialogOpen}
-              >
+                onOpenChange={setIsImportDialogOpen}>
                 <DialogTrigger asChild>
                   <Button
                     variant="outline"
-                    onClick={() => setIsImportDialogOpen(true)}
-                  >
+                    onClick={() => setIsImportDialogOpen(true)}>
                     Import BOM
                   </Button>
                 </DialogTrigger>
@@ -425,8 +419,7 @@ export function BomTable({ refresh }: { refresh: () => void }) {
                 <Button
                   variant="default"
                   className="w-full sm:w-auto"
-                  onClick={handleDownloadPDF}
-                >
+                  onClick={handleDownloadPDF}>
                   <Download className="mr-2 h-4 w-4" />
                   Download PDF (
                   {table.getFilteredSelectedRowModel().rows.length})
@@ -451,8 +444,7 @@ export function BomTable({ refresh }: { refresh: () => void }) {
                           checked={column.getIsVisible()}
                           onCheckedChange={(value) =>
                             column.toggleVisibility(!!value)
-                          }
-                        >
+                          }>
                           {getColumnDisplayName(column.id)}
                         </DropdownMenuCheckboxItem>
                       );
@@ -488,8 +480,7 @@ export function BomTable({ refresh }: { refresh: () => void }) {
                       <TableRow
                         key={row.id}
                         data-state={row.getIsSelected() && "selected"}
-                        className="h-8"
-                      >
+                        className="h-8">
                         {row.getVisibleCells().map((cell) => (
                           <TableCell key={cell.id} className="py-2">
                             {flexRender(
@@ -504,8 +495,7 @@ export function BomTable({ refresh }: { refresh: () => void }) {
                     <TableRow className="h-12">
                       <TableCell
                         colSpan={table.getAllColumns().length}
-                        className="h-24 text-center py-2"
-                      >
+                        className="h-24 text-center py-2">
                         No results.
                       </TableCell>
                     </TableRow>
@@ -524,16 +514,14 @@ export function BomTable({ refresh }: { refresh: () => void }) {
                 variant="outline"
                 size="sm"
                 onClick={() => table.previousPage()}
-                disabled={!table.getCanPreviousPage()}
-              >
+                disabled={!table.getCanPreviousPage()}>
                 Previous
               </Button>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => table.nextPage()}
-                disabled={!table.getCanNextPage()}
-              >
+                disabled={!table.getCanNextPage()}>
                 Next
               </Button>
             </div>
@@ -550,8 +538,7 @@ export function BomTable({ refresh }: { refresh: () => void }) {
             if (!open) {
               setEditingBom(null);
             }
-          }}
-        >
+          }}>
           <DialogContent className="max-w-3xl">
             <DialogHeader>
               <DialogTitle>{editingBom ? "Edit Bom" : "Add Bom"}</DialogTitle>

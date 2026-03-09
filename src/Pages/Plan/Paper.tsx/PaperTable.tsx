@@ -140,7 +140,9 @@ export const getColumns = (
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem onClick={handleEdit}>Edit Paper</DropdownMenuItem>
+            <DropdownMenuItem onClick={handleEdit}>
+              Edit QC Checklist
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       );
@@ -366,7 +368,7 @@ export function PaperTable({ refresh }: { refresh: () => void }) {
   return (
     <div className="w-full py-4 px-4">
       <div className="flex items-center justify-between">
-        <PageHeader title="Papers" />
+        <PageHeader title="QC Checklist" />
       </div>
       {showSetupGuide ? (
         <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
@@ -376,26 +378,28 @@ export function PaperTable({ refresh }: { refresh: () => void }) {
             </div>
             <div className="space-y-2">
               <h2 className="text-xl font-semibold tracking-tight">
-                No Papers Yet
+                No QC Checklist Yet
               </h2>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                Papers are quality-check questionnaires assigned to production
-                stages. They help your team follow standardised inspection
-                checklists and ensure every element meets project requirements
-                before moving to the next stage.
+                QC Checklist are quality-check questionnaires assigned to
+                production stages. They help your team follow standardised
+                inspection checklists and ensure every element meets project
+                requirements before moving to the next stage.
               </p>
             </div>
             <div className="rounded-lg border bg-muted/40 p-4 text-left space-y-2">
               <h3 className="text-sm font-medium">Getting started</h3>
               <ul className="text-xs text-muted-foreground space-y-1 list-disc list-inside">
-                <li>Create a paper with a descriptive name</li>
+                <li>Create a QC Checklist with a descriptive name</li>
                 <li>Add questions and multiple-choice options</li>
-                <li>Assign the paper to one or more production stages</li>
+                <li>
+                  Assign the QC Checklist to one or more production stages
+                </li>
               </ul>
             </div>
             <Button onClick={openCreateDialog} className="gap-2">
               <Plus className="w-4 h-4" />
-              Create Your First Paper
+              Create Your First QC Checklist
             </Button>
           </div>
         </div>
@@ -418,8 +422,7 @@ export function PaperTable({ refresh }: { refresh: () => void }) {
                 <Button
                   variant="default"
                   className="w-full sm:w-auto"
-                  onClick={handleDownloadPDF}
-                >
+                  onClick={handleDownloadPDF}>
                   <Download className="mr-2 h-4 w-4" />
                   Download PDF (
                   {table.getFilteredSelectedRowModel().rows.length})
@@ -428,9 +431,8 @@ export function PaperTable({ refresh }: { refresh: () => void }) {
               <Button
                 variant="outline"
                 className="w-full sm:w-auto"
-                onClick={openCreateDialog}
-              >
-                Add Paper
+                onClick={openCreateDialog}>
+                Add QC Checklist
               </Button>
 
               <DropdownMenu>
@@ -451,8 +453,7 @@ export function PaperTable({ refresh }: { refresh: () => void }) {
                           checked={column.getIsVisible()}
                           onCheckedChange={(value) =>
                             column.toggleVisibility(!!value)
-                          }
-                        >
+                          }>
                           {column.id}
                         </DropdownMenuCheckboxItem>
                       );
@@ -488,8 +489,7 @@ export function PaperTable({ refresh }: { refresh: () => void }) {
                       <TableRow
                         key={row.id}
                         data-state={row.getIsSelected() && "selected"}
-                        className="h-8"
-                      >
+                        className="h-8">
                         {row.getVisibleCells().map((cell) => (
                           <TableCell key={cell.id} className="py-2">
                             {flexRender(
@@ -504,8 +504,7 @@ export function PaperTable({ refresh }: { refresh: () => void }) {
                     <TableRow className="h-12">
                       <TableCell
                         colSpan={table.getAllColumns().length}
-                        className="h-24 text-center py-2"
-                      >
+                        className="h-24 text-center py-2">
                         No results.
                       </TableCell>
                     </TableRow>
@@ -524,16 +523,14 @@ export function PaperTable({ refresh }: { refresh: () => void }) {
                 variant="outline"
                 size="sm"
                 onClick={() => table.previousPage()}
-                disabled={!table.getCanPreviousPage()}
-              >
+                disabled={!table.getCanPreviousPage()}>
                 Previous
               </Button>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => table.nextPage()}
-                disabled={!table.getCanNextPage()}
-              >
+                disabled={!table.getCanNextPage()}>
                 Next
               </Button>
             </div>
@@ -548,17 +545,16 @@ export function PaperTable({ refresh }: { refresh: () => void }) {
             setEditingPaper(null);
             setPaperData(null);
           }
-        }}
-      >
+        }}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {editingPaper ? "Edit Paper" : "Add Paper"}
+              {editingPaper ? "Edit QC Checklist" : "Add QC Checklist"}
             </DialogTitle>
           </DialogHeader>
           {isLoadingPaper ? (
             <div className="flex items-center justify-center py-8">
-              <p>Loading paper data...</p>
+              <p>Loading QC Checklist data...</p>
             </div>
           ) : (
             <AddPaper

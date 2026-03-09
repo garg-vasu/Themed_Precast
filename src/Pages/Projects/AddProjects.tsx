@@ -64,8 +64,8 @@ const roleSchema = z.object({
 const baseSchema = z.object({
   name: z.string().min(1),
   description: z.string().optional(),
-  budget: z.string().min(1),
-  priority: z.string().min(1),
+  // budget: z.string().min(1),
+  // priority: z.string().min(1),
   project_status: z.string().min(1),
   abbreviation: z.string().min(1),
   start_date: z.string().min(1),
@@ -163,11 +163,11 @@ interface EditProject {
   description: string;
   name: string;
   abbreviation?: string;
-  priority: string;
+  // priority: string;
   project_status: string;
   start_date: string;
   end_date: string;
-  budget: string;
+  // budget: string;
   client_name: string;
   client_id: number;
   logo: string;
@@ -315,8 +315,8 @@ export default function AddProjects({ user }: UserFormProps) {
         name: "",
         description: "",
         abbreviation: "",
-        budget: "",
-        priority: "",
+        // budget: "",
+        // priority: "",
         project_status: "",
         start_date: "",
         end_date: "",
@@ -337,8 +337,8 @@ export default function AddProjects({ user }: UserFormProps) {
       name: user.name || "",
       description: user.description || "",
       abbreviation: user.abbreviation || "",
-      budget: user.budget || "",
-      priority: user.priority || "",
+      // budget: user.budget || "",
+      // priority: user.priority || "",
       project_status: user.project_status || "",
       start_date: user.start_date || "",
       end_date: user.end_date || "",
@@ -571,7 +571,7 @@ export default function AddProjects({ user }: UserFormProps) {
     try {
       const payload = {
         ...data,
-        budget: data.budget.toString(),
+        // budget: data.budget.toString(),
       };
 
       if (isEditMode && user) {
@@ -641,8 +641,7 @@ export default function AddProjects({ user }: UserFormProps) {
                 size="icon"
                 className="absolute -top-2 -right-2 rounded-full w-8 h-8 shadow-lg"
                 onClick={handleRemoveImage}
-                disabled={isUploadingImage}
-              >
+                disabled={isUploadingImage}>
                 <X className="w-4 h-4" />
               </Button>
             )}
@@ -653,8 +652,7 @@ export default function AddProjects({ user }: UserFormProps) {
               className={cn(
                 "flex items-center gap-2 px-3 py-1.5 rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground cursor-pointer transition-colors text-sm",
                 isUploadingImage && "opacity-50 cursor-not-allowed",
-              )}
-            >
+              )}>
               {isUploadingImage ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -724,7 +722,7 @@ export default function AddProjects({ user }: UserFormProps) {
                   </p>
                 </div>
 
-                <div className="grid w-full items-center gap-1">
+                {/* <div className="grid w-full items-center gap-1">
                   <Label htmlFor="project_budget">
                     Budget <span className="text-red-500">*</span>
                   </Label>
@@ -738,7 +736,7 @@ export default function AddProjects({ user }: UserFormProps) {
                   <p className="text-xs text-red-600 min-h-[16px]">
                     {errors.budget?.message || "\u00A0"}
                   </p>
-                </div>
+                </div> */}
 
                 <div className="grid w-full items-center gap-1 md:col-span-2">
                   <Label htmlFor="project_description">Description</Label>
@@ -785,8 +783,7 @@ export default function AddProjects({ user }: UserFormProps) {
                           if (selectedStatus) {
                             setValue("project_status", selectedStatus.value);
                           }
-                        }}
-                      >
+                        }}>
                         <SelectTrigger className="w-full">
                           <SelectValue placeholder="Select Project Status" />
                         </SelectTrigger>
@@ -796,8 +793,7 @@ export default function AddProjects({ user }: UserFormProps) {
                             {statuses.map((status) => (
                               <SelectItem
                                 key={status.value}
-                                value={status.value}
-                              >
+                                value={status.value}>
                                 {status.label}
                               </SelectItem>
                             ))}
@@ -811,7 +807,7 @@ export default function AddProjects({ user }: UserFormProps) {
                   </p>
                 </div>
 
-                <div className="grid w-full items-center gap-1">
+                {/* <div className="grid w-full items-center gap-1">
                   <Label htmlFor="project_priority">
                     Priority <span className="text-red-500">*</span>
                   </Label>
@@ -829,8 +825,7 @@ export default function AddProjects({ user }: UserFormProps) {
                           if (selectedPriority) {
                             setValue("priority", selectedPriority.value);
                           }
-                        }}
-                      >
+                        }}>
                         <SelectTrigger className="w-full">
                           <SelectValue placeholder="Select Priority" />
                         </SelectTrigger>
@@ -850,7 +845,7 @@ export default function AddProjects({ user }: UserFormProps) {
                   <p className="text-xs text-red-600 min-h-[16px]">
                     {errors.priority?.message || "\u00A0"}
                   </p>
-                </div>
+                </div> */}
 
                 <div className="grid w-full items-center gap-1">
                   <Label htmlFor="project_template">
@@ -870,8 +865,7 @@ export default function AddProjects({ user }: UserFormProps) {
                           if (selectedTemplate) {
                             setValue("template_id", selectedTemplate.id);
                           }
-                        }}
-                      >
+                        }}>
                         <SelectTrigger className="w-full">
                           <SelectValue placeholder="Select Template" />
                         </SelectTrigger>
@@ -881,8 +875,7 @@ export default function AddProjects({ user }: UserFormProps) {
                             {templates.map((template) => (
                               <SelectItem
                                 key={template.id}
-                                value={template.id.toString()}
-                              >
+                                value={template.id.toString()}>
                                 {template.name}
                               </SelectItem>
                             ))}
@@ -914,8 +907,7 @@ export default function AddProjects({ user }: UserFormProps) {
                           if (selectedEndClient) {
                             setValue("client_id", selectedEndClient.id);
                           }
-                        }}
-                      >
+                        }}>
                         <SelectTrigger className="w-full">
                           <SelectValue placeholder="Select End Client" />
                         </SelectTrigger>
@@ -925,8 +917,7 @@ export default function AddProjects({ user }: UserFormProps) {
                             {endClients.map((client) => (
                               <SelectItem
                                 key={client.id}
-                                value={client.id.toString()}
-                              >
+                                value={client.id.toString()}>
                                 {client.contact_person || client.email}
                               </SelectItem>
                             ))}
@@ -963,16 +954,14 @@ export default function AddProjects({ user }: UserFormProps) {
                     render={({ field }) => (
                       <Popover
                         open={openStartDate}
-                        onOpenChange={setOpenStartDate}
-                      >
+                        onOpenChange={setOpenStartDate}>
                         <PopoverTrigger asChild>
                           <Button
                             variant="outline"
                             className={cn(
                               "w-full justify-start text-left font-normal",
                               !field.value && "text-muted-foreground",
-                            )}
-                          >
+                            )}>
                             <CalendarIcon className="mr-2 h-4 w-4" />
                             {field.value ? (
                               format(new Date(field.value), "PPP")
@@ -1023,8 +1012,7 @@ export default function AddProjects({ user }: UserFormProps) {
                             className={cn(
                               "w-full justify-start text-left font-normal",
                               !field.value && "text-muted-foreground",
-                            )}
-                          >
+                            )}>
                             <CalendarIcon className="mr-2 h-4 w-4" />
                             {field.value ? (
                               format(new Date(field.value), "PPP")
@@ -1071,16 +1059,14 @@ export default function AddProjects({ user }: UserFormProps) {
                     render={({ field }) => (
                       <Popover
                         open={openSubscriptionStartDate}
-                        onOpenChange={setOpenSubscriptionStartDate}
-                      >
+                        onOpenChange={setOpenSubscriptionStartDate}>
                         <PopoverTrigger asChild>
                           <Button
                             variant="outline"
                             className={cn(
                               "w-full justify-start text-left font-normal",
                               !field.value && "text-muted-foreground",
-                            )}
-                          >
+                            )}>
                             <CalendarIcon className="mr-2 h-4 w-4" />
                             {field.value ? (
                               format(new Date(field.value), "PPP")
@@ -1127,16 +1113,14 @@ export default function AddProjects({ user }: UserFormProps) {
                     render={({ field }) => (
                       <Popover
                         open={openSubscriptionEndDate}
-                        onOpenChange={setOpenSubscriptionEndDate}
-                      >
+                        onOpenChange={setOpenSubscriptionEndDate}>
                         <PopoverTrigger asChild>
                           <Button
                             variant="outline"
                             className={cn(
                               "w-full justify-start text-left font-normal",
                               !field.value && "text-muted-foreground",
-                            )}
-                          >
+                            )}>
                             <CalendarIcon className="mr-2 h-4 w-4" />
                             {field.value ? (
                               format(new Date(field.value), "PPP")
@@ -1232,8 +1216,7 @@ export default function AddProjects({ user }: UserFormProps) {
                       return (
                         <div
                           key={role.role_id}
-                          className="flex items-center justify-between gap-2 bg-muted/50 p-2 rounded-md border"
-                        >
+                          className="flex items-center justify-between gap-2 bg-muted/50 p-2 rounded-md border">
                           <Label className="capitalize min-w-0 truncate font-medium text-xs">
                             {roleObj?.role_name}
                           </Label>
@@ -1334,8 +1317,7 @@ export default function AddProjects({ user }: UserFormProps) {
                   {oldroledata.map((role) => (
                     <div
                       key={role.role_id}
-                      className="flex items-center justify-between gap-2 bg-muted/30 p-2 rounded-md border border-dashed"
-                    >
+                      className="flex items-center justify-between gap-2 bg-muted/30 p-2 rounded-md border border-dashed">
                       <span className="capitalize min-w-0 truncate font-medium text-sm text-muted-foreground">
                         {role.role_name}
                       </span>
@@ -1354,15 +1336,13 @@ export default function AddProjects({ user }: UserFormProps) {
             type="button"
             variant="outline"
             onClick={() => navigate("/projects")}
-            disabled={isSubmitting || isLoading}
-          >
+            disabled={isSubmitting || isLoading}>
             Cancel
           </Button>
           <Button
             type="submit"
             disabled={isSubmitting || isLoading}
-            className="min-w-[120px]"
-          >
+            className="min-w-[120px]">
             {isSubmitting || isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />

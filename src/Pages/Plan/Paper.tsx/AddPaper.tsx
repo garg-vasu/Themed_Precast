@@ -283,13 +283,13 @@ export default function AddPaper({ onClose, paper }: PaperDialogProps) {
   return (
     <div className="flex flex-col gap-1  ">
       <form onSubmit={handleSubmit(onSubmit as any)} className="flex flex-col ">
-        <div className="grid w-full items-center gap-1">
-          <Label htmlFor="paper_name">
-            Paper Name <span className="text-red-500">*</span>
+        <div className="grid w-full items-center gap-2">
+          <Label htmlFor="qc_checklist_name">
+            QC Checklist Name <span className="text-red-500">*</span>
           </Label>
           <Input
-            id="paper_name"
-            placeholder="Paper Name"
+            id="qc_checklist_name"
+            placeholder="QC Checklist Name"
             {...register("paper_name")}
             aria-invalid={!!errors.paper_name}
           />
@@ -345,8 +345,8 @@ export default function AddPaper({ onClose, paper }: PaperDialogProps) {
             {isSubmitting
               ? "Saving..."
               : isEditMode
-                ? "Update Paper"
-                : "Create Paper"}
+                ? "Update QC Checklist"
+                : "Create QC Checklist"}
           </Button>
         </div>
       </form>

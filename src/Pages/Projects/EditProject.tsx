@@ -13,17 +13,21 @@ interface EditProject {
   description: string;
   name: string;
   abbreviation?: string;
-  priority: string;
+  // priority: string;
   project_status: string;
   start_date: string;
   end_date: string;
-  budget: string;
+  // budget: string;
   client_name: string;
   client_id: number;
   logo: string;
   total_elements: number;
   completed_elements: number;
   progress: number;
+  hra: boolean;
+  work_order: boolean;
+  invoice: boolean;
+  calculator: boolean;
   template_id: number;
   stockyards: editStockyard[];
   roles?: { role_id: number; quantity: number }[];
@@ -70,7 +74,7 @@ export default function EditProject() {
           setData(response.data);
         } else {
           toast.error(
-            response.data?.message || "Failed to fetch project roles data"
+            response.data?.message || "Failed to fetch project roles data",
           );
         }
       } catch (err: unknown) {
