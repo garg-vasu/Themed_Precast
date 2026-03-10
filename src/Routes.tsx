@@ -49,6 +49,9 @@ const MixDrawing = lazy(() => import("./Pages/Drawing/MixDrawing"));
 const MixElementStockyard = lazy(
   () => import("./Pages/ElementStockyard/MixElementStockyard"),
 );
+const NewRequestHandler = lazy(
+  () => import("./Pages/Errection/RequestHandle/NewRequestHandler"),
+);
 const StockyardAssigntable = lazy(() =>
   import("./Pages/ElementStockyard/StockyardAssigntable").then((module) => ({
     default: module.StockyardAssigntable,
@@ -614,6 +617,14 @@ const projectChildren: RouteObject[] = [
     element: projectRoleGuard(
       ["AddErrectionRequest"],
       withSuspense(<RequestHandler />),
+      "/",
+    ),
+  },
+  {
+    path: "new-dispatch-request",
+    element: projectRoleGuard(
+      ["AddErrectionRequest"],
+      withSuspense(<NewRequestHandler />),
       "/",
     ),
   },

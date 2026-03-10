@@ -17,10 +17,17 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-import { ArrowUpDown, ChevronDown, Download } from "lucide-react";
+import { ArrowUpDown, ChevronDown, Download, Eye } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 import { Input } from "@/components/ui/input";
 import {
@@ -39,25 +46,37 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { useNavigate, useParams } from "react-router";
 import { ProjectContext } from "@/Provider/ProjectProvider";
+import Elementdisplay from "./Elementdisplay";
 
 export type PendingApproval = {
-  precast_stock_id: number;
+  load_id: number;
+  type: string;
+  address: string;
+  Incharge: string;
+  Capacity: number;
+  InchargePhone: number;
+  remainingCapacity: number; // can alos be negative and positive
+  item_no: number;
+  created_at: string;
+  created_by: string;
+  item: item[];
+};
+
+export type item = {
   element_id: number;
-  element_type_id: number;
-  element_type_name: string;
+  element_name: string;
+  mass: number;
+  volumne: number;
   element_type: string;
+  element_type_name: string;
   floor_name: string;
   tower_name: string;
-  floor_id: number;
-  element_name: string;
-  disable: boolean;
-  weight?: number;
-  status?: string;
+  element_type_id: number;
 };
 
 export const getColumns = (
-  handleApprove: (elementId: number) => void,
-  handleReject: (elementId: number) => void,
+  handleApprove: (loadId: number) => void,
+  handleReject: (loadId: number) => void,
   permissions: string[],
 ): ColumnDef<PendingApproval>[] => [
   {
@@ -73,7 +92,7 @@ export const getColumns = (
       />
     ),
     cell: ({ row }) => {
-      const isDisabled = row.original.disable;
+      const isDisabled = (row.original as any).disable;
       return (
         <Checkbox
           checked={row.getIsSelected()}
@@ -86,96 +105,88 @@ export const getColumns = (
     enableSorting: false,
     enableHiding: false,
   },
-  //   name column
   {
-    accessorKey: "element_name",
-    header: "Element Name",
+    accessorKey: "load_id",
+    header: "Load ID",
+    cell: ({ row }) => (
+      <div className="font-medium">{row.getValue("load_id")}</div>
+    ),
+  },
+  {
+    accessorKey: "type",
+    header: "Type",
+    cell: ({ row }) => (
+      <div className="capitalize">{row.getValue("type")}</div>
+    ),
+  },
+  {
+    accessorKey: "address",
+    header: "Address",
+    cell: ({ row }) => (
+      <div className="max-w-[200px] truncate" title={row.getValue("address")}>
+        {row.getValue("address")}
+      </div>
+    ),
+  },
+  {
+    accessorKey: "Incharge",
+    header: "Incharge",
+    cell: ({ row }) => (
+      <div className="capitalize">{row.getValue("Incharge")}</div>
+    ),
+  },
+  {
+    accessorKey: "InchargePhone",
+    header: "Phone",
+    cell: ({ row }) => <div>{row.getValue("InchargePhone")}</div>,
+  },
+  {
+    accessorKey: "Capacity",
+    header: "Capacity",
+    cell: ({ row }) => <div>{row.getValue("Capacity")}</div>,
+  },
+  {
+    accessorKey: "remainingCapacity",
+    header: "Remaining",
+    cell: ({ row }) => <div>{row.getValue("remainingCapacity")}</div>,
+  },
+  {
+    accessorKey: "created_at",
+    header: "Created At",
     cell: ({ row }) => {
-      const navigate = useNavigate();
-      const { projectId } = useParams();
-      const isDisabled = row.original.disable;
-      return (
-        <div
-          className={`flex flex-col gap-2 ${
-            isDisabled ? "cursor-not-allowed" : "cursor-pointer"
-          }`}
-          onClick={() => {
-            if (isDisabled) return;
-            if (permissions?.includes("ViewElementDetail")) {
-              navigate(
-                `/project/${projectId}/element-detail/${row.original.element_id}`,
-              );
-            }
-          }}
-        >
-          {row.getValue("element_name")}
-          <span className="text-xs text-accent-foreground">
-            {row.original.element_id}
-          </span>
-        </div>
-      );
+      const date = new Date(row.getValue("created_at"));
+      return <div>{date.toLocaleDateString()}</div>;
     },
   },
-
   {
-    accessorKey: "element_type",
-    header: "Element Type",
-    cell: ({ row }) => (
-      <div className="capitalize">{row.getValue("element_type")}</div>
-    ),
-  },
-  {
-    accessorKey: "element_type_name",
-    header: "Element Type Name",
-    cell: ({ row }) => (
-      <div className="capitalize">{row.getValue("element_type_name")}</div>
-    ),
-  },
-  {
-    accessorKey: "weight",
-    header: ({ column }) => {
+    id: "items",
+    header: "Items",
+    cell: ({ row }) => {
+      const items = row.original.item;
       return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Weight
-          <ArrowUpDown className="ml-1 h-4 w-4" />
-        </Button>
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button variant="outline" size="sm" className="gap-2">
+              <Eye className="w-4 h-4" />
+              View
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Items for Load ID: {row.original.load_id}</DialogTitle>
+            </DialogHeader>
+            <Elementdisplay items={items || []} />
+          </DialogContent>
+        </Dialog>
       );
     },
-    cell: ({ row }) => (
-      <div className="capitalize">{row.getValue("weight")}</div>
-    ),
-  },
-
-  {
-    accessorKey: "floor_name",
-    header: "Floor Name",
-    cell: ({ row }) => (
-      <div className="capitalize">{row.getValue("floor_name")}</div>
-    ),
-  },
-  {
-    accessorKey: "tower_name",
-    header: "Tower Name",
-    cell: ({ row }) => (
-      <div className="capitalize">{row.getValue("tower_name")}</div>
-    ),
-  },
-  {
-    accessorKey: "status",
-    header: "Status",
-    cell: ({ row }) => (
-      <div className="capitalize">{row.getValue("status") || "Pending"}</div>
-    ),
   },
   {
     id: "actions",
     enableHiding: false,
     cell: ({ row }) => {
       const pendingApproval = row.original;
-      const isDisabled = pendingApproval.disable;
+      const isDisabled = (pendingApproval as any).disable;
       return (
         <div className="flex gap-2 items-center justify-center">
           <Button
@@ -185,9 +196,8 @@ export const getColumns = (
             disabled={isDisabled}
             onClick={() => {
               if (isDisabled) return;
-              handleApprove(pendingApproval.element_id);
-            }}
-          >
+              handleApprove(pendingApproval.load_id);
+            }}>
             Approve
           </Button>
           <Button
@@ -197,9 +207,8 @@ export const getColumns = (
             disabled={isDisabled}
             onClick={() => {
               if (isDisabled) return;
-              handleReject(pendingApproval.element_id);
-            }}
-          >
+              handleReject(pendingApproval.load_id);
+            }}>
             Reject
           </Button>
         </div>
@@ -209,13 +218,14 @@ export const getColumns = (
 ];
 
 const COLUMN_LABELS: Record<string, string> = {
-  element_name: "Element Name",
-  element_type: "Element Type",
-  element_type_name: "Element Type Name",
-  weight: "Weight",
-  floor_name: "Floor Name",
-  tower_name: "Tower Name",
-  status: "Status",
+  load_id: "Load ID",
+  type: "Type",
+  address: "Address",
+  Incharge: "Incharge",
+  InchargePhone: "Phone",
+  Capacity: "Capacity",
+  remainingCapacity: "Remaining",
+  created_at: "Created At",
 };
 
 const getColumnDisplayName = (columnId: string): string =>
@@ -285,40 +295,40 @@ export function PendingApprovalTable() {
     };
   }, [projectId, refreshKey]);
 
-  const handleApprove = async (elementId: number) => {
+  const handleApprove = async (loadId: number) => {
     try {
       const response = await apiClient.put(`/update_stock`, [
-        { element_id: elementId, approved_status: true },
+        { load_id: loadId, approved_status: true },
       ]);
 
       if (response.status === 200) {
-        toast.success(`Element ${elementId} approved successfully!`);
+        toast.success(`Load ${loadId} approved successfully!`);
         refreshData();
       } else {
-        toast.error(response.data?.message || "Failed to approve element");
+        toast.error(response.data?.message || "Failed to approve load");
       }
     } catch (error: unknown) {
-      console.error("Error approving element:", error);
-      toast.error(getErrorMessage(error, "approve element"));
+      console.error("Error approving load:", error);
+      toast.error(getErrorMessage(error, "approve load"));
       refreshData();
     }
   };
 
-  const handleReject = async (elementId: number) => {
+  const handleReject = async (loadId: number) => {
     try {
       const response = await apiClient.put(`/update_stock`, [
-        { element_id: elementId, approved_status: false },
+        { load_id: loadId, approved_status: false },
       ]);
 
       if (response.status === 200) {
-        toast.success(`Element ${elementId} rejected successfully!`);
+        toast.success(`Load ${loadId} rejected successfully!`);
         refreshData();
       } else {
-        toast.error(response.data?.message || "Failed to reject element");
+        toast.error(response.data?.message || "Failed to reject load");
       }
     } catch (error: unknown) {
-      console.error("Error rejecting element:", error);
-      toast.error(getErrorMessage(error, "reject element"));
+      console.error("Error rejecting load:", error);
+      toast.error(getErrorMessage(error, "reject load"));
       refreshData();
     }
   };
@@ -365,25 +375,27 @@ export function PendingApprovalTable() {
       const tableData = selectedRows.map((row) => {
         const pending = row.original;
         return [
-          pending.element_name || "—",
-          pending.element_type || "—",
-          pending.element_type_name || "—",
-          pending.weight ? pending.weight.toString() : "—",
-          pending.floor_name || "—",
-          pending.tower_name || "—",
-          pending.status || "Pending",
+          pending.load_id || "—",
+          pending.type || "—",
+          pending.address || "—",
+          pending.Incharge || "—",
+          pending.InchargePhone || "—",
+          pending.Capacity ? pending.Capacity.toString() : "—",
+          pending.remainingCapacity ? pending.remainingCapacity.toString() : "—",
+          pending.created_at ? new Date(pending.created_at).toLocaleDateString() : "—",
         ];
       });
 
       // Prepare headers
       const headers = [
-        "Element Name",
-        "Element Type",
-        "Element Type Name",
-        "Weight",
-        "Floor Name",
-        "Tower Name",
-        "Status",
+        "Load ID",
+        "Type",
+        "Address",
+        "Incharge",
+        "Phone No.",
+        "Capacity",
+        "Remaining",
+        "Created At",
       ];
 
       // Add table with all column headers
@@ -416,12 +428,12 @@ export function PendingApprovalTable() {
       {/* top toolbar */}
       <div className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
         <Input
-          placeholder="Filter by Element Name..."
+          placeholder="Filter by Type..."
           value={
-            (table.getColumn("element_name")?.getFilterValue() as string) ?? ""
+            (table.getColumn("type")?.getFilterValue() as string) ?? ""
           }
           onChange={(event) =>
-            table.getColumn("element_name")?.setFilterValue(event.target.value)
+            table.getColumn("type")?.setFilterValue(event.target.value)
           }
           className="w-full max-w-sm sm:max-w-xs"
         />
@@ -450,8 +462,7 @@ export function PendingApprovalTable() {
                       checked={column.getIsVisible()}
                       onCheckedChange={(value) =>
                         column.toggleVisibility(!!value)
-                      }
-                    >
+                      }>
                       {getColumnDisplayName(column.id)}
                     </DropdownMenuCheckboxItem>
                   );
@@ -484,7 +495,7 @@ export function PendingApprovalTable() {
           <TableBody>
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => {
-                const isDisabled = row.original.disable;
+                const isDisabled = (row.original as any).disable;
                 return (
                   <TableRow
                     key={row.id}
@@ -493,13 +504,11 @@ export function PendingApprovalTable() {
                       isDisabled
                         ? "opacity-50 bg-gray-100 cursor-not-allowed"
                         : ""
-                    }
-                  >
+                    }>
                     {row.getVisibleCells().map((cell) => (
                       <TableCell
                         key={cell.id}
-                        className={`${isDisabled ? "text-gray-500" : ""}`}
-                      >
+                        className={`${isDisabled ? "text-gray-500" : ""}`}>
                         {flexRender(
                           cell.column.columnDef.cell,
                           cell.getContext(),
@@ -515,8 +524,7 @@ export function PendingApprovalTable() {
                   colSpan={
                     getColumns(handleApprove, handleReject, permissions).length
                   }
-                  className="h-24 text-center"
-                >
+                  className="h-24 text-center">
                   No results.
                 </TableCell>
               </TableRow>
@@ -534,16 +542,14 @@ export function PendingApprovalTable() {
             variant="outline"
             size="sm"
             onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-          >
+            disabled={!table.getCanPreviousPage()}>
             Previous
           </Button>
           <Button
             variant="outline"
             size="sm"
             onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-          >
+            disabled={!table.getCanNextPage()}>
             Next
           </Button>
         </div>

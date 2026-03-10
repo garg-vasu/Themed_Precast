@@ -112,8 +112,7 @@ export const columns = (
                 `/project/${projectId}/element-detail/${row.original.element_id}`,
               );
             }
-          }}
-        >
+          }}>
           {row.getValue("element_id")}
         </div>
       );
@@ -184,8 +183,7 @@ export const columns = (
       <Button
         variant="customPadding"
         size="noPadding"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
         Action At
         <ArrowUpDown className="ml-1 h-4 w-4" />
       </Button>
@@ -394,9 +392,10 @@ export function ErrectionRequestTable() {
               </ul>
             </div>
             <Button
-              onClick={() => navigate(`/project/${projectId}/dispatch-request`)}
-              className="gap-2"
-            >
+              onClick={() =>
+                navigate(`/project/${projectId}/new-dispatch-request`)
+              }
+              size="sm">
               <Plus className="w-4 h-4" />
               Create Your Errection Request
             </Button>
@@ -414,9 +413,10 @@ export function ErrectionRequestTable() {
           {permissions?.includes("AddErrectionRequest") && (
             <Button
               variant="outline"
-              className="sm:w-auto"
-              onClick={() => navigate(`/project/${projectId}/dispatch-request`)}
-            >
+              size="sm"
+              onClick={() =>
+                navigate(`/project/${projectId}/new-dispatch-request`)
+              }>
               Add Request
             </Button>
           )}
@@ -436,19 +436,15 @@ export function ErrectionRequestTable() {
         />
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-center">
           {table.getFilteredSelectedRowModel().rows.length > 0 && (
-            <Button
-              variant="default"
-              className="w-full sm:w-auto"
-              onClick={handleDownloadPDF}
-            >
-              <Download className="mr-2 h-4 w-4" />
+            <Button variant="default" size="sm" onClick={handleDownloadPDF}>
+              <Download className="" />
               Download PDF ({table.getFilteredSelectedRowModel().rows.length})
             </Button>
           )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="w-full sm:w-auto">
-                Columns <ChevronDown className="ml-1 h-4 w-4" />
+              <Button variant="outline" size="sm">
+                Columns <ChevronDown className="" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -463,8 +459,7 @@ export function ErrectionRequestTable() {
                       checked={column.getIsVisible()}
                       onCheckedChange={(value) =>
                         column.toggleVisibility(!!value)
-                      }
-                    >
+                      }>
                       {column.id}
                     </DropdownMenuCheckboxItem>
                   );
@@ -506,13 +501,11 @@ export function ErrectionRequestTable() {
                       isDisabled
                         ? "opacity-50 bg-gray-100 cursor-not-allowed"
                         : ""
-                    }
-                  >
+                    }>
                     {row.getVisibleCells().map((cell) => (
                       <TableCell
                         key={cell.id}
-                        className={`${isDisabled ? "text-gray-500" : ""}`}
-                      >
+                        className={`${isDisabled ? "text-gray-500" : ""}`}>
                         {flexRender(
                           cell.column.columnDef.cell,
                           cell.getContext(),
@@ -526,8 +519,7 @@ export function ErrectionRequestTable() {
               <TableRow>
                 <TableCell
                   colSpan={columns(permissions, navigate, projectId).length}
-                  className="h-24 text-center"
-                >
+                  className="h-24 text-center">
                   No results.
                 </TableCell>
               </TableRow>
@@ -545,16 +537,14 @@ export function ErrectionRequestTable() {
             variant="outline"
             size="sm"
             onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-          >
+            disabled={!table.getCanPreviousPage()}>
             Previous
           </Button>
           <Button
             variant="outline"
             size="sm"
             onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-          >
+            disabled={!table.getCanNextPage()}>
             Next
           </Button>
         </div>
