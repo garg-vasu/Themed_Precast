@@ -10,6 +10,7 @@ import { DispatchedElementTable } from "./DispatchedElement";
 import { DispatchedReadyTable } from "./DispatchedReadyTable";
 import { useNavigate, useParams } from "react-router";
 import { ProjectSetupGuide } from "@/components/ProjectSetupGuide";
+import { LoadDispatchTable } from "./LoadDispatchTable";
 
 interface TabLink {
   id: string;
@@ -60,10 +61,10 @@ export default function MixDispatch() {
     if (permissions?.includes("ViewDispatchLog")) {
       tabs.push({
         id: "3",
-        label: "Element for Dispatch",
+        label: "Load for Dispatch",
         number: 25,
         icon: MoreHorizontal,
-        content: <DispatchedReadyTable />,
+        content: <LoadDispatchTable />,
       });
     }
 
@@ -100,8 +101,7 @@ export default function MixDispatch() {
         {permissions?.includes("AddDispatchLog") && (
           <Button
             variant="outline"
-            onClick={() => navigate(`/project/${projectId}/vehicle-dispatch`)}
-          >
+            onClick={() => navigate(`/project/${projectId}/vehicle-dispatch`)}>
             Add Dispatch
           </Button>
         )}

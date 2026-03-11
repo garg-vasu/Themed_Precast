@@ -1,0 +1,213 @@
+{
+  "book_metadata": {
+    "title": "Hookonomics: Guide to Hook",
+    "author": "Himanshu Gandotra",
+    "year": 2026,
+    "domain": "Content creation / Attention engineering / Social media marketing",
+    "core_thesis": "Content success is determined by the ability to capture attention in the first few seconds using psychological hooks."
+  },
+
+  "core_principles": {
+    "attention_economy": {
+      "description": "In the social media era attention is the most scarce resource. Content competes primarily for viewer attention.",
+      "implication": "The first 3 seconds of content determine whether a viewer continues watching or scrolls away."
+    },
+    "hook_definition": {
+      "description": "A hook is an attention trigger designed to stop scrolling and create curiosity or emotional engagement."
+    },
+    "three_second_rule": {
+      "description": "The first three seconds determine viewer retention trajectory.",
+      "goal": "Move viewer attention sequentially from 3 seconds → 5 seconds → 10 seconds → 30 seconds → completion."
+    }
+  },
+
+  "attention_pipeline": {
+    "stages": [
+      "content_exposure",
+      "first_3_second_hook",
+      "viewer_engagement",
+      "continued_viewing",
+      "completion"
+    ],
+    "failure_condition": "If the hook fails the rest of the content is never consumed."
+  },
+
+  "hook_categories": [
+    {
+      "category": "brain_hooks",
+      "description": "Hooks that trigger primitive survival instincts in the brain.",
+      "brain_checks": [
+        "Is this dangerous?",
+        "Is this beneficial?",
+        "Is this unknown?"
+      ],
+      "result": "Immediate attention response"
+    },
+    {
+      "category": "social_status_hooks",
+      "description": "Hooks targeting identity, belonging, and hierarchy psychology.",
+      "viewer_reactions": [
+        "This relates to me",
+        "I want to belong to this group",
+        "I disagree and want to respond",
+        "I want to be like this person"
+      ]
+    },
+    {
+      "category": "narrative_pattern_hooks",
+      "description": "Hooks using storytelling, structure, and pattern interruption to maintain engagement."
+    }
+  ],
+
+  "brain_hook_types": [
+    "curiosity_gap",
+    "shock_and_surprise",
+    "big_result",
+    "conflict_or_negative",
+    "secret_or_hidden_information",
+    "comparison_or_controversy",
+    "emotion_or_pain",
+    "instant_value",
+    "urgency_or_fomo"
+  ],
+
+  "curiosity_gap_mechanics": {
+    "definition": "A curiosity gap occurs when information is partially revealed, forcing the brain to seek closure.",
+    "psychology": "Humans dislike missing information and feel compelled to resolve uncertainty.",
+    "mechanism_steps": [
+      "Introduce incomplete information",
+      "Create cognitive tension",
+      "Trigger curiosity",
+      "Viewer clicks to resolve uncertainty"
+    ]
+  },
+
+  "curiosity_gap_templates": [
+    "You're focusing on the wrong ___",
+    "Everyone teaches ___ but nobody teaches ___",
+    "This is not the reason your ___ is failing",
+    "You're skipping the step that actually makes ___ work",
+    "The real problem isn't ___, it's ___",
+    "You don't need more ___, you need better ___",
+    "This thing looks useless but it changes everything",
+    "You won't understand why this works until you try it",
+    "You're not solving the problem, you're protecting it",
+    "The most important part of ___ is the part you ignore",
+    "Everyone notices ___ but experts notice ___",
+    "The thing you're trying to fix isn't broken",
+    "Stop asking how, start asking why",
+    "Your effort isn't the problem, your direction is",
+    "You're chasing results without mastering ___",
+    "You think the secret is ___ but it's actually ___"
+  ],
+
+  "hardcore_curiosity_hooks": [
+    {
+      "template": "You're optimizing the only part that doesn't matter",
+      "trigger": "contradiction"
+    },
+    {
+      "template": "The mistake is not what you're doing, it's what you're avoiding",
+      "trigger": "missing information"
+    },
+    {
+      "template": "This doesn't make you fail, it makes you fail slowly",
+      "trigger": "fear + mystery"
+    },
+    {
+      "template": "You're not improving, you're getting more stuck creatively",
+      "trigger": "opposite logic"
+    },
+    {
+      "template": "Your success is being delayed by something that feels productive",
+      "trigger": "productivity paradox"
+    },
+    {
+      "template": "The problem isn't big, that's the problem",
+      "trigger": "paradox"
+    },
+    {
+      "template": "Your plan isn't wrong, it's too safe",
+      "trigger": "safety contradiction"
+    },
+    {
+      "template": "You're doing the right thing at the wrong intensity",
+      "trigger": "cognitive tension"
+    },
+    {
+      "template": "It worked. That's the worst part",
+      "trigger": "positive framed as negative"
+    },
+    {
+      "template": "Your biggest skill is causing your biggest problem",
+      "trigger": "identity conflict"
+    },
+    {
+      "template": "You didn't fail. You succeeded at the wrong thing",
+      "trigger": "wrong success paradox"
+    },
+    {
+      "template": "You don't lack talent, you lack the right boredom",
+      "trigger": "unexpected concept"
+    },
+    {
+      "template": "You're not stuck, you're repeating progress that leads nowhere",
+      "trigger": "fake progress reveal"
+    },
+    {
+      "template": "You don't need new ideas, you need to escape old ones",
+      "trigger": "unexpected reframing"
+    },
+    {
+      "template": "Your growth stopped the moment you started measuring it",
+      "trigger": "measurement paradox"
+    },
+    {
+      "template": "You're not overthinking, you're questioning the wrong decision",
+      "trigger": "reframed mental state"
+    },
+    {
+      "template": "The thing you think is slowing you is protecting you",
+      "trigger": "danger reframed as safety"
+    },
+    {
+      "template": "The skill you want is locked behind the skill you avoid",
+      "trigger": "hidden dependency"
+    }
+  ],
+
+  "visual_hooks": {
+    "description": "Visual elements that trigger attention before the script begins.",
+    "elements": [
+      "thumbnail",
+      "first frame",
+      "visual contrast",
+      "movement",
+      "pattern break",
+      "text overlays"
+    ]
+  },
+
+  "hook_combination_strategy": {
+    "insight": "Top creators combine multiple hook categories.",
+    "single_hook_limitations": {
+      "brain_hooks": "generate views but limited trust",
+      "social_hooks": "generate authority but fewer clicks",
+      "narrative_hooks": "generate retention but slow virality"
+    },
+    "optimal_strategy": "Combine brain + social + narrative hooks."
+  },
+
+  "example_combined_hook": {
+    "text": "Everyone teaches editing but nobody teaches attention.",
+    "components": ["curiosity gap", "identity trigger", "contradiction"]
+  },
+
+  "key_takeaways": [
+    "Attention is engineered using psychology.",
+    "The first three seconds determine viewer retention.",
+    "Hooks must trigger curiosity or emotion instantly.",
+    "Top creators combine brain, social, and narrative hooks.",
+    "Content quality matters only after attention is captured."
+  ]
+}

@@ -1,0 +1,147 @@
+{
+  "document_type": "Content Hook Psychology Framework",
+  "core_topic": "Social and Status Hooks for storytelling, marketing, and viral content",
+  "psychological_foundation": {
+    "human_driver": "Humans are strongly motivated by social status and identity.",
+    "evolutionary_basis": {
+      "status_benefits": [
+        "Access to resources",
+        "Safety and protection",
+        "Mating opportunities",
+        "Influence within group"
+      ],
+      "modern_effect": "Loss of status triggers the brain similarly to physical pain."
+    },
+    "core_brain_triggers": [
+      "Fear of falling behind",
+      "Desire to climb social hierarchy",
+      "Need for belonging",
+      "Identity protection",
+      "Comparison with peers"
+    ]
+  },
+
+  "core_mechanism": {
+    "status_hook_effect": [
+      "Makes viewer compare themselves to others",
+      "Triggers identity evaluation",
+      "Creates psychological tension",
+      "Viewer clicks to resolve tension"
+    ],
+    "viewer_questions_triggered": [
+      "Am I ahead or behind?",
+      "Am I doing better than others?",
+      "How do people see me?",
+      "What is the social cost if I ignore this?"
+    ]
+  },
+
+  "major_hook_categories": [
+    "Identity Hooks",
+    "Social Proof Hooks",
+    "Authority / Command Hooks",
+    "Polarizing Hooks"
+  ],
+
+  "identity_hooks": {
+    "core_trigger": "Threat or reward to viewer identity",
+    "emotion": "Self-evaluation and insecurity",
+    "brain_regions": ["Medial Prefrontal Cortex", "Amygdala"],
+    "psychological_principle": "Humans hate identity misalignment between who they think they are and what behavior suggests.",
+    "core_formula": "If you do X, it reveals something about your identity.",
+    "templates": [
+      "If you do X, you're not the person you think you are.",
+      "Nothing exposes a beginner faster than X.",
+      "You'll never grow until you stop identifying as X.",
+      "If this hurts to hear, it's probably true about you.",
+      "You're not behind, you're acting like someone who is."
+    ],
+    "conceptual_models": {
+      "identity_elevation": "If you relate to X, you're the kind of person who becomes Y.",
+      "identity_exposure": "Doing X exposes you as Y.",
+      "identity_correction": "You think you're A, but your actions show you're B."
+    }
+  },
+
+  "social_proof_hooks": {
+    "core_trigger": "Fear of being the only one missing out",
+    "emotion": "FOMO and social comparison",
+    "brain_regions": ["Medial Prefrontal Cortex", "Social Comparison Network"],
+    "psychological_principle": "Humans copy what other humans validate.",
+    "core_formula_patterns": [
+      "Everyone is doing X",
+      "Top performers rely on X",
+      "People like you already do X"
+    ],
+    "templates": [
+      "Everyone who's growing right now is doing this.",
+      "All top creators quietly rely on this.",
+      "If you're not doing this yet, you're already behind.",
+      "The top 1% do this without talking about it.",
+      "People who grow fast all have this habit.",
+      "Most beginners avoid this but every expert lives by it."
+    ],
+    "variants": [
+      "Majority validation",
+      "Elite validation",
+      "Secret majority",
+      "Peer pressure",
+      "Unspoken rule"
+    ]
+  },
+
+  "authority_hooks": {
+    "core_trigger": "Perceived expertise and certainty",
+    "emotion": "Trust and obedience to authority",
+    "psychological_principle": "People prefer clear guidance when overwhelmed with choices.",
+    "creator_positioning": "Creator becomes leader, not narrator.",
+    "core_structures": [
+      "Direct command",
+      "Expert diagnosis",
+      "Rule-based authority",
+      "Action directive"
+    ],
+    "templates": [
+      "Stop doing this immediately if you want to grow.",
+      "Do this one thing and your results will change.",
+      "If you want results, follow this rule.",
+      "Here's what you're doing wrong.",
+      "Fix this mistake before anything else.",
+      "You need to stop ignoring this if you're serious.",
+      "This is the standard. Follow it.",
+      "Here's the exact method professionals use."
+    ]
+  },
+
+  "polarizing_hooks": {
+    "purpose": "Create division and strong opinions to trigger engagement.",
+    "mechanism": "Forces viewer to agree or disagree.",
+    "effect": "High emotional response and increased interaction."
+  },
+
+  "why_hooks_work": {
+    "reason_1": "Humans constantly compare themselves with others.",
+    "reason_2": "Fear of losing social status triggers strong reactions.",
+    "reason_3": "Desire for upward mobility and improvement.",
+    "reason_4": "Identity-based urgency forces engagement."
+  },
+
+  "engagement_mechanism": {
+    "steps": [
+      "Hook triggers identity or status threat",
+      "Viewer feels psychological tension",
+      "Viewer seeks resolution",
+      "Click or watch action happens"
+    ]
+  },
+
+  "ethical_warning": {
+    "note": "These hooks are powerful but can be misused by scammers or manipulative marketers.",
+    "recommendation": "Use responsibly and avoid overusing identity attacks."
+  },
+
+  "master_hook_formula": {
+    "universal_template": "If you do X, it means Y about you.",
+    "purpose": "Creates identity conflict forcing attention."
+  }
+}

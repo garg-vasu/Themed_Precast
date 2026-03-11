@@ -17,7 +17,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-import { ArrowUpDown, ChevronDown, Download, Eye } from "lucide-react";
+import { ArrowUpDown, ChevronDown, Download, Eye, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -30,6 +30,7 @@ import {
 } from "@/components/ui/dialog";
 
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Table,
   TableBody,
@@ -46,7 +47,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { useNavigate, useParams } from "react-router";
 import { ProjectContext } from "@/Provider/ProjectProvider";
-import Elementdisplay from "./Elementdisplay";
+import Elementdisplay from "../PlanningApproval/Elementdisplay";
 
 export type PendingApproval = {
   load_id: number;
@@ -76,8 +77,6 @@ export type item = {
 };
 
 export const getColumns = (
-  handleApprove: (loadId: number) => void,
-  handleReject: (loadId: number) => void,
   permissions: string[],
 ): ColumnDef<PendingApproval>[] => [
   {
@@ -183,40 +182,6 @@ export const getColumns = (
       );
     },
   },
-  {
-    id: "actions",
-    enableHiding: false,
-    cell: ({ row }) => {
-      const pendingApproval = row.original;
-      const isDisabled = (pendingApproval as any).disable;
-      return (
-        <div className="flex gap-2 items-center justify-center">
-          <Button
-            variant="default"
-            size="sm"
-            className="bg-green-500 hover:bg-green-600 text-white"
-            disabled={isDisabled}
-            onClick={() => {
-              if (isDisabled) return;
-              handleApprove(pendingApproval.load_id);
-            }}>
-            Approve
-          </Button>
-          <Button
-            variant="default"
-            size="sm"
-            className="bg-destructive hover:bg-destructive/90 text-white"
-            disabled={isDisabled}
-            onClick={() => {
-              if (isDisabled) return;
-              handleReject(pendingApproval.load_id);
-            }}>
-            Reject
-          </Button>
-        </div>
-      );
-    },
-  },
 ];
 
 const COLUMN_LABELS: Record<string, string> = {
@@ -250,7 +215,7 @@ const getErrorMessage = (error: AxiosError | unknown, data: string): string => {
   return "An unexpected error occurred. Please try again later.";
 };
 
-export function PendingApprovalTable() {
+export function LoadDispatchTable() {
   const [sorting, setSorting] = useState<SortingState>([]);
   const { projectId } = useParams();
   const projectCtx = useContext(ProjectContext);
@@ -260,6 +225,11 @@ export function PendingApprovalTable() {
   const [rowSelection, setRowSelection] = useState({});
   const [data, setData] = useState<PendingApproval[]>([]);
   const [refreshKey, setRefreshKey] = useState(0);
+
+  const [isDispatchDialogOpen, setIsDispatchDialogOpen] = useState(false);
+  const [driverName, setDriverName] = useState("");
+  const [phoneNo, setPhoneNo] = useState("");
+  const [isDispatching, setIsDispatching] = useState(false);
 
   const refreshData = () => {
     setRefreshKey((prev) => prev + 1);
@@ -272,20 +242,23 @@ export function PendingApprovalTable() {
 
     const fetchPendingErectionOrders = async () => {
       try {
-        const response = await apiClient.get(`/erection_orders/${projectId}`, {
-          cancelToken: source.token,
-        });
+        const response = await apiClient.get(
+          `/stock-summary/approved-erected/${projectId}`,
+          {
+            cancelToken: source.token,
+          },
+        );
 
         if (response.status === 200) {
           setData(response.data);
         } else {
           toast.error(
-            response.data?.message || "Failed to fetch pending erection orders",
+            response.data?.message || "Failed to fetch load for dispatch",
           );
         }
       } catch (err: unknown) {
         if (!axios.isCancel(err)) {
-          toast.error(getErrorMessage(err, "pending erection orders data"));
+          toast.error(getErrorMessage(err, "load for dispatch"));
         }
       }
     };
@@ -297,47 +270,9 @@ export function PendingApprovalTable() {
     };
   }, [projectId, refreshKey]);
 
-  const handleApprove = async (loadId: number) => {
-    try {
-      const response = await apiClient.put(`/update_stock`, [
-        { load_id: loadId, approved_status: true },
-      ]);
-
-      if (response.status === 200) {
-        toast.success(`Load ${loadId} approved successfully!`);
-        refreshData();
-      } else {
-        toast.error(response.data?.message || "Failed to approve load");
-      }
-    } catch (error: unknown) {
-      console.error("Error approving load:", error);
-      toast.error(getErrorMessage(error, "approve load"));
-      refreshData();
-    }
-  };
-
-  const handleReject = async (loadId: number) => {
-    try {
-      const response = await apiClient.put(`/update_stock`, [
-        { load_id: loadId, approved_status: false },
-      ]);
-
-      if (response.status === 200) {
-        toast.success(`Load ${loadId} rejected successfully!`);
-        refreshData();
-      } else {
-        toast.error(response.data?.message || "Failed to reject load");
-      }
-    } catch (error: unknown) {
-      console.error("Error rejecting load:", error);
-      toast.error(getErrorMessage(error, "reject load"));
-      refreshData();
-    }
-  };
-
   const table = useReactTable({
     data,
-    columns: getColumns(handleApprove, handleReject, permissions),
+    columns: getColumns(permissions),
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
@@ -353,6 +288,48 @@ export function PendingApprovalTable() {
       rowSelection,
     },
   });
+
+  const handleDispatchLoad = async () => {
+    const selectedRows = table.getFilteredSelectedRowModel().rows;
+    if (selectedRows.length === 0) {
+      toast.error("Please select at least one load to dispatch");
+      return;
+    }
+    
+    if (!driverName.trim() || phoneNo.length < 10) {
+      toast.error("Please provide valid driver details");
+      return;
+    }
+
+    const loads = selectedRows.map((row) => row.original.load_id);
+
+    try {
+      setIsDispatching(true);
+      const response = await apiClient.post(
+        `/stock-summary/dispatch-loads`,
+        {
+          loads,
+          driver_name: driverName.trim(),
+          phone_no: phoneNo
+        }
+      );
+      
+      if (response.status === 200 || response.status === 201) {
+        toast.success("Load dispatched successfully");
+        setIsDispatchDialogOpen(false);
+        setDriverName("");
+        setPhoneNo("");
+        table.toggleAllPageRowsSelected(false);
+        refreshData();
+      } else {
+        toast.error(response.data?.message || "Failed to dispatch load");
+      }
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, "dispatch load"));
+    } finally {
+      setIsDispatching(false);
+    }
+  };
 
   const handleDownloadPDF = () => {
     const selectedRows = table.getFilteredSelectedRowModel().rows;
@@ -446,10 +423,60 @@ export function PendingApprovalTable() {
         />
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-center">
           {table.getFilteredSelectedRowModel().rows.length > 0 && (
-            <Button variant="default" size="sm" onClick={handleDownloadPDF}>
-              <Download className="" />
-              Download PDF ({table.getFilteredSelectedRowModel().rows.length})
-            </Button>
+            <>
+              <Button variant="default" size="sm" onClick={handleDownloadPDF}>
+                <Download className="" />
+                Download PDF ({table.getFilteredSelectedRowModel().rows.length})
+              </Button>
+              <Dialog open={isDispatchDialogOpen} onOpenChange={setIsDispatchDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="default" size="sm">
+                    Dispatch load
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Dispatch Load Details</DialogTitle>
+                  </DialogHeader>
+                  <div className="grid gap-4 py-4">
+                    <div className="flex flex-col gap-2">
+                      <Label htmlFor="driverName">Driver name</Label>
+                      <Input
+                        id="driverName"
+                        value={driverName}
+                        onChange={(e) => setDriverName(e.target.value)}
+                        placeholder="Enter driver name"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <Label htmlFor="phoneNo">Phone no</Label>
+                      <Input
+                        id="phoneNo"
+                        value={phoneNo}
+                        onChange={(e) => {
+                          const val = e.target.value.replace(/\D/g, '');
+                          setPhoneNo(val.slice(0, 10));
+                        }}
+                        placeholder="Enter 10 digit phone number"
+                        maxLength={10}
+                      />
+                    </div>
+                  </div>
+                  <div className="flex justify-end gap-2">
+                    <Button variant="outline" onClick={() => setIsDispatchDialogOpen(false)}>
+                      Cancel
+                    </Button>
+                    <Button 
+                      onClick={handleDispatchLoad} 
+                      disabled={isDispatching || !driverName.trim() || phoneNo.length < 10}
+                    >
+                      {isDispatching && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      Submit
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </>
           )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -528,9 +555,7 @@ export function PendingApprovalTable() {
             ) : (
               <TableRow>
                 <TableCell
-                  colSpan={
-                    getColumns(handleApprove, handleReject, permissions).length
-                  }
+                  colSpan={getColumns(permissions).length}
                   className="h-24 text-center">
                   No results.
                 </TableCell>
