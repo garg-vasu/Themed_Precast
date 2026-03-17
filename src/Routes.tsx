@@ -113,6 +113,9 @@ const ElementDetailPage = lazy(
 const RequestHandler = lazy(
   () => import("./Pages/Errection/RequestHandle/RequestHandler"),
 );
+const CreateNewDispatch = lazy(
+  () => import("./Pages/DispatchStockyard/CreateNewDispatch"),
+);
 const MixDispatch = lazy(() => import("./Pages/DispatchStockyard/MixDispatch"));
 const MixErrectedElement = lazy(
   () => import("./Pages/ErrectedElement/MixErrectedElement"),
@@ -617,6 +620,14 @@ const projectChildren: RouteObject[] = [
     element: projectRoleGuard(
       ["AddErrectionRequest"],
       withSuspense(<RequestHandler />),
+      "/",
+    ),
+  },
+  {
+    path: "create-new-dispatch",
+    element: projectRoleGuard(
+      ["AddErrectionRequest"],
+      withSuspense(<CreateNewDispatch />),
       "/",
     ),
   },

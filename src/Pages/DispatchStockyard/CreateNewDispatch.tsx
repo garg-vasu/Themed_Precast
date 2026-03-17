@@ -1,5 +1,5 @@
 import { useNavigate, useParams } from "react-router-dom";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { toast } from "sonner";
 import { apiClient } from "@/utils/apiClient";
 import axios, { AxiosError } from "axios";
@@ -42,32 +42,17 @@ const API_ENDPOINTS = {
 
 // Types
 export type Element = {
-  id: number;
-  element_type_name: string;
-  element_name: string;
+  precast_stock_id: number;
   element_id: number;
-  element_type: string;
   element_type_id: number;
-  stockyard_id: number;
-  thickness: number;
-  length: number;
-  height: number;
-  volume: number;
-  mass: number;
-  area: number;
-  width: number;
-  production_date: string;
-  storage_location: string;
-  dispatch_status: boolean;
-  created_at: string;
-  updated_at: string;
-  stockyard: boolean;
-  project_id: number;
-  target_location: number;
-  tower_name: string;
+  element_type_name: string;
+  element_type: string;
   floor_name: string;
+  tower_name: string;
   floor_id: number;
+  element_name: string;
   disable: boolean;
+  status: string;
 };
 
 const getErrorMessage = (error: AxiosError | unknown, data: string): string => {
@@ -96,6 +81,7 @@ const vehicleSchema = z.object({
   tower_name: z.string().min(1, "Tower name is required"),
   address: z.string().min(5, "Address must be at least 5 characters"),
   contact_no: z.string().min(10, "Phone number must be at least 10 digits"),
+  vehicle_no: z.string().min(1, "Vehicle number is required"),
 });
 
 type VehicleFormValues = z.infer<typeof vehicleSchema>;
@@ -110,13 +96,26 @@ const trailerTypes = [
   "Other",
 ];
 
+export type Vehicle = {
+  id: number;
+  vehicle_number: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+  driver_name: string;
+  truck_type: string;
+  driver_contact_no: string;
+  transporter_id: number;
+};
+
 const capacity = ["25", "35"];
 
-export default function NewRequestHandler() {
+export default function CreateNewDispatch() {
   const navigate = useNavigate();
   const { projectId } = useParams<{ projectId: string }>();
 
   const [data, setData] = useState<Element[]>([]);
+  const [vehicle, setVehicle] = useState<Vehicle[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [selectedItems, setSelectedItems] = useState<Set<number>>(new Set());
@@ -128,6 +127,7 @@ export default function NewRequestHandler() {
     watch,
     formState: { errors },
     reset,
+    setValue,
   } = useForm<VehicleFormValues>({
     resolver: zodResolver(vehicleSchema) as any,
     defaultValues: {
@@ -137,10 +137,33 @@ export default function NewRequestHandler() {
       gate_no: "",
       address: "",
       contact_no: "",
+      vehicle_no: "",
+      tower_name: "",
     },
   });
 
   const vehicleCapacity = watch("capacity") || 0;
+  const vehicleNoValue = watch("vehicle_no") || "";
+
+  const suggestionRef = useRef<HTMLDivElement>(null);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        suggestionRef.current &&
+        !suggestionRef.current.contains(event.target as Node)
+      ) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const filteredVehicles = vehicle.filter((v) =>
+    (v.vehicle_number || "").toLowerCase().includes(vehicleNoValue.toLowerCase())
+  );
 
   // Fetch elements
   useEffect(() => {
@@ -148,11 +171,11 @@ export default function NewRequestHandler() {
 
     const source = axios.CancelToken.source();
 
-    const fetchStockyards = async () => {
+    const fetchElements = async () => {
       setLoading(true);
       try {
         const response = await apiClient.get(
-          `/precast_stock/all/${projectId}`,
+          `/erection_orders/approved/${projectId}`,
           {
             cancelToken: source.token,
           },
@@ -161,18 +184,50 @@ export default function NewRequestHandler() {
         if (response.status === 200) {
           setData(response.data);
         } else {
-          toast.error(response.data?.message || "Failed to fetch stockyards");
+          toast.error(response.data?.message || "Failed to fetch elements");
         }
       } catch (err: unknown) {
         if (!axios.isCancel(err)) {
-          toast.error(getErrorMessage(err, "stockyards data"));
+          toast.error(getErrorMessage(err, "elements data"));
         }
       } finally {
         setLoading(false);
       }
     };
 
-    fetchStockyards();
+    fetchElements();
+
+    return () => {
+      source.cancel();
+    };
+  }, [projectId]);
+
+  useEffect(() => {
+    if (!projectId) return;
+
+    const source = axios.CancelToken.source();
+
+    const fetchVehicleDetails = async () => {
+      try {
+        const response = await apiClient.get(`/vehicles`, {
+          cancelToken: source.token,
+        });
+
+        if (response.status === 200) {
+          setVehicle(response.data);
+        } else {
+          toast.error(
+            response.data?.message || "Failed to fetch vehicle details",
+          );
+        }
+      } catch (err: unknown) {
+        if (!axios.isCancel(err)) {
+          toast.error(getErrorMessage(err, "vehicle details"));
+        }
+      }
+    };
+
+    fetchVehicleDetails();
 
     return () => {
       source.cancel();
@@ -276,6 +331,66 @@ export default function NewRequestHandler() {
           <CardContent className="">
             <form id="vehicle-form" onSubmit={handleSubmit(onSendDispatch)}>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-4">
+                <div className="grid gap-1.5 relative" ref={suggestionRef}>
+                  <Label
+                    htmlFor="vehicle_no"
+                    className="text-xs font-semibold uppercase text-muted-foreground">
+                    Vehicle No <span className="text-red-500">*</span>
+                  </Label>
+                  <Input
+                    className="h-9"
+                    id="vehicle_no"
+                    placeholder="Enter or select vehicle"
+                    autoComplete="off"
+                    {...register("vehicle_no", {
+                      onChange: () => setShowSuggestions(true),
+                    })}
+                    onFocus={() => setShowSuggestions(true)}
+                  />
+                  {errors.vehicle_no && (
+                    <p className="text-xs text-red-600">
+                      {errors.vehicle_no.message}
+                    </p>
+                  )}
+
+                  {showSuggestions && (
+                    <div className="absolute top-[100%] left-0 z-50 mt-1 w-full rounded-md border bg-popover text-popover-foreground shadow-md outline-none">
+                      <ul className="flex w-full flex-col gap-1 p-1 max-h-48 overflow-y-auto">
+                        {filteredVehicles.length > 0 ? (
+                          filteredVehicles.map((v) => (
+                            <li
+                              key={v.id}
+                              className="relative flex w-full cursor-pointer select-none items-center rounded-sm py-1.5 px-2 text-sm outline-none hover:bg-accent hover:text-accent-foreground"
+                              onClick={() => {
+                                setValue("vehicle_no", v.vehicle_number, {
+                                  shouldValidate: true,
+                                });
+                                setValue("incharge_name", v.driver_name || "", {
+                                  shouldValidate: true,
+                                });
+                                setValue("contact_no", v.driver_contact_no || "", {
+                                  shouldValidate: true,
+                                });
+                                if (v.truck_type) {
+                                  setValue("type", v.truck_type, {
+                                    shouldValidate: true,
+                                  });
+                                }
+                                setShowSuggestions(false);
+                              }}>
+                              {v.vehicle_number}
+                            </li>
+                          ))
+                        ) : (
+                          <li className="relative flex w-full select-none items-center rounded-sm py-1.5 px-2 text-sm text-muted-foreground">
+                            No matching vehicles.
+                          </li>
+                        )}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+
                 <div className="grid gap-1.5">
                   <Label
                     htmlFor="type"

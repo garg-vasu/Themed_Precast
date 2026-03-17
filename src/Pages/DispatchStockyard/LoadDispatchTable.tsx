@@ -215,9 +215,22 @@ const getErrorMessage = (error: AxiosError | unknown, data: string): string => {
   return "An unexpected error occurred. Please try again later.";
 };
 
+export type Vehicle = {
+  id: number;
+  vehicle_number: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+  driver_name: string;
+  truck_type: string;
+  driver_contact_no: string;
+  transporter_id: number;
+};
+
 export function LoadDispatchTable() {
   const [sorting, setSorting] = useState<SortingState>([]);
   const { projectId } = useParams();
+  const [vehicle, setVehicle] = useState<Vehicle[]>([]);
   const projectCtx = useContext(ProjectContext);
   const permissions = projectCtx?.permissions || [];
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -231,6 +244,7 @@ export function LoadDispatchTable() {
   const [vehicleNo, setVehicleNo] = useState("");
   const [phoneNo, setPhoneNo] = useState("");
   const [isDispatching, setIsDispatching] = useState(false);
+  const [showVehicleSuggestions, setShowVehicleSuggestions] = useState(false);
 
   const refreshData = () => {
     setRefreshKey((prev) => prev + 1);
@@ -265,6 +279,38 @@ export function LoadDispatchTable() {
     };
 
     fetchPendingErectionOrders();
+
+    return () => {
+      source.cancel();
+    };
+  }, [projectId, refreshKey]);
+
+  useEffect(() => {
+    if (!projectId) return;
+
+    const source = axios.CancelToken.source();
+
+    const fetchVehicleDetails = async () => {
+      try {
+        const response = await apiClient.get(`/vehicles`, {
+          cancelToken: source.token,
+        });
+
+        if (response.status === 200) {
+          setVehicle(response.data);
+        } else {
+          toast.error(
+            response.data?.message || "Failed to fetch vehicle details",
+          );
+        }
+      } catch (err: unknown) {
+        if (!axios.isCancel(err)) {
+          toast.error(getErrorMessage(err, "vehicle details"));
+        }
+      }
+    };
+
+    fetchVehicleDetails();
 
     return () => {
       source.cancel();
@@ -465,17 +511,58 @@ export function LoadDispatchTable() {
                         maxLength={10}
                       />
                     </div>
-                    <div className="flex flex-col gap-2">
+                    <div className="flex flex-col gap-2 relative">
                       <Label htmlFor="Vehicleno">Vehicle no:</Label>
                       <Input
                         id="Vehicleno"
                         value={vehicleNo}
                         onChange={(e) => {
                           setVehicleNo(e.target.value);
+                          setShowVehicleSuggestions(true);
                         }}
+                        onFocus={() => setShowVehicleSuggestions(true)}
+                        onBlur={() => setShowVehicleSuggestions(false)}
                         placeholder="Enter vehicle number"
                         maxLength={10}
+                        autoComplete="off"
                       />
+                      {showVehicleSuggestions &&
+                        vehicleNo.trim().length > 0 &&
+                        vehicle.filter((v) =>
+                          v.vehicle_number
+                            ?.toLowerCase()
+                            .includes(vehicleNo.toLowerCase()),
+                        ).length > 0 && (
+                          <div className="absolute top-full left-0 z-50 w-full mt-1 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-md shadow-md max-h-48 overflow-y-auto">
+                            {vehicle
+                              .filter((v) =>
+                                v.vehicle_number
+                                  ?.toLowerCase()
+                                  .includes(vehicleNo.toLowerCase()),
+                              )
+                              .map((v) => (
+                                <div
+                                  key={v.id}
+                                  className="px-3 py-2 text-sm cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                                  onMouseDown={(e) => {
+                                    e.preventDefault();
+                                    setVehicleNo(v.vehicle_number);
+                                    if (v.driver_name)
+                                      setDriverName(v.driver_name);
+                                    if (v.driver_contact_no) {
+                                      const val = v.driver_contact_no.replace(
+                                        /\D/g,
+                                        "",
+                                      );
+                                      setPhoneNo(val.slice(0, 10));
+                                    }
+                                    setShowVehicleSuggestions(false);
+                                  }}>
+                                  {v.vehicle_number}
+                                </div>
+                              ))}
+                          </div>
+                        )}
                     </div>
                   </div>
                   <div className="flex justify-end gap-2">
