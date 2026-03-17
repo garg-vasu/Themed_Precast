@@ -300,7 +300,7 @@ export function PendingApprovalTable() {
   const handleApprove = async (loadId: number) => {
     try {
       const response = await apiClient.put(`/update_stock`, [
-        { load_id: loadId, approved_status: true },
+        { load_id: [loadId], approved_status: true },
       ]);
 
       if (response.status === 200) {

@@ -228,6 +228,7 @@ export function LoadDispatchTable() {
 
   const [isDispatchDialogOpen, setIsDispatchDialogOpen] = useState(false);
   const [driverName, setDriverName] = useState("");
+  const [vehicleNo, setVehicleNo] = useState("");
   const [phoneNo, setPhoneNo] = useState("");
   const [isDispatching, setIsDispatching] = useState(false);
 
@@ -295,7 +296,7 @@ export function LoadDispatchTable() {
       toast.error("Please select at least one load to dispatch");
       return;
     }
-    
+
     if (!driverName.trim() || phoneNo.length < 10) {
       toast.error("Please provide valid driver details");
       return;
@@ -306,14 +307,15 @@ export function LoadDispatchTable() {
     try {
       setIsDispatching(true);
       const response = await apiClient.post(
-        `/stock-summary/dispatch-loads`,
+        `/stock-summary/dispatch-loads/${projectId}`,
         {
           loads,
           driver_name: driverName.trim(),
-          phone_no: phoneNo
-        }
+          phone_no: phoneNo,
+          vehicle_no: vehicleNo.trim(),
+        },
       );
-      
+
       if (response.status === 200 || response.status === 201) {
         toast.success("Load dispatched successfully");
         setIsDispatchDialogOpen(false);
@@ -428,7 +430,9 @@ export function LoadDispatchTable() {
                 <Download className="" />
                 Download PDF ({table.getFilteredSelectedRowModel().rows.length})
               </Button>
-              <Dialog open={isDispatchDialogOpen} onOpenChange={setIsDispatchDialogOpen}>
+              <Dialog
+                open={isDispatchDialogOpen}
+                onOpenChange={setIsDispatchDialogOpen}>
                 <DialogTrigger asChild>
                   <Button variant="default" size="sm">
                     Dispatch load
@@ -454,23 +458,42 @@ export function LoadDispatchTable() {
                         id="phoneNo"
                         value={phoneNo}
                         onChange={(e) => {
-                          const val = e.target.value.replace(/\D/g, '');
+                          const val = e.target.value.replace(/\D/g, "");
                           setPhoneNo(val.slice(0, 10));
                         }}
                         placeholder="Enter 10 digit phone number"
                         maxLength={10}
                       />
                     </div>
+                    <div className="flex flex-col gap-2">
+                      <Label htmlFor="Vehicleno">Vehicle no:</Label>
+                      <Input
+                        id="Vehicleno"
+                        value={vehicleNo}
+                        onChange={(e) => {
+                          setVehicleNo(e.target.value);
+                        }}
+                        placeholder="Enter vehicle number"
+                        maxLength={10}
+                      />
+                    </div>
                   </div>
                   <div className="flex justify-end gap-2">
-                    <Button variant="outline" onClick={() => setIsDispatchDialogOpen(false)}>
+                    <Button
+                      variant="outline"
+                      onClick={() => setIsDispatchDialogOpen(false)}>
                       Cancel
                     </Button>
-                    <Button 
-                      onClick={handleDispatchLoad} 
-                      disabled={isDispatching || !driverName.trim() || phoneNo.length < 10}
-                    >
-                      {isDispatching && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    <Button
+                      onClick={handleDispatchLoad}
+                      disabled={
+                        isDispatching ||
+                        !driverName.trim() ||
+                        phoneNo.length < 10
+                      }>
+                      {isDispatching && (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      )}
                       Submit
                     </Button>
                   </div>
