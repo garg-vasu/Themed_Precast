@@ -167,8 +167,7 @@ function NavigationItemComponent({
               ? undefined
               : `${0.75 + level * 0.5 - (hasActiveChild ? 0.125 : 0)}rem`,
           }}
-          title={isCollapsed ? item.name : ""}
-        >
+          title={isCollapsed ? item.name : ""}>
           <div className="flex items-center space-x-3">
             <Icon
               className={`h-5 w-5 flex-shrink-0 ${
@@ -198,8 +197,7 @@ function NavigationItemComponent({
             }`}
             style={{
               transitionProperty: "max-height, opacity, transform",
-            }}
-          >
+            }}>
             <div className="py-1 space-y-1 pl-2">
               {item.children?.map((child) => (
                 <NavigationItemComponent
@@ -229,8 +227,7 @@ function NavigationItemComponent({
       style={{
         paddingLeft: isCollapsed ? undefined : `${0.75 + level * 0.5}rem`,
       }}
-      title={isCollapsed ? item.name : ""}
-    >
+      title={isCollapsed ? item.name : ""}>
       <Icon
         className={`h-5 w-5 flex-shrink-0 ${
           isActive ? "text-sidebar-primary" : ""
@@ -365,6 +362,12 @@ export default function ProjectSidebar({
           permissions: ["ViewElement", "ViewElementType"],
         },
         {
+          name: "Bulk BOM Update",
+          href: `/project/${projectId}/edit-bom-elementtype`,
+          icon: ClipboardList,
+          permissions: ["EditElementType"],
+        },
+        {
           name: "BOM",
           href: `/project/${projectId}/bom`,
           icon: ClipboardList,
@@ -451,22 +454,19 @@ export default function ProjectSidebar({
       className={`flex flex-col h-full bg-sidebar text-sidebar-foreground transition-[width] duration-150 ease-out ${
         isCollapsed ? "w-16" : "w-64"
       }`}
-      style={{ willChange: "width" }}
-    >
+      style={{ willChange: "width" }}>
       {/* Header */}
       <div
         className={`flex items-center h-16 p-4 ${
           isCollapsed ? "justify-center" : "justify-between"
-        }`}
-      >
+        }`}>
         <div
           className={`flex items-center space-x-2 overflow-hidden transition-all duration-150 ease-out ${
             isCollapsed
               ? "opacity-0 w-0 scale-95"
               : "opacity-100 w-auto scale-100"
           }`}
-          style={{ willChange: "opacity, width, transform" }}
-        >
+          style={{ willChange: "opacity, width, transform" }}>
           <div className="w-8 h-8 bg-primary flex items-center justify-center rounded">
             <span className="text-primary-foreground font-normal text-sm">
               PC
@@ -478,8 +478,7 @@ export default function ProjectSidebar({
         <button
           onClick={onToggle}
           className="p-1.5 rounded-md hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors flex-shrink-0"
-          aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-        >
+          aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}>
           {isCollapsed ? (
             <Menu className="h-5 w-5" />
           ) : (
@@ -497,8 +496,7 @@ export default function ProjectSidebar({
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
-                className="data-[state=open]:bg-sidebar-accent hover:bg-sidebar-accent flex w-full p-2 items-center gap-2 data-[state=open]:text-sidebar-accent-foreground rounded-lg transition-colors"
-              >
+                className="data-[state=open]:bg-sidebar-accent hover:bg-sidebar-accent flex w-full p-2 items-center gap-2 data-[state=open]:text-sidebar-accent-foreground rounded-lg transition-colors">
                 <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg flex-shrink-0">
                   <FileText className="size-4" />
                 </div>
@@ -516,8 +514,7 @@ export default function ProjectSidebar({
             <DropdownMenuContent
               className="w-[var(--radix-dropdown-menu-trigger-width)] min-w-56 rounded-lg"
               align="start"
-              sideOffset={4}
-            >
+              sideOffset={4}>
               <DropdownMenuLabel className="text-muted-foreground text-sm">
                 Projects
               </DropdownMenuLabel>
@@ -535,8 +532,7 @@ export default function ProjectSidebar({
                       onClick={() => handleProjectSelect(project)}
                       className={`gap-2 p-2 ${
                         isSelected ? "bg-sidebar-accent" : ""
-                      }`}
-                    >
+                      }`}>
                       <div className="flex size-6 items-center justify-center rounded-md border bg-sidebar-primary/10 flex-shrink-0">
                         <FileText className="size-3.5 shrink-0" />
                       </div>
@@ -580,8 +576,7 @@ export default function ProjectSidebar({
         <NavLink
           to="/"
           className="flex items-center space-x-3 px-3 py-1.5 rounded-md text-sm font-normal transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground text-sidebar-foreground/70"
-          title={isCollapsed ? "Homepage" : undefined}
-        >
+          title={isCollapsed ? "Homepage" : undefined}>
           <Home className="h-5 w-5 flex-shrink-0" />
           {!isCollapsed && <span className="truncate">Homepage</span>}
         </NavLink>

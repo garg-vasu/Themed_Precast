@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
 import {
   Card,
   CardContent,
@@ -19,12 +20,21 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
   Loader2,
   Send,
 } from "lucide-react";
+import PageHeader from "@/components/ui/PageHeader";
 
 // ─── Types ───────────────────────────────────────────────────────────
 
@@ -124,6 +134,8 @@ export default function EditbomElemenrtype() {
   const [searchElement, setSearchElement] = useState("");
   const [searchBom, setSearchBom] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [passProduction, setPassProduction] = useState(true);
 
   // ── Fetch element types ────────────────────────────────────────────
   useEffect(() => {
@@ -313,12 +325,17 @@ export default function EditbomElemenrtype() {
   };
 
   // ── Submit ─────────────────────────────────────────────────────────
-  const handleSubmit = async () => {
+  // Opens the confirmation dialog instead of submitting directly
+  const handleSubmitClick = () => {
     if (!validateQuantities()) {
       toast.error("Please enter a valid quantity (> 0) for every BOM item.");
       return;
     }
+    setShowConfirmDialog(true);
+  };
 
+  // Actually submits after user confirms in the dialog
+  const handleConfirmSubmit = async () => {
     // Build BOM array from the per-BOM quantities
     const bom: BomQuantityEntry[] = [];
     quantities.forEach((qty, bomId) => {
@@ -329,10 +346,12 @@ export default function EditbomElemenrtype() {
     const payload = {
       elementtypeid: Array.from(selectedElementTypeIds).map(String),
       bom,
+      update_all: passProduction,
     };
 
     try {
       setSubmitting(true);
+      setShowConfirmDialog(false);
       const response = await apiClient.post(
         `/assign_bom_elementtype/${projectId}`,
         payload,
@@ -422,14 +441,7 @@ export default function EditbomElemenrtype() {
   return (
     <div className="w-full p-4">
       {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-xl sm:text-2xl font-bold tracking-tight">
-          Assign BOM to Element Types
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Select element types, choose BOMs, and set quantities.
-        </p>
-      </div>
+      <PageHeader title="Bulk BOM Update" />
 
       <StepIndicator />
 
@@ -707,7 +719,7 @@ export default function EditbomElemenrtype() {
         ) : (
           <Button
             disabled={submitting || !validateQuantities()}
-            onClick={handleSubmit}>
+            onClick={handleSubmitClick}>
             {submitting ? (
               <>
                 <Loader2 className="w-4 h-4 mr-1 animate-spin" />
@@ -722,6 +734,61 @@ export default function EditbomElemenrtype() {
           </Button>
         )}
       </div>
+
+      {/* ──── Confirmation Dialog with Pass Production Switch ──────── */}
+      <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Confirm BOM Assignment</DialogTitle>
+            <DialogDescription>
+              Choose whether to pass all elements into production or not before
+              submitting.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex items-center justify-center gap-4 rounded-lg border p-4 my-2">
+            <Label
+              htmlFor="pass-production-switch"
+              className={`text-sm font-medium cursor-pointer transition-colors ${
+                passProduction ? "text-foreground" : "text-muted-foreground"
+              }`}
+              onClick={() => setPassProduction(true)}>
+              Apply on all element type
+            </Label>
+            <Switch
+              id="pass-production-switch"
+              checked={!passProduction}
+              onCheckedChange={(checked) => setPassProduction(!checked)}
+            />
+            <Label
+              htmlFor="pass-production-switch"
+              className={`text-sm font-medium cursor-pointer transition-colors ${
+                !passProduction ? "text-foreground" : "text-muted-foreground"
+              }`}
+              onClick={() => setPassProduction(false)}>
+              Element which pass the production cycle
+            </Label>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowConfirmDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleConfirmSubmit} disabled={submitting}>
+              {submitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                  Submitting…
+                </>
+              ) : (
+                "Confirm & Submit"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
