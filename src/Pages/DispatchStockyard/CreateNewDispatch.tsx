@@ -37,22 +37,20 @@ import {
 
 // Constants
 const API_ENDPOINTS = {
-  DISPATCH_ORDER: "/stock_erection",
+  DISPATCH_ORDER: "/dispatch_order",
 } as const;
 
 // Types
 export type Element = {
-  precast_stock_id: number;
   element_id: number;
+  element_name: string;
+  element_type: string;
   element_type_id: number;
   element_type_name: string;
-  element_type: string;
   floor_name: string;
-  tower_name: string;
-  floor_id: number;
-  element_name: string;
-  disable: boolean;
-  status: string;
+  mass: number;
+  site_tower_name: string;
+  volume: number;
 };
 
 const getErrorMessage = (error: AxiosError | unknown, data: string): string => {
@@ -162,7 +160,9 @@ export default function CreateNewDispatch() {
   }, []);
 
   const filteredVehicles = vehicle.filter((v) =>
-    (v.vehicle_number || "").toLowerCase().includes(vehicleNoValue.toLowerCase())
+    (v.vehicle_number || "")
+      .toLowerCase()
+      .includes(vehicleNoValue.toLowerCase()),
   );
 
   // Fetch elements
@@ -175,7 +175,7 @@ export default function CreateNewDispatch() {
       setLoading(true);
       try {
         const response = await apiClient.get(
-          `/erection_orders/approved/${projectId}`,
+          `stock-summary/approved-erected-elements/${projectId}`,
           {
             cancelToken: source.token,
           },
@@ -209,12 +209,12 @@ export default function CreateNewDispatch() {
 
     const fetchVehicleDetails = async () => {
       try {
-        const response = await apiClient.get(`/vehicles`, {
+        const response = await apiClient.get(`/vehicles/project/${projectId}`, {
           cancelToken: source.token,
         });
 
         if (response.status === 200) {
-          setVehicle(response.data);
+          setVehicle(response.data ?? []);
         } else {
           toast.error(
             response.data?.message || "Failed to fetch vehicle details",
@@ -280,8 +280,12 @@ export default function CreateNewDispatch() {
     setSubmitting(true);
     try {
       const payload = {
+        project_id: Number(projectId),
         items: Array.from(selectedItems),
-        vehicle_details: formData,
+        vehicle_details: {
+          ...formData,
+          capacity: Number(formData.capacity),
+        },
       };
 
       const response = await apiClient.post(
@@ -293,7 +297,7 @@ export default function CreateNewDispatch() {
         toast.success("Dispatch order sent successfully!");
         setSelectedItems(new Set());
         reset();
-        navigate(`/project/${projectId}/errection-request`);
+        navigate(`/project/${projectId}/dispatch-log`);
       }
     } catch (error) {
       console.error("Error sending dispatch:", error);
@@ -368,9 +372,13 @@ export default function CreateNewDispatch() {
                                 setValue("incharge_name", v.driver_name || "", {
                                   shouldValidate: true,
                                 });
-                                setValue("contact_no", v.driver_contact_no || "", {
-                                  shouldValidate: true,
-                                });
+                                setValue(
+                                  "contact_no",
+                                  v.driver_contact_no || "",
+                                  {
+                                    shouldValidate: true,
+                                  },
+                                );
                                 if (v.truck_type) {
                                   setValue("type", v.truck_type, {
                                     shouldValidate: true,

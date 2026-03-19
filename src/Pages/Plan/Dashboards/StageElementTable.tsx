@@ -119,7 +119,9 @@ const getTimeStatusText = (endDateStr?: string): string => {
 
   const duration = `${d > 0 ? `${d}d ` : ""}${h > 0 || d > 0 ? `${h}h ` : ""}${m}m`;
 
-  return diffMinutes >= 0 ? `Time Left: ${duration}` : `Delayed by: ${duration}`;
+  return diffMinutes >= 0
+    ? `Time Left: ${duration}`
+    : `Delayed by: ${duration}`;
 };
 
 export const getColumns = (permissions: string[]): ColumnDef<Element>[] => [
@@ -161,8 +163,7 @@ export const getColumns = (permissions: string[]): ColumnDef<Element>[] => [
                 `/project/${projectId}/element-type-detail/${row.original.element_type_id}/${row.original.target_location}`,
               );
             }
-          }}
-        >
+          }}>
           {row.getValue("element_type_name")}
         </div>
       );
@@ -190,8 +191,7 @@ export const getColumns = (permissions: string[]): ColumnDef<Element>[] => [
                 `/project/${projectId}/element-detail/${row.original.element_id}`,
               );
             }
-          }}
-        >
+          }}>
           {row.getValue("element_name")}
         </div>
       );
@@ -231,8 +231,7 @@ export const getColumns = (permissions: string[]): ColumnDef<Element>[] => [
       return (
         <Badge
           variant="outline"
-          className={`capitalize whitespace-nowrap ${badgeClassName}`}
-        >
+          className={`capitalize whitespace-nowrap ${badgeClassName}`}>
           {status}
         </Badge>
       );
@@ -268,8 +267,7 @@ export const getColumns = (permissions: string[]): ColumnDef<Element>[] => [
             isDelayed
               ? "text-red-500 font-medium whitespace-nowrap"
               : "text-emerald-600 font-medium"
-          }
-        >
+          }>
           {timeStatus}
         </div>
       );
@@ -283,8 +281,7 @@ export const getColumns = (permissions: string[]): ColumnDef<Element>[] => [
       <Button
         variant="customPadding"
         size="noPadding"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
         Start Date
         <ArrowUpDown className="ml-1 h-4 w-4" />
       </Button>
@@ -301,8 +298,7 @@ export const getColumns = (permissions: string[]): ColumnDef<Element>[] => [
       <Button
         variant="customPadding"
         size="noPadding"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
         End Date
         <ArrowUpDown className="ml-1 h-4 w-4" />
       </Button>
@@ -434,7 +430,7 @@ export function StageElementTable({ stage_id }: StageElementProps) {
         );
 
         if (response.status === 200) {
-          setData(response.data);
+          setData(response.data.data);
           setError(null);
         } else {
           const errMsg = response.data?.message || "Failed to fetch element";
@@ -557,8 +553,7 @@ export function StageElementTable({ stage_id }: StageElementProps) {
                       checked={column.getIsVisible()}
                       onCheckedChange={(value) =>
                         column.toggleVisibility(!!value)
-                      }
-                    >
+                      }>
                       {getColumnDisplayName(column.id)}
                     </DropdownMenuCheckboxItem>
                   );
@@ -593,8 +588,7 @@ export function StageElementTable({ stage_id }: StageElementProps) {
               <TableRow>
                 <TableCell
                   colSpan={getColumns(permissions).length}
-                  className="h-24 text-center"
-                >
+                  className="h-24 text-center">
                   Loading elements...
                 </TableCell>
               </TableRow>
@@ -602,8 +596,7 @@ export function StageElementTable({ stage_id }: StageElementProps) {
               <TableRow>
                 <TableCell
                   colSpan={getColumns(permissions).length}
-                  className="h-24 text-center text-destructive"
-                >
+                  className="h-24 text-center text-destructive">
                   {error}
                 </TableCell>
               </TableRow>
@@ -611,8 +604,7 @@ export function StageElementTable({ stage_id }: StageElementProps) {
               table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
-                >
+                  data-state={row.getIsSelected() && "selected"}>
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
                       {flexRender(
@@ -627,8 +619,7 @@ export function StageElementTable({ stage_id }: StageElementProps) {
               <TableRow>
                 <TableCell
                   colSpan={getColumns(permissions).length}
-                  className="h-24 text-center"
-                >
+                  className="h-24 text-center">
                   No results.
                 </TableCell>
               </TableRow>
@@ -646,16 +637,14 @@ export function StageElementTable({ stage_id }: StageElementProps) {
             variant="outline"
             size="sm"
             onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-          >
+            disabled={!table.getCanPreviousPage()}>
             Previous
           </Button>
           <Button
             variant="outline"
             size="sm"
             onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-          >
+            disabled={!table.getCanNextPage()}>
             Next
           </Button>
         </div>

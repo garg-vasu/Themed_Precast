@@ -165,6 +165,9 @@ const UploadElementtype = lazy(
   () => import("./Pages/Elementtype/UploadElementtype"),
 );
 const AdjustmentPage = lazy(() => import("./Pages/Elementtype/AdjustmentPage"));
+const EditbomElemenrtype = lazy(
+  () => import("./Pages/Elementtype/EditbomElemenrtype"),
+);
 const MixHierarchy = lazy(() => import("./Pages/Hierarchy/HierarchyTable"));
 const AddAttendance = lazy(() => import("./Pages/Attendance/AddAttendance"));
 const AddMember = lazy(() => import("./Pages/ProjectMember/AddMember"));
@@ -689,6 +692,14 @@ const projectChildren: RouteObject[] = [
   {
     path: "adjustment/:element_type_id",
     element: withSuspense(<AdjustmentPage />),
+  },
+  {
+    path: "edit-bom-elementtype",
+    element: projectRoleGuard(
+      ["EditElementType"],
+      withSuspense(<EditbomElemenrtype />),
+      "/",
+    ),
   },
   {
     path: "mix-stagewise",

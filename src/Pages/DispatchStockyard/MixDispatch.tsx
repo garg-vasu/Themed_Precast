@@ -101,8 +101,10 @@ export default function MixDispatch() {
         {permissions?.includes("AddDispatchLog") && (
           <Button
             variant="outline"
-            onClick={() => navigate(`/project/${projectId}/vehicle-dispatch`)}>
-            Add Dispatch
+            onClick={() =>
+              navigate(`/project/${projectId}/create-new-dispatch`)
+            }>
+            Create New Dispatch
           </Button>
         )}
       </div>

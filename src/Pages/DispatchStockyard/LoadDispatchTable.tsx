@@ -292,7 +292,7 @@ export function LoadDispatchTable() {
 
     const fetchVehicleDetails = async () => {
       try {
-        const response = await apiClient.get(`/vehicles`, {
+        const response = await apiClient.get(`/vehicles/project/${projectId}`, {
           cancelToken: source.token,
         });
 
