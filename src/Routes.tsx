@@ -168,6 +168,9 @@ const AdjustmentPage = lazy(() => import("./Pages/Elementtype/AdjustmentPage"));
 const EditbomElemenrtype = lazy(
   () => import("./Pages/Elementtype/EditbomElemenrtype"),
 );
+const BulkUploadDrawing = lazy(
+  () => import("./Pages/Elementtype/BulkUploadDrawing"),
+);
 const MixHierarchy = lazy(() => import("./Pages/Hierarchy/HierarchyTable"));
 const AddAttendance = lazy(() => import("./Pages/Attendance/AddAttendance"));
 const AddMember = lazy(() => import("./Pages/ProjectMember/AddMember"));
@@ -698,6 +701,14 @@ const projectChildren: RouteObject[] = [
     element: projectRoleGuard(
       ["EditElementType"],
       withSuspense(<EditbomElemenrtype />),
+      "/",
+    ),
+  },
+  {
+    path: "bulk-upload-drawing",
+    element: projectRoleGuard(
+      ["EditElementType"],
+      withSuspense(<BulkUploadDrawing />),
       "/",
     ),
   },

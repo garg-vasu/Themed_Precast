@@ -368,6 +368,12 @@ export default function ProjectSidebar({
           permissions: ["EditElementType"],
         },
         {
+          name: "Bulk Drawing Upload",
+          href: `/project/${projectId}/bulk-upload-drawing`,
+          icon: ClipboardList,
+          permissions: ["EditElementType"],
+        },
+        {
           name: "BOM",
           href: `/project/${projectId}/bom`,
           icon: ClipboardList,
