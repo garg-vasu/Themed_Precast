@@ -68,35 +68,16 @@ import { toast } from "sonner";
 import { useParams } from "react-router";
 
 import { ProjectContext } from "@/Provider/ProjectProvider";
-import { Badge } from "@/components/ui/badge";
 import PageHeader from "@/components/ui/PageHeader";
 
 const baseUrl = import.meta.env.VITE_API_URL || "";
 
 export type Elementtype = {
+  element_type_id: number;
   element_type: string;
   element_type_name: string;
-  thickness: number;
-  length: number;
-  height: number;
-  volume: number;
-  mass: number;
-  area: number;
-  width: number;
-  element_type_id: number;
-  project_id: number;
-  element_type_version: string;
-  quantity: number;
-  hierarchy_id: number;
   floor_name: string;
   tower_name: string;
-  naming_convention: string;
-  drawings: [];
-  production_count: number;
-  stockyard_count: number;
-  in_request_count: number;
-  dispatch_count: number;
-  erection_count: number;
 };
 
 export type DrawingType = {
@@ -106,12 +87,9 @@ export type DrawingType = {
 };
 
 export type UploadedFileResult = {
-  original_name: string;
-  saved_name: string;
-  file_path: string;
-  file_size: number;
-  mime_type: string;
-  uploaded_at: string;
+  id: number;
+  path: string;
+  project_id: number;
 };
 
 export type SingleAssignment = {
@@ -154,26 +132,23 @@ export const getColumns = (
   },
   //   file name column
   {
-    accessorKey: "saved_name",
+    accessorKey: "path",
     header: "File Name",
     cell: ({ row }) => (
       <div className="flex flex-col gap-1.5">
         <span
           className="text-sm font-medium truncate max-w-[200px]"
-          title={row.original.original_name}>
-          {row.original.original_name}
+          title={row.original.path}>
+          {row.original.path}
         </span>
         <div className="flex items-center gap-2">
-          <Badge variant="secondary" className="text-[10px] font-normal">
-            {(row.original.file_size / 1024).toFixed(1)} KB
-          </Badge>
           <Button
             size="sm"
             variant="outline"
             className="h-6 px-2 text-xs"
             onClick={() =>
               window.open(
-                `${baseUrl}/get-file?file=${encodeURIComponent(row.original.saved_name)}`,
+                `${baseUrl}/get-file?file=${encodeURIComponent(row.original.path)}`,
                 "_blank",
               )
             }>
@@ -187,7 +162,7 @@ export const getColumns = (
     id: "drawingType",
     header: "Drawing Type",
     cell: ({ row }) => {
-      const savedName = row.original.saved_name;
+      const savedName = row.original.path;
       const assignment = assignments[savedName] || {
         drawing_type_id: null,
         element_type_id: null,
@@ -223,7 +198,7 @@ export const getColumns = (
     id: "elementType",
     header: "Element Type",
     cell: ({ row }) => {
-      const savedName = row.original.saved_name;
+      const savedName = row.original.path;
       const assignment = assignments[savedName] || {
         drawing_type_id: null,
         element_type_id: null,
@@ -325,7 +300,6 @@ export default function DrawingUploadTable({
   const [sorting, setSorting] = useState<SortingState>([]);
   const { projectId } = useParams();
   const projectCtx = useContext(ProjectContext);
-  const permissions = projectCtx?.permissions || [];
   const [refreshKey, setRefreshKey] = useState<number>(0);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
@@ -355,12 +329,16 @@ export default function DrawingUploadTable({
     try {
       setLoadingElementTypes((prev) => ({ ...prev, [drawingTypeId]: true }));
       const response = await apiClient.get(
-        `/elementtype_fetch/${projectId}/${drawingTypeId}`,
+        `/element-types/not-instage/${projectId}/${drawingTypeId}`,
       );
       if (response.status === 200) {
+        const payloadData = response.data;
+        const dataArray = Array.isArray(payloadData) 
+          ? payloadData 
+          : (payloadData?.data || []);
         setElementTypesMap((prev) => ({
           ...prev,
-          [drawingTypeId]: response.data.data ?? [],
+          [drawingTypeId]: dataArray,
         }));
       }
     } catch (err) {
@@ -389,23 +367,20 @@ export default function DrawingUploadTable({
   };
 
   const handleBulkSave = async () => {
-    const payloadAssignments = data
-      .filter(
-        (row) =>
-          assignments[row.saved_name]?.drawing_type_id &&
-          assignments[row.saved_name]?.element_type_id,
-      )
-      .map((row) => {
-        const assign = assignments[row.saved_name];
-        return {
-          saved_name: row.saved_name,
-          original_name: row.original_name,
-          file_path: row.file_path,
-          file_size: row.file_size,
-          drawing_type_id: assign.drawing_type_id,
-          element_type_ids: [assign.element_type_id],
-        };
+    const payloadAssignments: any[] = [];
+    
+    if (data && data.length > 0) {
+      data.forEach((row) => {
+        const assign = assignments[row.path];
+        if (assign && assign.drawing_type_id && assign.element_type_id) {
+          payloadAssignments.push({
+            unmapped_drawing_id: row.id,
+            drawing_type_id: assign.drawing_type_id,
+            element_type_id: assign.element_type_id,
+          });
+        }
       });
+    }
 
     if (payloadAssignments.length === 0) {
       toast.info("No rows are fully assigned yet.");
@@ -414,10 +389,9 @@ export default function DrawingUploadTable({
 
     setSavingBulk(true);
     try {
-      const payload = { assignments: payloadAssignments };
       const response = await apiClient.post(
         `/bulk_assign_drawings/${projectId}`,
-        payload,
+        payloadAssignments,
       );
       if (response.status === 200 || response.status === 201) {
         toast.success("Assignments saved successfully");
@@ -442,7 +416,7 @@ export default function DrawingUploadTable({
     try {
       setUploading(true);
       const response = await apiClient.post(
-        `/save_upload/bulk_files`,
+        `/upload/bulk_files?project_id=${projectId}`,
         formData,
         {
           headers: { "Content-Type": "multipart/form-data" },
@@ -481,7 +455,11 @@ export default function DrawingUploadTable({
         });
 
         if (response.status === 200) {
-          setDrawingType(response.data ?? []);
+          const payloadData = response.data;
+          const dataArray = Array.isArray(payloadData)
+            ? payloadData
+            : (payloadData?.data || []);
+          setDrawingType(dataArray);
         } else {
           toast.error(
             response.data?.message || "Failed to fetch drawing types",
@@ -504,38 +482,45 @@ export default function DrawingUploadTable({
   }, [refreshKey]);
 
   //   fetch uploaded files
-  //   useEffect(() => {
-  //     const source = axios.CancelToken.source();
+  useEffect(() => {
+    const source = axios.CancelToken.source();
 
-  //     const fetchUploadedFiles = async () => {
-  //       try {
-  //         setDataLoading(true);
-  //         const response = await apiClient.get(`/uploadedfile/${projectId}`, {
-  //           cancelToken: source.token,
-  //         });
+    const fetchUploadedFiles = async () => {
+      try {
+        setDataLoading(true);
+        const response = await apiClient.get(
+          `/unmapped_drawings?project_id=${projectId}`,
+          {
+            cancelToken: source.token,
+          },
+        );
 
-  //         if (response.status === 200) {
-  //           setData(response.data ?? []);
-  //         } else {
-  //           toast.error(
-  //             response.data?.message || "Failed to fetch uploaded files",
-  //           );
-  //         }
-  //       } catch (err: unknown) {
-  //         if (!axios.isCancel(err)) {
-  //           toast.error(getErrorMessage(err, "uploaded files data"));
-  //         }
-  //       } finally {
-  //         setDataLoading(false);
-  //       }
-  //     };
+        if (response.status === 200) {
+          const payloadData = response.data;
+          const dataArray = Array.isArray(payloadData)
+            ? payloadData
+            : (payloadData?.data || []);
+          setData(dataArray);
+        } else {
+          toast.error(
+            response.data?.message || "Failed to fetch uploaded files",
+          );
+        }
+      } catch (err: unknown) {
+        if (!axios.isCancel(err)) {
+          toast.error(getErrorMessage(err, "uploaded files data"));
+        }
+      } finally {
+        setDataLoading(false);
+      }
+    };
 
-  //     fetchUploadedFiles();
+    fetchUploadedFiles();
 
-  //     return () => {
-  //       source.cancel();
-  //     };
-  //   }, [refreshKey]);
+    return () => {
+      source.cancel();
+    };
+  }, [refreshKey]);
 
   const table = useReactTable({
     data,
@@ -615,10 +600,10 @@ export default function DrawingUploadTable({
         <Input
           placeholder="Filter by file name..."
           value={
-            (table.getColumn("saved_name")?.getFilterValue() as string) ?? ""
+            (table.getColumn("path")?.getFilterValue() as string) ?? ""
           }
           onChange={(event) =>
-            table.getColumn("saved_name")?.setFilterValue(event.target.value)
+            table.getColumn("path")?.setFilterValue(event.target.value)
           }
           className="w-full max-w-sm sm:max-w-xs"
         />
