@@ -24,12 +24,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -212,6 +207,11 @@ export const getColumns = (
         ? loadingElementTypes[drawingTypeId]
         : false;
 
+      const drawing_type_name = drawingTypeId
+        ? drawingTypes.find((dt) => dt.drawings_type_id === drawingTypeId)
+            ?.drawing_type_name || "this"
+        : "this";
+
       return (
         <Popover>
           <PopoverTrigger asChild>
@@ -230,14 +230,14 @@ export const getColumns = (
                       (et) => et.element_type_id === assignment.element_type_id,
                     )?.element_type_name || "Selected"
                   : "Select Element Type"}
-              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+              <ChevronsUpDown className="" />
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-[200px] p-0">
             <Command>
               <CommandInput placeholder="Search element type..." />
               <CommandList>
-                <CommandEmpty>No element type found.</CommandEmpty>
+                <CommandEmpty>{`No ${drawing_type_name} drawing pending R1`}</CommandEmpty>
                 <CommandGroup>
                   {elementTypes.map((et) => (
                     <CommandItem
@@ -633,7 +633,6 @@ export default function DrawingUploadTable({
             )}
             Save Assignments
           </Button>
-         
         </div>
       </div>
       <div className="overflow-hidden rounded-md border">
