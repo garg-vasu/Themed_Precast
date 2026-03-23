@@ -333,9 +333,9 @@ export default function DrawingUploadTable({
       );
       if (response.status === 200) {
         const payloadData = response.data;
-        const dataArray = Array.isArray(payloadData) 
-          ? payloadData 
-          : (payloadData?.data || []);
+        const dataArray = Array.isArray(payloadData)
+          ? payloadData
+          : payloadData?.data || [];
         setElementTypesMap((prev) => ({
           ...prev,
           [drawingTypeId]: dataArray,
@@ -368,7 +368,7 @@ export default function DrawingUploadTable({
 
   const handleBulkSave = async () => {
     const payloadAssignments: any[] = [];
-    
+
     if (data && data.length > 0) {
       data.forEach((row) => {
         const assign = assignments[row.path];
@@ -390,7 +390,7 @@ export default function DrawingUploadTable({
     setSavingBulk(true);
     try {
       const response = await apiClient.post(
-        `/bulk_assign_drawings/${projectId}`,
+        `/bulk_assign_drawings?project_id=${projectId}`,
         payloadAssignments,
       );
       if (response.status === 200 || response.status === 201) {
@@ -458,7 +458,7 @@ export default function DrawingUploadTable({
           const payloadData = response.data;
           const dataArray = Array.isArray(payloadData)
             ? payloadData
-            : (payloadData?.data || []);
+            : payloadData?.data || [];
           setDrawingType(dataArray);
         } else {
           toast.error(
@@ -499,7 +499,7 @@ export default function DrawingUploadTable({
           const payloadData = response.data;
           const dataArray = Array.isArray(payloadData)
             ? payloadData
-            : (payloadData?.data || []);
+            : payloadData?.data || [];
           setData(dataArray);
         } else {
           toast.error(
@@ -599,9 +599,7 @@ export default function DrawingUploadTable({
       <div className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
         <Input
           placeholder="Filter by file name..."
-          value={
-            (table.getColumn("path")?.getFilterValue() as string) ?? ""
-          }
+          value={(table.getColumn("path")?.getFilterValue() as string) ?? ""}
           onChange={(event) =>
             table.getColumn("path")?.setFilterValue(event.target.value)
           }
