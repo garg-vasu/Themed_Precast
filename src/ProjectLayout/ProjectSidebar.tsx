@@ -368,7 +368,7 @@ export default function ProjectSidebar({
           permissions: ["EditElementType"],
         },
         {
-          name: "Bulk Drawing Upload",
+          name: "Drawing Upload",
           href: `/project/${projectId}/bulk-upload-drawing`,
           icon: ClipboardList,
           permissions: ["EditElementType"],

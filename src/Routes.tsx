@@ -171,6 +171,9 @@ const EditbomElemenrtype = lazy(
 const BulkUploadDrawing = lazy(
   () => import("./Pages/Elementtype/BulkUploadDrawing"),
 );
+const BulkDrawingUploadtable = lazy(
+  () => import("./Pages/Elementtype/uploadDrawing/DrawingUploadtable"),
+);
 const MixHierarchy = lazy(() => import("./Pages/Hierarchy/HierarchyTable"));
 const AddAttendance = lazy(() => import("./Pages/Attendance/AddAttendance"));
 const AddMember = lazy(() => import("./Pages/ProjectMember/AddMember"));
@@ -708,7 +711,7 @@ const projectChildren: RouteObject[] = [
     path: "bulk-upload-drawing",
     element: projectRoleGuard(
       ["EditElementType"],
-      withSuspense(<BulkUploadDrawing />),
+      withSuspense(<BulkDrawingUploadtable refresh={() => {}} />),
       "/",
     ),
   },
