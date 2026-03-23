@@ -1,6 +1,6 @@
 import { apiClient } from "@/utils/apiClient";
 import axios, { AxiosError } from "axios";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router";
 import { toast } from "sonner";
 
@@ -35,6 +35,7 @@ import {
   Send,
 } from "lucide-react";
 import PageHeader from "@/components/ui/PageHeader";
+import EditbomFilter, { type FilterStateElementtype } from "./EditbomFilter";
 
 // ─── Types ───────────────────────────────────────────────────────────
 
@@ -120,6 +121,9 @@ export default function EditbomElemenrtype() {
   const [loadingElements, setLoadingElements] = useState(true);
   const [loadingBoms, setLoadingBoms] = useState(true);
 
+  // Master cache: stores every element type ever fetched so selected items persist across filter changes
+  const allElementTypesMap = useRef<Map<number, Elementtype>>(new Map());
+
   // Selections
   const [selectedElementTypeIds, setSelectedElementTypeIds] = useState<
     Set<number>
@@ -136,6 +140,38 @@ export default function EditbomElemenrtype() {
   const [submitting, setSubmitting] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [passProduction, setPassProduction] = useState(true);
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [filterState, setFilterState] = useState<FilterStateElementtype>({
+    selectedTower: 0,
+    selectedFloor: 0,
+    elementType: "",
+    typeName: "",
+    selectedStages: [],
+  });
+
+  const handleFilterChange = useCallback((filters: FilterStateElementtype) => {
+    setFilterState(filters);
+  }, []);
+
+  const clearAllFilters = useCallback(() => {
+    setFilterState({
+      selectedTower: 0,
+      selectedFloor: 0,
+      elementType: "",
+      typeName: "",
+      selectedStages: [],
+    });
+  }, []);
+
+  const hasActiveFilters = () => {
+    return (
+      filterState.selectedTower > 0 ||
+      filterState.selectedFloor > 0 ||
+      filterState.elementType !== "" ||
+      filterState.typeName !== "" ||
+      filterState.selectedStages.length > 0
+    );
+  };
 
   // ── Fetch element types ────────────────────────────────────────────
   useEffect(() => {
@@ -144,13 +180,38 @@ export default function EditbomElemenrtype() {
     const fetchElementTypes = async () => {
       try {
         setLoadingElements(true);
+        const params: Record<string, number | string> = {};
+
+        if (filterState.selectedFloor > 0) {
+          params.hierarchy_id = filterState.selectedFloor;
+        } else if (filterState.selectedTower > 0) {
+          params.hierarchy_id = filterState.selectedTower;
+        }
+        if (filterState.elementType !== "") {
+          params.element_type = filterState.elementType.trim();
+        }
+        if (filterState.typeName !== "") {
+          params.element_type_name = filterState.typeName.trim();
+        }
+        if (filterState.selectedStages.length > 0) {
+          params.stages = filterState.selectedStages.join(",");
+        }
+
         const response = await apiClient.get(
           `/elementtype_fetch/${projectId}`,
-          { cancelToken: source.token },
+          { 
+            cancelToken: source.token,
+            params 
+          },
         );
 
         if (response.status === 200) {
-          setElementTypes(response.data.data ?? []);
+          const fetched: Elementtype[] = response.data.data ?? [];
+          // Merge into master cache
+          fetched.forEach((et) => {
+            allElementTypesMap.current.set(et.element_type_id, et);
+          });
+          setElementTypes(fetched);
         } else {
           toast.error(
             response.data?.message || "Failed to fetch element types",
@@ -172,7 +233,7 @@ export default function EditbomElemenrtype() {
     return () => {
       source.cancel();
     };
-  }, [projectId]);
+  }, [projectId, filterState]);
 
   // ── Fetch BOMs ─────────────────────────────────────────────────────
   useEffect(() => {
@@ -211,16 +272,30 @@ export default function EditbomElemenrtype() {
 
   // ── Filtered lists ─────────────────────────────────────────────────
   const filteredElements = useMemo(() => {
-    if (!searchElement.trim()) return elementTypes;
+    const currentIds = new Set(elementTypes.map((e) => e.element_type_id));
+
+    // Gather selected items that are NOT in the current API response
+    const missingSelected: Elementtype[] = [];
+    selectedElementTypeIds.forEach((id) => {
+      if (!currentIds.has(id)) {
+        const cached = allElementTypesMap.current.get(id);
+        if (cached) missingSelected.push(cached);
+      }
+    });
+
+    // Combine: current API results + missing selected items
+    const combined = [...elementTypes, ...missingSelected];
+
+    if (!searchElement.trim()) return combined;
     const q = searchElement.toLowerCase();
-    return elementTypes.filter(
+    return combined.filter(
       (e) =>
         e.element_type.toLowerCase().includes(q) ||
         e.element_type_name.toLowerCase().includes(q) ||
         e.tower_name?.toLowerCase().includes(q) ||
         e.floor_name?.toLowerCase().includes(q),
     );
-  }, [elementTypes, searchElement]);
+  }, [elementTypes, searchElement, selectedElementTypeIds]);
 
   const filteredBoms = useMemo(() => {
     if (!searchBom.trim()) return bomData;
@@ -247,11 +322,17 @@ export default function EditbomElemenrtype() {
 
   const toggleAllElements = (checked: boolean) => {
     if (checked) {
-      setSelectedElementTypeIds(
-        new Set(filteredElements.map((e) => e.element_type_id)),
-      );
+      setSelectedElementTypeIds((prev) => {
+        const next = new Set(prev);
+        filteredElements.forEach((e) => next.add(e.element_type_id));
+        return next;
+      });
     } else {
-      setSelectedElementTypeIds(new Set());
+      setSelectedElementTypeIds((prev) => {
+        const next = new Set(prev);
+        filteredElements.forEach((e) => next.delete(e.element_type_id));
+        return next;
+      });
     }
   };
 
@@ -269,9 +350,17 @@ export default function EditbomElemenrtype() {
 
   const toggleAllBoms = (checked: boolean) => {
     if (checked) {
-      setSelectedBomIds(new Set(filteredBoms.map((b) => b.bom_id)));
+      setSelectedBomIds((prev) => {
+        const next = new Set(prev);
+        filteredBoms.forEach((b) => next.add(b.bom_id));
+        return next;
+      });
     } else {
-      setSelectedBomIds(new Set());
+      setSelectedBomIds((prev) => {
+        const next = new Set(prev);
+        filteredBoms.forEach((b) => next.delete(b.bom_id));
+        return next;
+      });
     }
   };
 
@@ -458,11 +547,38 @@ export default function EditbomElemenrtype() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Input
-              placeholder="Search element types..."
-              value={searchElement}
-              onChange={(e) => setSearchElement(e.target.value)}
-            />
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between py-2">
+              <Input
+                placeholder="Search element types locally..."
+                value={searchElement}
+                onChange={(e) => setSearchElement(e.target.value)}
+                className="w-full max-w-sm"
+              />
+              <div className="flex items-center gap-2">
+                 <Button
+                    variant={hasActiveFilters() ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setFilterOpen((prev) => !prev)}
+                  >
+                    Advance Filter
+                  </Button>
+                  {hasActiveFilters() && (
+                    <Button variant="outline" size="sm" onClick={clearAllFilters}>
+                      Clear Filters
+                    </Button>
+                  )}
+              </div>
+            </div>
+
+            {filterOpen && (
+              <div className="border rounded-md p-4 bg-muted/20 mb-4">
+                <EditbomFilter
+                  onFilterChange={handleFilterChange}
+                  onClose={() => setFilterOpen(false)}
+                  currentFilter={filterState}
+                />
+              </div>
+            )}
 
             {loadingElements ? (
               <LoadingSkeleton />

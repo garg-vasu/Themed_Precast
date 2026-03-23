@@ -537,7 +537,7 @@ export function ElementtypeTable() {
   };
 
   const showSetupGuide =
-    !dataLoading && data.length === 0 && projectCtx?.projectDetails;
+    !dataLoading && data.length === 0 && projectCtx?.projectDetails && !hasActiveFilters();
 
   if (showSetupGuide) {
     return (

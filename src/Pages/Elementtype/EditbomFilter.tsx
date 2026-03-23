@@ -60,16 +60,16 @@ const getErrorMessage = (error: AxiosError | unknown, data: string): string => {
   return "An unexpected error occurred. Please try again later.";
 };
 
-interface ElementtypeFilterProps {
+interface EditbomFilterProps {
   onFilterChange: (filter: FilterStateElementtype) => void;
   onClose: () => void;
   currentFilter?: FilterStateElementtype;
 }
-export default function ElementtypeFilter({
+export default function EditbomFilter({
   onFilterChange,
   onClose,
   currentFilter,
-}: ElementtypeFilterProps) {
+}: EditbomFilterProps) {
   // Available stages for selection
   const availableStages = [
     { id: "production", label: "Production" },

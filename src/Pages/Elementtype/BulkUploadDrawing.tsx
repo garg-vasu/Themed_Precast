@@ -56,7 +56,7 @@ import {
   X,
   Eye,
   Plus,
-  Trash2
+  Trash2,
 } from "lucide-react";
 import PageHeader from "@/components/ui/PageHeader";
 
@@ -155,7 +155,7 @@ function ElementTypeMultiSelect({
     return options.filter(
       (o) =>
         o.element_type.toLowerCase().includes(q) ||
-        o.element_type_name.toLowerCase().includes(q)
+        o.element_type_name.toLowerCase().includes(q),
     );
   }, [options, search]);
 
@@ -181,8 +181,7 @@ function ElementTypeMultiSelect({
           variant="outline"
           className={`w-full justify-start text-left font-normal truncate h-9 px-3 ${
             selectedIds.size === 0 ? "text-muted-foreground" : ""
-          }`}
-        >
+          }`}>
           {selectedIds.size > 0
             ? `${selectedIds.size} selected`
             : "Select element types..."}
@@ -190,16 +189,28 @@ function ElementTypeMultiSelect({
       </PopoverTrigger>
       <PopoverContent className="w-[300px] p-2" align="start">
         <div className="flex gap-2 mb-2 items-center">
-            <Input
-              placeholder="Search..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="h-8"
-            />
+          <Input
+            placeholder="Search..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="h-8"
+          />
         </div>
         <div className="flex items-center gap-2 mb-2 text-xs">
-            <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={selectAll}>Select All</Button>
-            <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={clearAll}>Clear</Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-6 px-2 text-xs"
+            onClick={selectAll}>
+            Select All
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-6 px-2 text-xs"
+            onClick={clearAll}>
+            Clear
+          </Button>
         </div>
         <ScrollArea className="h-[200px]">
           {filtered.length === 0 && (
@@ -212,8 +223,7 @@ function ElementTypeMultiSelect({
               <div
                 key={et.element_type_id}
                 className="flex items-center gap-2 p-1.5 rounded hover:bg-muted cursor-pointer"
-                onClick={() => toggle(et.element_type_id)}
-              >
+                onClick={() => toggle(et.element_type_id)}>
                 <Checkbox
                   checked={selectedIds.has(et.element_type_id)}
                   className="mt-0.5"
@@ -240,7 +250,7 @@ function ElementTypeMultiSelect({
 export default function BulkUploadDrawing() {
   const { projectId } = useParams();
   const navigate = useNavigate();
-  
+
   // Data
   const [elementTypes, setElementTypes] = useState<Elementtype[]>([]);
   const [drawingTypes, setDrawingTypes] = useState<DrawingType[]>([]);
@@ -248,7 +258,9 @@ export default function BulkUploadDrawing() {
   const [loadingDrawingTypes, setLoadingDrawingTypes] = useState(true);
 
   // Selections & State
-  const [selectedElementTypeIds, setSelectedElementTypeIds] = useState<Set<number>>(new Set());
+  const [selectedElementTypeIds, setSelectedElementTypeIds] = useState<
+    Set<number>
+  >(new Set());
   const [currentStep, setCurrentStep] = useState(0);
   const [searchElement, setSearchElement] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -260,9 +272,13 @@ export default function BulkUploadDrawing() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Step 3 State
-  const [uploadedResults, setUploadedResults] = useState<UploadedFileResult[]>([]);
-  const [activeFiles, setActiveFiles] = useState<Set<string>>(new Set()); 
-  const [assignments, setAssignments] = useState<Record<string, FileAssignment>>({});
+  const [uploadedResults, setUploadedResults] = useState<UploadedFileResult[]>(
+    [],
+  );
+  const [activeFiles, setActiveFiles] = useState<Set<string>>(new Set());
+  const [assignments, setAssignments] = useState<
+    Record<string, FileAssignment>
+  >({});
 
   // ── Fetch data ────────────────────────────────────────────
   useEffect(() => {
@@ -272,7 +288,7 @@ export default function BulkUploadDrawing() {
         setLoadingElements(true);
         const response = await apiClient.get(
           `/elementtype_fetch/${projectId}`,
-          { cancelToken: source.token }
+          { cancelToken: source.token },
         );
         if (response.status === 200) {
           setElementTypes(response.data.data ?? []);
@@ -322,7 +338,7 @@ export default function BulkUploadDrawing() {
         e.element_type.toLowerCase().includes(q) ||
         e.element_type_name.toLowerCase().includes(q) ||
         e.tower_name?.toLowerCase().includes(q) ||
-        e.floor_name?.toLowerCase().includes(q)
+        e.floor_name?.toLowerCase().includes(q),
     );
   }, [elementTypes, searchElement]);
 
@@ -339,7 +355,7 @@ export default function BulkUploadDrawing() {
   const toggleAllElements = (checked: boolean) => {
     if (checked) {
       setSelectedElementTypeIds(
-        new Set(filteredElements.map((e) => e.element_type_id))
+        new Set(filteredElements.map((e) => e.element_type_id)),
       );
     } else {
       setSelectedElementTypeIds(new Set());
@@ -362,7 +378,7 @@ export default function BulkUploadDrawing() {
 
   const handleBulkUpload = async () => {
     if (selectedLocalFiles.length === 0) return;
-    
+
     const formData = new FormData();
     selectedLocalFiles.forEach((file) => formData.append("files", file));
 
@@ -375,12 +391,12 @@ export default function BulkUploadDrawing() {
       if (response.status === 200 && response.data?.results) {
         toast.success(`Successfully uploaded ${response.data.succeeded} files`);
         const results = response.data.results as UploadedFileResult[];
-        
+
         // Setup initial state for Step 3
         setUploadedResults(results);
         const activeSet = new Set(results.map((r) => r.saved_name));
         setActiveFiles(activeSet);
-        
+
         const initialAssignments: Record<string, FileAssignment> = {};
         results.forEach((r) => {
           initialAssignments[r.saved_name] = {
@@ -404,14 +420,14 @@ export default function BulkUploadDrawing() {
   // ── Navigation ─────────────────────────────────────────────────────
   const canGoNext = () => {
     if (currentStep === 0) return selectedElementTypeIds.size > 0;
-    if (currentStep === 1) return selectedLocalFiles.length > 0; // Handled by Upload button, but check if user wants to skip. Actually, we shouldn't let them go next without uploading. 
+    if (currentStep === 1) return selectedLocalFiles.length > 0; // Handled by Upload button, but check if user wants to skip. Actually, we shouldn't let them go next without uploading.
     return true;
   };
 
   const handleNext = () => {
     if (currentStep === 1) {
-       handleBulkUpload();
-       return;
+      handleBulkUpload();
+      return;
     }
     setCurrentStep((prev) => Math.min(prev + 1, STEPS.length - 1));
   };
@@ -421,50 +437,64 @@ export default function BulkUploadDrawing() {
   };
 
   // ── Assignment Handlers (Step 3) ───────────────────────────────────
-  
+
   // Element types available for selection (restricted to Step 1 subset)
   const availableElementTypes = useMemo(() => {
-    return elementTypes.filter(et => selectedElementTypeIds.has(et.element_type_id));
+    return elementTypes.filter((et) =>
+      selectedElementTypeIds.has(et.element_type_id),
+    );
   }, [elementTypes, selectedElementTypeIds]);
 
-  const updateAssignmentDrawingType = (savedName: string, drawingTypeId: number) => {
-    setAssignments(prev => ({
-        ...prev,
-        [savedName]: {
-            ...prev[savedName],
-            drawing_type_id: drawingTypeId
-        }
+  const updateAssignmentDrawingType = (
+    savedName: string,
+    drawingTypeId: number,
+  ) => {
+    setAssignments((prev) => ({
+      ...prev,
+      [savedName]: {
+        ...prev[savedName],
+        drawing_type_id: drawingTypeId,
+      },
     }));
   };
 
-  const updateAssignmentElementTypes = (savedName: string, ids: Set<number>) => {
-    setAssignments(prev => ({
-        ...prev,
-        [savedName]: {
-            ...prev[savedName],
-            element_type_ids: ids
-        }
+  const updateAssignmentElementTypes = (
+    savedName: string,
+    ids: Set<number>,
+  ) => {
+    setAssignments((prev) => ({
+      ...prev,
+      [savedName]: {
+        ...prev[savedName],
+        element_type_ids: ids,
+      },
     }));
   };
 
   const toggleCancelFile = (savedName: string, cancel: boolean) => {
-    setActiveFiles(prev => {
-        const next = new Set(prev);
-        if (cancel) next.delete(savedName);
-        else next.add(savedName);
-        return next;
+    setActiveFiles((prev) => {
+      const next = new Set(prev);
+      if (cancel) next.delete(savedName);
+      else next.add(savedName);
+      return next;
     });
   };
 
   // ── Validation & Submit ────────────────────────────────────────────
   const validateAssignments = (): boolean => {
-    const activeArr = uploadedResults.filter(r => activeFiles.has(r.saved_name));
+    const activeArr = uploadedResults.filter((r) =>
+      activeFiles.has(r.saved_name),
+    );
     if (activeArr.length === 0) return false;
-    
+
     for (const file of activeArr) {
       const assign = assignments[file.saved_name];
       // File must have drawing type AND at least one element type
-      if (!assign || !assign.drawing_type_id || assign.element_type_ids.size === 0) {
+      if (
+        !assign ||
+        !assign.drawing_type_id ||
+        assign.element_type_ids.size === 0
+      ) {
         return false;
       }
     }
@@ -473,29 +503,33 @@ export default function BulkUploadDrawing() {
 
   const handleSubmitClick = () => {
     if (!validateAssignments()) {
-      toast.error("Please ensure all active files have a Drawing Type and at least one Element Type assigned.");
+      toast.error(
+        "Please ensure all active files have a Drawing Type and at least one Element Type assigned.",
+      );
       return;
     }
     setShowConfirmDialog(true);
   };
 
   const handleConfirmSubmit = async () => {
-    const activeArr = uploadedResults.filter(r => activeFiles.has(r.saved_name));
-    
-    const payloadAssignments = activeArr.map(file => {
+    const activeArr = uploadedResults.filter((r) =>
+      activeFiles.has(r.saved_name),
+    );
+
+    const payloadAssignments = activeArr.map((file) => {
       const assign = assignments[file.saved_name];
       return {
-         saved_name: file.saved_name,
-         original_name: file.original_name,
-         file_path: file.file_path,
-         file_size: file.file_size,
-         drawing_type_id: assign.drawing_type_id,
-         element_type_ids: Array.from(assign.element_type_ids)
+        saved_name: file.saved_name,
+        original_name: file.original_name,
+        file_path: file.file_path,
+        file_size: file.file_size,
+        drawing_type_id: assign.drawing_type_id,
+        element_type_ids: Array.from(assign.element_type_ids),
       };
     });
 
     const payload = {
-        assignments: payloadAssignments
+      assignments: payloadAssignments,
     };
 
     try {
@@ -503,7 +537,7 @@ export default function BulkUploadDrawing() {
       setShowConfirmDialog(false);
       const response = await apiClient.post(
         `/bulk_assign_drawings/${projectId}`,
-        payload
+        payload,
       );
 
       if (response.status === 200 || response.status === 201) {
@@ -511,7 +545,7 @@ export default function BulkUploadDrawing() {
         navigate(`/project/${projectId}/element-type`); // Redirect or reset
       } else {
         toast.error(
-          response.data?.message || "Failed to submit drawing assignments."
+          response.data?.message || "Failed to submit drawing assignments.",
         );
       }
     } catch (err: unknown) {
@@ -551,18 +585,16 @@ export default function BulkUploadDrawing() {
                   isActive
                     ? "bg-primary text-primary-foreground"
                     : isCompleted
-                    ? "bg-primary/20 text-primary"
-                    : "bg-muted text-muted-foreground"
-                }`}
-              >
+                      ? "bg-primary/20 text-primary"
+                      : "bg-muted text-muted-foreground"
+                }`}>
                 {isCompleted ? <CheckCircle2 className="w-4 h-4" /> : idx + 1}
               </div>
               <div className="hidden md:block">
                 <p
                   className={`text-xs sm:text-sm font-medium leading-tight ${
                     isActive ? "text-foreground" : "text-muted-foreground"
-                  }`}
-                >
+                  }`}>
                   {step.label}
                 </p>
               </div>
@@ -577,8 +609,12 @@ export default function BulkUploadDrawing() {
   //  RENDER
   // ══════════════════════════════════════════════════════════════════
 
-  const activeResults = uploadedResults.filter(r => activeFiles.has(r.saved_name));
-  const canceledResults = uploadedResults.filter(r => !activeFiles.has(r.saved_name));
+  const activeResults = uploadedResults.filter((r) =>
+    activeFiles.has(r.saved_name),
+  );
+  const canceledResults = uploadedResults.filter(
+    (r) => !activeFiles.has(r.saved_name),
+  );
 
   return (
     <div className="w-full p-4">
@@ -590,7 +626,9 @@ export default function BulkUploadDrawing() {
       {currentStep === 0 && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Step 1: Select Target Element Types</CardTitle>
+            <CardTitle className="text-lg">
+              Step 1: Select Target Element Types
+            </CardTitle>
             <CardDescription>
               Choose the subset of element types you may assign drawings to.
               <Badge variant="secondary" className="ml-2">
@@ -619,15 +657,14 @@ export default function BulkUploadDrawing() {
                     checked={
                       filteredElements.length > 0 &&
                       filteredElements.every((e) =>
-                        selectedElementTypeIds.has(e.element_type_id)
+                        selectedElementTypeIds.has(e.element_type_id),
                       )
                     }
                     onCheckedChange={(checked) => toggleAllElements(!!checked)}
                   />
                   <Label
                     htmlFor="select-all-elements"
-                    className="cursor-pointer text-sm font-medium"
-                  >
+                    className="cursor-pointer text-sm font-medium">
                     Select All ({filteredElements.length})
                   </Label>
                 </div>
@@ -636,7 +673,7 @@ export default function BulkUploadDrawing() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                     {filteredElements.map((et) => {
                       const isChecked = selectedElementTypeIds.has(
-                        et.element_type_id
+                        et.element_type_id,
                       );
                       return (
                         <div
@@ -646,8 +683,7 @@ export default function BulkUploadDrawing() {
                               ? "border-primary bg-primary/5"
                               : "border-border"
                           }`}
-                          onClick={() => toggleElementType(et.element_type_id)}
-                        >
+                          onClick={() => toggleElementType(et.element_type_id)}>
                           <Checkbox
                             checked={isChecked}
                             onCheckedChange={() =>
@@ -666,16 +702,14 @@ export default function BulkUploadDrawing() {
                               {et.tower_name && (
                                 <Badge
                                   variant="outline"
-                                  className="text-[10px] px-1.5 py-0"
-                                >
+                                  className="text-[10px] px-1.5 py-0">
                                   {et.tower_name}
                                 </Badge>
                               )}
                               {et.floor_name && (
                                 <Badge
                                   variant="outline"
-                                  className="text-[10px] px-1.5 py-0"
-                                >
+                                  className="text-[10px] px-1.5 py-0">
                                   {et.floor_name}
                                 </Badge>
                               )}
@@ -702,41 +736,59 @@ export default function BulkUploadDrawing() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="flex flex-col items-center justify-center p-8 border-2 border-dashed rounded-lg bg-muted/20 hover:bg-muted/50 transition-colors w-full cursor-pointer" onClick={() => fileInputRef.current?.click()}>
-               <UploadCloud className="size-10 text-muted-foreground mb-4" />
-               <p className="text-sm font-medium mb-1">Click to select files</p>
-               <p className="text-xs text-muted-foreground">PDFs, images, or drawings</p>
-               <input 
-                 type="file" 
-                 multiple 
-                 className="hidden" 
-                 ref={fileInputRef} 
-                 onChange={handleLocalFileSelect} 
-               />
+            <div
+              className="flex flex-col items-center justify-center p-8 border-2 border-dashed rounded-lg bg-muted/20 hover:bg-muted/50 transition-colors w-full cursor-pointer"
+              onClick={() => fileInputRef.current?.click()}>
+              <UploadCloud className="size-10 text-muted-foreground mb-4" />
+              <p className="text-sm font-medium mb-1">Click to select files</p>
+              <p className="text-xs text-muted-foreground">
+                PDFs, images, or drawings
+              </p>
+              <input
+                type="file"
+                multiple
+                className="hidden"
+                ref={fileInputRef}
+                onChange={handleLocalFileSelect}
+              />
             </div>
 
             {selectedLocalFiles.length > 0 && (
-                <div className="space-y-3">
-                   <div className="flex items-center justify-between">
-                     <h4 className="text-sm font-semibold">{selectedLocalFiles.length} File(s) Selected</h4>
-                     <Button variant="ghost" size="sm" onClick={() => setSelectedLocalFiles([])}>Clear All</Button>
-                   </div>
-                   <ScrollArea className="h-[240px] border rounded-md p-2">
-                       <ul className="space-y-2">
-                          {selectedLocalFiles.map((f, idx) => (
-                              <li key={idx} className="flex items-center justify-between p-2 rounded bg-muted/40 text-sm">
-                                  <span className="truncate pr-4 flex-1">{f.name}</span>
-                                  <span className="text-xs text-muted-foreground mr-4">{(f.size / 1024).toFixed(1)} KB</span>
-                                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => removeLocalFile(idx)}>
-                                      <X className="size-4" />
-                                  </Button>
-                              </li>
-                          ))}
-                       </ul>
-                   </ScrollArea>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-sm font-semibold">
+                    {selectedLocalFiles.length} File(s) Selected
+                  </h4>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setSelectedLocalFiles([])}>
+                    Clear All
+                  </Button>
                 </div>
+                <ScrollArea className="h-[240px] border rounded-md p-2">
+                  <ul className="space-y-2">
+                    {selectedLocalFiles.map((f, idx) => (
+                      <li
+                        key={idx}
+                        className="flex items-center justify-between p-2 rounded bg-muted/40 text-sm">
+                        <span className="truncate pr-4 flex-1">{f.name}</span>
+                        <span className="text-xs text-muted-foreground mr-4">
+                          {(f.size / 1024).toFixed(1)} KB
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6"
+                          onClick={() => removeLocalFile(idx)}>
+                          <X className="size-4" />
+                        </Button>
+                      </li>
+                    ))}
+                  </ul>
+                </ScrollArea>
+              </div>
             )}
-
           </CardContent>
         </Card>
       )}
@@ -747,105 +799,158 @@ export default function BulkUploadDrawing() {
           <CardHeader>
             <CardTitle className="text-lg">Step 3: Assign Drawings</CardTitle>
             <CardDescription>
-              Map your uploaded files to a Drawing Type and target Element Types. 
+              Map your uploaded files to a Drawing Type and target Element
+              Types.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            
             {canceledResults.length > 0 && (
-                <div className="border border-destructive/20 bg-destructive/5 rounded-md p-4">
-                    <h4 className="text-sm font-semibold text-destructive mb-2 flex items-center gap-2">
-                        <Trash2 className="size-4" />
-                        Canceled Files ({canceledResults.length})
-                    </h4>
-                    <p className="text-xs text-muted-foreground mb-3">These files will not be assigned or submitted.</p>
-                    <div className="flex flex-wrap gap-2">
-                        {canceledResults.map(r => (
-                            <Badge key={r.saved_name} variant="outline" className="flex items-center gap-1.5 py-1 px-2">
-                                <span className="truncate max-w-[150px]">{r.original_name}</span>
-                                <Button variant="ghost" size="icon" className="h-4 w-4 rounded-full hover:bg-background" onClick={() => toggleCancelFile(r.saved_name, false)}>
-                                    <Plus className="size-3" />
-                                </Button>
-                            </Badge>
-                        ))}
-                    </div>
+              <div className="border border-destructive/20 bg-destructive/5 rounded-md p-4">
+                <h4 className="text-sm font-semibold text-destructive mb-2 flex items-center gap-2">
+                  <Trash2 className="size-4" />
+                  Canceled Files ({canceledResults.length})
+                </h4>
+                <p className="text-xs text-muted-foreground mb-3">
+                  These files will not be assigned or submitted.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {canceledResults.map((r) => (
+                    <Badge
+                      key={r.saved_name}
+                      variant="outline"
+                      className="flex items-center gap-1.5 py-1 px-2">
+                      <span className="truncate max-w-[150px]">
+                        {r.original_name}
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-4 w-4 rounded-full hover:bg-background"
+                        onClick={() => toggleCancelFile(r.saved_name, false)}>
+                        <Plus className="size-3" />
+                      </Button>
+                    </Badge>
+                  ))}
                 </div>
+              </div>
             )}
 
             <div className="rounded-md border">
               <Table>
                 <TableHeader>
                   <TableRow>
-                     <TableHead className="w-[30%]">File Info</TableHead>
-                     <TableHead className="w-[30%]">Drawing Type</TableHead>
-                     <TableHead className="w-[35%]">Element Types</TableHead>
-                     <TableHead className="w-[5%] text-right">Action</TableHead>
+                    <TableHead className="w-[30%]">File Info</TableHead>
+                    <TableHead className="w-[30%]">Drawing Type</TableHead>
+                    <TableHead className="w-[35%]">Element Types</TableHead>
+                    <TableHead className="w-[5%] text-right">Action</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                   {activeResults.length === 0 ? (
-                       <TableRow>
-                           <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
-                               No active files to assign. Please restore canceled files.
-                           </TableCell>
-                       </TableRow>
-                   ) : (
-                       activeResults.map(r => {
-                           const assign = assignments[r.saved_name];
-                           if (!assign) return null;
+                  {activeResults.length === 0 ? (
+                    <TableRow>
+                      <TableCell
+                        colSpan={4}
+                        className="h-24 text-center text-muted-foreground">
+                        No active files to assign. Please restore canceled
+                        files.
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    activeResults.map((r) => {
+                      const assign = assignments[r.saved_name];
+                      if (!assign) return null;
 
-                           return (
-                               <TableRow key={r.saved_name}>
-                                   <TableCell>
-                                       <div className="flex flex-col gap-1.5">
-                                           <span className="text-sm font-medium truncate max-w-[200px]" title={r.original_name}>{r.original_name}</span>
-                                           <div className="flex items-center gap-2">
-                                                <Badge variant="secondary" className="text-[10px] font-normal">{(r.file_size / 1024).toFixed(1)} KB</Badge>
-                                                <Button size="sm" variant="outline" className="h-6 px-2 text-xs" onClick={() => window.open(`${baseUrl}/get-file?file=${encodeURIComponent(r.saved_name)}`, '_blank')}>
-                                                    <Eye className="size-3 mr-1" /> Preview
-                                                </Button>
-                                           </div>
-                                       </div>
-                                   </TableCell>
-                                   <TableCell>
-                                       <Select 
-                                         value={assign.drawing_type_id?.toString() || ""} 
-                                         onValueChange={(val) => updateAssignmentDrawingType(r.saved_name, Number(val))}
-                                       >
-                                           <SelectTrigger className="w-full text-xs h-9">
-                                               <SelectValue placeholder="Select type..." />
-                                           </SelectTrigger>
-                                           <SelectContent>
-                                               {drawingTypes.map(dt => (
-                                                   <SelectItem key={dt.drawings_type_id} value={dt.drawings_type_id.toString()}>
-                                                       {dt.drawing_type_name}
-                                                   </SelectItem>
-                                               ))}
-                                           </SelectContent>
-                                       </Select>
-                                       {!assign.drawing_type_id && <p className="text-[10px] text-destructive mt-1">Required</p>}
-                                   </TableCell>
-                                   <TableCell>
-                                       <ElementTypeMultiSelect 
-                                         options={availableElementTypes} 
-                                         selectedIds={assign.element_type_ids} 
-                                         onChange={(ids) => updateAssignmentElementTypes(r.saved_name, ids)} 
-                                       />
-                                       {assign.element_type_ids.size === 0 && <p className="text-[10px] text-destructive mt-1">Minimum 1 required</p>}
-                                   </TableCell>
-                                   <TableCell className="text-right">
-                                       <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => toggleCancelFile(r.saved_name, true)} title="Remove File">
-                                           <X className="size-4" />
-                                       </Button>
-                                   </TableCell>
-                               </TableRow>
-                           );
-                       })
-                   )}
+                      return (
+                        <TableRow key={r.saved_name}>
+                          <TableCell>
+                            <div className="flex flex-col gap-1.5">
+                              <span
+                                className="text-sm font-medium truncate max-w-[200px]"
+                                title={r.original_name}>
+                                {r.original_name}
+                              </span>
+                              <div className="flex items-center gap-2">
+                                <Badge
+                                  variant="secondary"
+                                  className="text-[10px] font-normal">
+                                  {(r.file_size / 1024).toFixed(1)} KB
+                                </Badge>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-6 px-2 text-xs"
+                                  onClick={() =>
+                                    window.open(
+                                      `${baseUrl}/get-file?file=${encodeURIComponent(r.saved_name)}`,
+                                      "_blank",
+                                    )
+                                  }>
+                                  <Eye className="size-3 mr-1" /> Preview
+                                </Button>
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Select
+                              value={assign.drawing_type_id?.toString() || ""}
+                              onValueChange={(val) =>
+                                updateAssignmentDrawingType(
+                                  r.saved_name,
+                                  Number(val),
+                                )
+                              }>
+                              <SelectTrigger className="w-full text-xs h-9">
+                                <SelectValue placeholder="Select type..." />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {drawingTypes.map((dt) => (
+                                  <SelectItem
+                                    key={dt.drawings_type_id}
+                                    value={dt.drawings_type_id.toString()}>
+                                    {dt.drawing_type_name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            {!assign.drawing_type_id && (
+                              <p className="text-[10px] text-destructive mt-1">
+                                Required
+                              </p>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <ElementTypeMultiSelect
+                              options={availableElementTypes}
+                              selectedIds={assign.element_type_ids}
+                              onChange={(ids) =>
+                                updateAssignmentElementTypes(r.saved_name, ids)
+                              }
+                            />
+                            {assign.element_type_ids.size === 0 && (
+                              <p className="text-[10px] text-destructive mt-1">
+                                Minimum 1 required
+                              </p>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                              onClick={() =>
+                                toggleCancelFile(r.saved_name, true)
+                              }
+                              title="Remove File">
+                              <X className="size-4" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })
+                  )}
                 </TableBody>
               </Table>
             </div>
-
           </CardContent>
         </Card>
       )}
@@ -855,8 +960,7 @@ export default function BulkUploadDrawing() {
         <Button
           variant="outline"
           disabled={currentStep === 0 || uploading || submitting}
-          onClick={handleBack}
-        >
+          onClick={handleBack}>
           <ChevronLeft className="w-4 h-4 mr-1" />
           Back
         </Button>
@@ -867,11 +971,13 @@ export default function BulkUploadDrawing() {
               {selectedElementTypeIds.size} Target Element(s)
             </Badge>
           )}
-          {currentStep >= 1 && selectedLocalFiles.length > 0 && currentStep < 2 && (
-            <Badge variant="secondary" className="hidden sm:inline-flex">
-              {selectedLocalFiles.length} File(s)
-            </Badge>
-          )}
+          {currentStep >= 1 &&
+            selectedLocalFiles.length > 0 &&
+            currentStep < 2 && (
+              <Badge variant="secondary" className="hidden sm:inline-flex">
+                {selectedLocalFiles.length} File(s)
+              </Badge>
+            )}
           {currentStep === 2 && activeResults.length > 0 && (
             <Badge variant="secondary" className="hidden sm:inline-flex">
               {activeResults.length} Active File(s)
@@ -887,23 +993,24 @@ export default function BulkUploadDrawing() {
         ) : currentStep === 1 ? (
           <Button disabled={!canGoNext() || uploading} onClick={handleNext}>
             {uploading ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Uploading...
-                </>
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Uploading...
+              </>
             ) : (
-                <>
-                  Upload & Next
-                  <UploadCloud className="w-4 h-4 ml-2" />
-                </>
+              <>
+                Upload & Next
+                <UploadCloud className="w-4 h-4 ml-2" />
+              </>
             )}
           </Button>
         ) : (
           <Button
-            disabled={submitting || activeResults.length === 0 || !validateAssignments()}
+            disabled={
+              submitting || activeResults.length === 0 || !validateAssignments()
+            }
             onClick={handleSubmitClick}
-            className="bg-primary hover:bg-primary/90"
-          >
+            className="bg-primary hover:bg-primary/90">
             {submitting ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -925,15 +1032,15 @@ export default function BulkUploadDrawing() {
           <DialogHeader>
             <DialogTitle>Confirm Submit</DialogTitle>
             <DialogDescription>
-              Are you sure you want to assign these {activeResults.length} drawings?
+              Are you sure you want to assign these {activeResults.length}{" "}
+              drawings?
             </DialogDescription>
           </DialogHeader>
 
           <DialogFooter className="mt-4">
             <Button
               variant="outline"
-              onClick={() => setShowConfirmDialog(false)}
-            >
+              onClick={() => setShowConfirmDialog(false)}>
               Cancel
             </Button>
             <Button onClick={handleConfirmSubmit} disabled={submitting}>
