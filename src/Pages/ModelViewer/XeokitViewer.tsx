@@ -152,7 +152,8 @@ const XeokitViewer = memo(
               case ".ifc": {
                 const WebIFC = await import("web-ifc");
                 const ifcApi = new WebIFC.IfcAPI();
-                ifcApi.SetWasmPath("/");
+                // Ensure proper path resolution on servers (especially if deployed to non-root URLs)
+                ifcApi.SetWasmPath(import.meta.env.BASE_URL || "/");
                 await ifcApi.Init();
                 if (destroyed) return;
                 loader = new xeokit.WebIFCLoaderPlugin(viewer, {
