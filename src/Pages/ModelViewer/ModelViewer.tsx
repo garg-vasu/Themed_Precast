@@ -3,18 +3,21 @@ import PageHeader from "@/components/ui/PageHeader";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
-  Upload,
+  UploadCloud,
   RotateCcw,
   Maximize2,
   Box,
   Trash2,
   FileUp,
-  AlertCircle,
+  AlertTriangle,
   CheckCircle2,
   Loader2,
-  Move3D,
+  Info,
+  Cube,
+  Eye,
+  Settings2,
 } from "lucide-react";
-import XeokitViewer from "./XeokitViewer";
+import XeokitViewer, { XeokitViewerHandle } from "./XeokitViewer";
 
 type ViewerStatus = "idle" | "loading" | "loaded" | "error";
 
@@ -30,11 +33,7 @@ export default function ModelViewer() {
   } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
-  const viewerRef = useRef<{
-    resetCamera: () => void;
-    fitModel: () => void;
-    setOrtho: (v: boolean) => void;
-  } | null>(null);
+  const viewerRef = useRef<XeokitViewerHandle | null>(null);
   const [isOrtho, setIsOrtho] = useState(false);
 
   const formatFileSize = (bytes: number): string => {
@@ -45,7 +44,6 @@ export default function ModelViewer() {
 
   const handleFile = useCallback(
     (selectedFile: File) => {
-      // Validate file type
       const validExtensions = [".ifc", ".gltf", ".glb", ".obj", ".stl", ".xkt"];
       const ext = selectedFile.name
         .substring(selectedFile.name.lastIndexOf("."))
@@ -53,13 +51,18 @@ export default function ModelViewer() {
 
       if (!validExtensions.includes(ext)) {
         setStatus("error");
-        setErrorMsg(
-          `Unsupported file format "${ext}". Please upload IFC, glTF, OBJ, STL, or XKT files.`,
-        );
+        if (ext === ".dwg" || ext === ".dxf") {
+          setErrorMsg(
+            `AutoCAD formats (${ext}) are not natively supported in the browser. Please export your drawing as an IFC file and upload it here.`,
+          );
+        } else {
+          setErrorMsg(
+            `Unsupported file format "${ext}". Please upload IFC, glTF, OBJ, STL, or XKT files.`,
+          );
+        }
         return;
       }
 
-      // Revoke previous URL
       if (fileUrl) {
         URL.revokeObjectURL(fileUrl);
       }
@@ -129,6 +132,7 @@ export default function ModelViewer() {
   }, []);
 
   const handleModelError = useCallback((error: string) => {
+    console.error("Model Error:", error);
     setStatus("error");
     setErrorMsg(error);
   }, []);
@@ -140,177 +144,162 @@ export default function ModelViewer() {
   };
 
   return (
-    <div className="space-y-4 p-4">
-      <PageHeader title="3D Model Viewer" />
-
-      {/* Status Bar */}
-      {modelInfo && status !== "idle" && (
-        <div
-          className={`flex items-center gap-3 px-4 py-2.5 rounded-lg border text-sm transition-all duration-300 ${
-            status === "loading"
-              ? "bg-amber-50 border-amber-200 text-amber-800 dark:bg-amber-950/30 dark:border-amber-800 dark:text-amber-300"
-              : status === "loaded"
-                ? "bg-emerald-50 border-emerald-200 text-emerald-800 dark:bg-emerald-950/30 dark:border-emerald-800 dark:text-emerald-300"
-                : "bg-red-50 border-red-200 text-red-800 dark:bg-red-950/30 dark:border-red-800 dark:text-red-300"
-          }`}>
-          {status === "loading" && (
-            <Loader2 className="h-4 w-4 animate-spin flex-shrink-0" />
-          )}
-          {status === "loaded" && (
-            <CheckCircle2 className="h-4 w-4 flex-shrink-0" />
-          )}
-          {status === "error" && (
-            <AlertCircle className="h-4 w-4 flex-shrink-0" />
-          )}
-          <div className="flex-1 min-w-0">
-            {status === "loading" && (
-              <span>
-                Loading <strong>{modelInfo.name}</strong> ({modelInfo.size})...
-              </span>
-            )}
-            {status === "loaded" && (
-              <span>
-                <strong>{modelInfo.name}</strong> — {modelInfo.size} •{" "}
-                {modelInfo.type} format
-              </span>
-            )}
-            {status === "error" && <span>{errorMsg}</span>}
+    <div className="flex flex-col h-[calc(100vh-theme(spacing.16))] overflow-hidden p-6 gap-6 bg-slate-50/50 dark:bg-slate-950/50">
+      <div className="flex items-center justify-between flex-shrink-0">
+        <div>
+          <PageHeader title="3D Model Viewer" />
+          <p className="text-sm text-muted-foreground mt-1">
+            Upload and visualize IFC building models directly in your browser.
+          </p>
+        </div>
+        
+        {status === "loaded" && modelInfo && (
+          <div className="flex items-center gap-3 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-400 text-sm font-medium animate-in fade-in zoom-in duration-300">
+            <CheckCircle2 className="h-4 w-4" />
+            <span>Model Loaded: {modelInfo.name}</span>
           </div>
-          {(status === "loaded" || status === "error") && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleRemoveModel}
-              className="flex-shrink-0 h-7 gap-1 text-current hover:bg-black/5 dark:hover:bg-white/10">
-              <Trash2 className="h-3.5 w-3.5" />
-              Remove
-            </Button>
-          )}
+        )}
+      </div>
+
+      {status === "idle" && (
+        <div className="flex-1 flex items-center justify-center animate-in fade-in zoom-in duration-500">
+          <Card 
+            className={`w-full max-w-2xl border-2 border-dashed transition-all duration-300 shadow-sm ${
+              isDragging 
+                ? "border-primary bg-primary/5 scale-[1.02] shadow-primary/10 shadow-xl" 
+                : "border-muted-foreground/25 hover:border-primary/50 hover:shadow-md hover:bg-muted/30"
+            }`}
+          >
+            <CardContent className="p-0">
+              <div
+                className="flex flex-col items-center justify-center py-20 px-10 cursor-pointer text-center"
+                onDrop={handleDrop}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <div
+                  className={`p-6 rounded-3xl mb-6 transition-all duration-500 shadow-sm ${
+                    isDragging
+                      ? "bg-primary text-primary-foreground scale-110 shadow-primary/20"
+                      : "bg-white dark:bg-slate-900 text-primary border shadow-sm group-hover:scale-105"
+                  }`}
+                >
+                  <UploadCloud className="h-10 w-10" strokeWidth={1.5} />
+                </div>
+                
+                <h3 className="text-xl font-semibold tracking-tight mb-2">
+                  {isDragging ? "Drop your model file here" : "Upload 3D Model"}
+                </h3>
+                
+                <p className="text-muted-foreground/80 mb-8 max-w-sm">
+                  Drag and drop your structural or architectural model file here, or click to browse your computer.
+                </p>
+
+                <div className="flex flex-wrap gap-2 justify-center mb-8">
+                  {["IFC", "glTF", "GLB", "OBJ", "STL", "XKT"].map((fmt) => (
+                    <span
+                      key={fmt}
+                      className="px-3 py-1 text-xs font-semibold rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border"
+                    >
+                      {fmt}
+                    </span>
+                  ))}
+                </div>
+
+                <Button size="lg" className="rounded-full shadow-sm" type="button">
+                  <FileUp className="h-4 w-4 mr-2" />
+                  Select File
+                </Button>
+
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".ifc,.gltf,.glb,.obj,.stl,.xkt"
+                  onChange={handleFileInput}
+                  className="hidden"
+                  id="model-file-input"
+                />
+              </div>
+            </CardContent>
+          </Card>
         </div>
       )}
 
-      {/* Upload Zone (when no file loaded) */}
-      {status === "idle" && (
-        <Card className="border-dashed border-2 hover:border-primary/50 transition-colors">
-          <CardContent className="p-0">
-            <div
-              className={`flex flex-col items-center justify-center py-16 px-6 cursor-pointer transition-all duration-200 rounded-xl ${
-                isDragging
-                  ? "bg-primary/5 border-primary scale-[1.01]"
-                  : "hover:bg-muted/50"
-              }`}
-              onDrop={handleDrop}
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onClick={() => fileInputRef.current?.click()}>
-              <div
-                className={`p-5 rounded-2xl mb-4 transition-all duration-300 ${
-                  isDragging
-                    ? "bg-primary/10 scale-110"
-                    : "bg-gradient-to-br from-primary/5 to-primary/10"
-                }`}>
-                <Upload
-                  className={`h-10 w-10 transition-all duration-300 ${
-                    isDragging
-                      ? "text-primary scale-110"
-                      : "text-muted-foreground"
-                  }`}
-                />
+      {(status === "loading" || status === "loaded" || (status === "error" && fileUrl)) && fileUrl && file && (
+        <div className="flex-1 flex flex-col gap-4 min-h-0 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          {/* Top Toolbar */}
+          <div className="flex items-center justify-between bg-white dark:bg-slate-900 border rounded-xl p-2 shadow-sm shrink-0">
+            <div className="flex items-center gap-2 px-2">
+              <div className="p-2 rounded-lg bg-primary/10 text-primary">
+                <Box className="h-4 w-4" />
               </div>
-              <h3 className="text-lg font-semibold mb-1">
-                {isDragging ? "Drop your file here" : "Upload 3D Model File"}
-              </h3>
-              <p className="text-sm text-muted-foreground mb-4 text-center max-w-md">
-                Drag and drop your building model file, or click to browse.
-                <br />
-                The model will be rendered interactively in 3D.
-              </p>
-
-              <div className="flex flex-wrap gap-2 justify-center mb-4">
-                {["IFC", "glTF", "GLB", "OBJ", "STL", "XKT"].map((fmt) => (
-                  <span
-                    key={fmt}
-                    className="px-2.5 py-1 text-xs font-medium rounded-full bg-primary/10 text-primary border border-primary/20">
-                    .{fmt.toLowerCase()}
-                  </span>
-                ))}
+              <div className="flex flex-col">
+                <span className="text-sm font-medium leading-none truncate max-w-[200px] sm:max-w-xs">{modelInfo?.name}</span>
+                <span className="text-xs text-muted-foreground mt-1">{modelInfo?.size} • {modelInfo?.type}</span>
               </div>
-
-              <Button variant="outline" className="gap-2" type="button">
-                <FileUp className="h-4 w-4" />
-                Browse Files
-              </Button>
-
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".ifc,.gltf,.glb,.obj,.stl,.xkt"
-                onChange={handleFileInput}
-                className="hidden"
-                id="model-file-input"
-              />
             </div>
-          </CardContent>
-        </Card>
-      )}
 
-      {/* Viewer Area (when file is loading or loaded) */}
-      {(status === "loading" ||
-        status === "loaded" ||
-        (status === "error" && fileUrl)) &&
-        fileUrl &&
-        file && (
-          <div className="space-y-3">
-            {/* Toolbar */}
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <div className="flex items-center gap-1 bg-muted/50 rounded-lg p-1 border">
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  onClick={() => viewerRef.current?.resetCamera()}
-                  title="Reset Camera">
-                  <RotateCcw className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  onClick={() => viewerRef.current?.fitModel()}
-                  title="Fit Model to View">
-                  <Maximize2 className="h-4 w-4" />
-                </Button>
-              </div>
+            <div className="h-6 w-px bg-border mx-2 hidden sm:block" />
 
-              <div className="flex items-center gap-1 bg-muted/50 rounded-lg p-1 border">
-                <Button
-                  variant={isOrtho ? "default" : "ghost"}
-                  size="icon-sm"
-                  onClick={toggleProjection}
-                  title={
-                    isOrtho ? "Switch to Perspective" : "Switch to Orthographic"
-                  }>
-                  <Box className="h-4 w-4" />
-                </Button>
-              </div>
+            <div className="flex items-center gap-1.5 flex-1 justify-center overflow-x-auto">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-9 gap-2"
+                onClick={() => viewerRef.current?.resetCamera()}
+                title="Reset Camera"
+                disabled={status !== "loaded"}
+              >
+                <RotateCcw className="h-4 w-4" />
+                <span className="hidden md:inline">Reset</span>
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-9 gap-2"
+                onClick={() => viewerRef.current?.fitModel()}
+                title="Fit to Screen"
+                disabled={status !== "loaded"}
+              >
+                <Maximize2 className="h-4 w-4" />
+                <span className="hidden md:inline">Fit</span>
+              </Button>
+              <div className="h-4 w-px bg-border mx-1" />
+              <Button
+                variant={isOrtho ? "secondary" : "ghost"}
+                size="sm"
+                className="h-9 gap-2"
+                onClick={toggleProjection}
+                title="Toggle Orthographic"
+                disabled={status !== "loaded"}
+              >
+                <Eye className="h-4 w-4" />
+                <span className="hidden md:inline">{isOrtho ? "Perspective" : "Ortho"}</span>
+              </Button>
+            </div>
 
-              <div className="flex-1" />
+            <div className="h-6 w-px bg-border mx-2 hidden sm:block" />
 
+            <div className="flex items-center gap-2 px-1 shrink-0">
               <Button
                 variant="outline"
                 size="sm"
+                className="h-9 hidden sm:flex"
                 onClick={() => fileInputRef.current?.click()}
-                className="gap-1.5">
-                <FileUp className="h-3.5 w-3.5" />
-                Load Another
+              >
+                <FileUp className="h-4 w-4 mr-2" />
+                Replace
               </Button>
               <Button
                 variant="destructive"
                 size="sm"
+                className="h-9"
                 onClick={handleRemoveModel}
-                className="gap-1.5">
-                <Trash2 className="h-3.5 w-3.5" />
-                Remove
+              >
+                <Trash2 className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Remove</span>
               </Button>
-
               <input
                 ref={fileInputRef}
                 type="file"
@@ -320,96 +309,107 @@ export default function ModelViewer() {
                 id="model-file-input-toolbar"
               />
             </div>
+          </div>
 
-            {/* 3D Canvas */}
-            <Card className="overflow-hidden">
-              <CardContent className="p-0 relative">
-                <div
-                  className="w-full"
-                  style={{ height: "calc(100vh - 280px)", minHeight: "400px" }}>
-                  <XeokitViewer
-                    ref={viewerRef}
-                    fileUrl={fileUrl}
-                    fileName={file.name}
-                    onLoaded={handleModelLoaded}
-                    onError={handleModelError}
-                  />
-                </div>
+          {/* Viewer Container */}
+          <Card className="flex-1 overflow-hidden border-0 shadow-xl ring-1 ring-border relative rounded-2xl bg-slate-100 dark:bg-slate-900/50">
+            <CardContent className="p-0 h-full w-full relative">
+              <XeokitViewer
+                ref={viewerRef}
+                fileUrl={fileUrl}
+                fileName={file.name}
+                onLoaded={handleModelLoaded}
+                onError={handleModelError}
+              />
 
-                {/* Loading Overlay */}
-                {status === "loading" && (
-                  <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-10">
-                    <div className="flex flex-col items-center gap-3">
-                      <div className="relative">
-                        <div className="w-16 h-16 rounded-full border-4 border-primary/20 border-t-primary animate-spin" />
-                        <Move3D className="h-6 w-6 text-primary absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+              {/* Loading Overlay */}
+              {status === "loading" && (
+                <div className="absolute inset-0 bg-background/60 backdrop-blur-md flex flex-col items-center justify-center z-20 animate-in fade-in duration-300">
+                  <div className="bg-white dark:bg-slate-900 border shadow-2xl rounded-2xl p-8 flex flex-col items-center max-w-sm w-full mx-4">
+                    <div className="relative mb-6">
+                      <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full mix-blend-multiply dark:mix-blend-screen animate-pulse" />
+                      <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20 relative z-10">
+                        <Loader2 className="h-8 w-8 text-primary animate-spin" />
                       </div>
-                      <p className="text-sm font-medium text-muted-foreground">
-                        Parsing model...
-                      </p>
+                    </div>
+                    <h4 className="text-lg font-semibold mb-2">Processing Model</h4>
+                    <p className="text-sm text-center text-muted-foreground whitespace-pre-wrap">
+                      Parsing IFC geometries and materials.{"\n"}This might take a few moments for large files.
+                    </p>
+                    
+                    <div className="w-full bg-secondary h-1.5 rounded-full mt-6 overflow-hidden">
+                      <div className="h-full bg-primary w-full animate-pulse origin-left scale-x-75 will-change-transform" style={{ animationDuration: '2s' }} />
                     </div>
                   </div>
-                )}
-              </CardContent>
-            </Card>
+                </div>
+              )}
 
-            {/* Controls Help */}
-            <div className="flex flex-wrap gap-4 px-1 text-xs text-muted-foreground">
-              <span className="flex items-center gap-1.5">
-                <kbd className="px-1.5 py-0.5 rounded border bg-muted font-mono text-[10px]">
-                  Left Click + Drag
-                </kbd>
-                Orbit
-              </span>
-              <span className="flex items-center gap-1.5">
-                <kbd className="px-1.5 py-0.5 rounded border bg-muted font-mono text-[10px]">
-                  Right Click + Drag
-                </kbd>
-                Pan
-              </span>
-              <span className="flex items-center gap-1.5">
-                <kbd className="px-1.5 py-0.5 rounded border bg-muted font-mono text-[10px]">
-                  Scroll
-                </kbd>
-                Zoom
-              </span>
-              <span className="flex items-center gap-1.5">
-                <kbd className="px-1.5 py-0.5 rounded border bg-muted font-mono text-[10px]">
-                  Double Click
-                </kbd>
-                Focus Object
-              </span>
-            </div>
-          </div>
-        )}
+              {/* Embedded Help Overlay */}
+              {status === "loaded" && (
+                <div className="absolute bottom-4 left-4 z-10 pointer-events-none">
+                  <div className="bg-background/80 backdrop-blur-md border rounded-xl p-3 shadow-lg pointer-events-auto transition-opacity hover:opacity-100 opacity-60">
+                    <div className="flex flex-col gap-2 text-xs font-medium text-muted-foreground">
+                      <div className="flex items-center gap-3">
+                         <span className="flex items-center justify-center w-6 h-6 rounded bg-muted border shrink-0">L</span>
+                         <span>Orbit (Left Drag)</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                         <span className="flex items-center justify-center w-6 h-6 rounded bg-muted border shrink-0">R</span>
+                         <span>Pan (Right Drag)</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                         <span className="flex flex-col justify-center items-center w-6 h-6 rounded bg-muted border shrink-0 space-y-[2px]">
+                           <div className="w-1 h-1 rounded-full bg-current" />
+                           <div className="w-1.5 h-1.5 rounded-full bg-current" />
+                         </span>
+                         <span>Zoom (Scroll)</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
-      {/* Error state when no file URL (format error etc.) */}
       {status === "error" && !fileUrl && (
-        <Card className="border-red-200 dark:border-red-800">
-          <CardContent className="flex flex-col items-center py-12 gap-4">
-            <div className="p-4 rounded-full bg-red-50 dark:bg-red-950/30">
-              <AlertCircle className="h-8 w-8 text-red-500" />
-            </div>
-            <div className="text-center">
-              <h3 className="font-semibold text-red-700 dark:text-red-400 mb-1">
-                Invalid File Format
-              </h3>
-              <p className="text-sm text-muted-foreground max-w-md">
+        <div className="flex-1 flex items-center justify-center animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <Card className="w-full max-w-md border-red-200 dark:border-red-900/50 shadow-sm overflow-hidden">
+            <div className="h-2 bg-red-500 w-full" />
+            <CardContent className="flex flex-col items-center py-10 px-8 text-center">
+              <div className="h-16 w-16 rounded-full bg-red-50 dark:bg-red-500/10 flex items-center justify-center mb-6 border border-red-100 dark:border-red-500/20 text-red-500">
+                <AlertTriangle className="h-8 w-8" />
+              </div>
+              
+              <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-2">Unsupported Format</h3>
+              
+              <p className="text-muted-foreground mb-8 text-sm">
                 {errorMsg}
               </p>
-            </div>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setStatus("idle");
-                setErrorMsg("");
-              }}
-              className="gap-2">
-              <Upload className="h-4 w-4" />
-              Try Another File
-            </Button>
-          </CardContent>
-        </Card>
+              
+              <div className="flex gap-3 w-full">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => {
+                    setStatus("idle");
+                    setErrorMsg("");
+                  }}
+                >
+                  Go Back
+                </Button>
+                <Button
+                  className="flex-1 gap-2"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <UploadCloud className="h-4 w-4" />
+                  Select File
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       )}
     </div>
   );
