@@ -13,6 +13,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import AddDrawingtype from "./AddDrawingtype";
+import BulkUploadDrawing from "./BulkUploadDrawing";
 
 interface TabLink {
   id: string;
@@ -26,6 +27,7 @@ export default function MixDrawing() {
     useProject();
   const [refreshKey, setRefreshKey] = useState<number>(0);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
   const [editingDrawingType, setEditingDrawingType] =
     useState<DrawingType | null>(null);
 
@@ -119,15 +121,24 @@ export default function MixDrawing() {
       <div className="flex flex-col gap-2 py-4 px-4">
         <div className="flex items-center justify-between">
           <PageHeader title="  Drawing" />
-          {permissions?.includes("CreateDrawingType") && (
-            <Button
-              variant="outline"
-              className="w-full sm:w-auto"
-              onClick={openCreateDialog}
-            >
-              Add Drawing Type
-            </Button>
-          )}
+          <div className="flex gap-2">
+            {permissions?.includes("CreateDrawingType") && (
+              <Button
+                variant="outline"
+                className="w-full sm:w-auto"
+                onClick={openCreateDialog}>
+                Add Drawing Type
+              </Button>
+            )}
+            {permissions?.includes("CreateDrawingType") && (
+              <Button
+                variant="outline"
+                className="w-full sm:w-auto"
+                onClick={() => setIsBulkUploadOpen(true)}>
+                Upload Drawing
+              </Button>
+            )}
+          </div>
         </div>
 
         <Tabs defaultValue={tabLinks[0]?.id}>
@@ -168,8 +179,7 @@ export default function MixDrawing() {
             if (!open) {
               setEditingDrawingType(null);
             }
-          }}
-        >
+          }}>
           <DialogContent className="max-w-3xl">
             <DialogHeader>
               <DialogTitle>
@@ -183,6 +193,22 @@ export default function MixDrawing() {
                 setIsDialogOpen(false);
                 setEditingDrawingType(null);
               }}
+            />
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {permissions?.includes("CreateDrawingType") && (
+        <Dialog open={isBulkUploadOpen} onOpenChange={setIsBulkUploadOpen}>
+          <DialogContent className="max-w-2xl px-6 py-8 sm:px-8">
+            <DialogHeader className="mb-2">
+              <DialogTitle className="text-2xl font-bold">
+                Bulk Upload Drawings
+              </DialogTitle>
+            </DialogHeader>
+            <BulkUploadDrawing
+              refresh={refreshData}
+              onClose={() => setIsBulkUploadOpen(false)}
             />
           </DialogContent>
         </Dialog>

@@ -439,6 +439,8 @@ export default function DrawingUploadTable({
 
   const refreshData = () => {
     setRefreshKey((prev) => prev + 1);
+    setElementTypesMap({});
+    setLoadingElementTypes({});
     if (refreshKey > 0) {
       refresh();
     }

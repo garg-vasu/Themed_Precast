@@ -100,6 +100,7 @@ export type Element = {
   tower_name: string;
   floor_name: string;
   target_location: string;
+  delay_days: number;
 };
 
 const getTimeStatusText = (endDateStr?: string): string => {
@@ -220,10 +221,10 @@ export const getColumns = (permissions: string[]): ColumnDef<Element>[] => [
       let badgeClassName =
         "bg-gray-100 text-gray-800 border-gray-200 hover:bg-gray-100";
 
-      if (status === "QC InProgress" || status === "QC in-progress") {
+      if (status === "QC InProgress" || status === "QC in-progress" || status === "QC In Progress") {
         badgeClassName =
           "bg-orange-100 text-orange-800 border-orange-200 hover:bg-orange-100";
-      } else if (status === "InProgress" || status === "In-progress") {
+      } else if (status === "InProgress" || status === "In-progress" || status === "In Progress") {
         badgeClassName =
           "bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-100";
       }
@@ -241,13 +242,16 @@ export const getColumns = (permissions: string[]): ColumnDef<Element>[] => [
   {
     accessorKey: "assignee_name",
     header: "Assignee Name",
-    cell: ({ row }) => (
-      <div className="capitalize">
-        {row.getValue("activity_status") == "InProgress"
-          ? row.getValue("assignee_name")
-          : row.getValue("qc_assignee_name")}
-      </div>
-    ),
+    cell: ({ row }) => {
+      const status = row.original.activity_status;
+      const isQCInProgress = status === "QC InProgress" || status === "QC in-progress" || status === "QC In Progress";
+      
+      return (
+        <div className="capitalize">
+          {isQCInProgress ? row.original.qc_assignee_name : row.original.assignee_name}
+        </div>
+      );
+    },
   },
 
   // show delayed by
@@ -268,7 +272,7 @@ export const getColumns = (permissions: string[]): ColumnDef<Element>[] => [
               ? "text-red-500 font-medium whitespace-nowrap"
               : "text-emerald-600 font-medium"
           }>
-          {timeStatus}
+          {row.original.delay_days} days
         </div>
       );
     },
