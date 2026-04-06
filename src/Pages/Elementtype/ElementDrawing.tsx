@@ -82,7 +82,7 @@ export default function ElementDrawing({
   const [drawings, setDrawings] = useState<File[]>([]);
   const [loading, setLoading] = useState(false);
   const [expandedSections, setExpandedSections] = useState<Set<number>>(
-    new Set()
+    new Set(),
   );
 
   useEffect(() => {
@@ -95,7 +95,7 @@ export default function ElementDrawing({
           `/drawings_by_element_type/${elementTypeId}`,
           {
             cancelToken: source.token,
-          }
+          },
         );
 
         if (response.status === 200) {
@@ -125,7 +125,7 @@ export default function ElementDrawing({
     if (filePath) {
       window.open(
         `${baseUrl}/get-file?file=${encodeURIComponent(filePath)}`,
-        "_blank"
+        "_blank",
       );
     }
   };
@@ -145,7 +145,7 @@ export default function ElementDrawing({
   // Group drawings by drawing_type_name
   const groupedDrawings: GroupedDrawing[] = drawings.reduce((acc, drawing) => {
     const existingGroup = acc.find(
-      (group) => group.drawing_type_id === drawing.drawing_type_id
+      (group) => group.drawing_type_id === drawing.drawing_type_id,
     );
 
     if (existingGroup) {
@@ -201,7 +201,7 @@ export default function ElementDrawing({
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-12"></TableHead>
-                    <TableHead>Version</TableHead>
+                    <TableHead>Revision</TableHead>
                     <TableHead>Comments</TableHead>
                     <TableHead>Date</TableHead>
                     <TableHead>File</TableHead>
@@ -216,8 +216,7 @@ export default function ElementDrawing({
                           variant="ghost"
                           size="sm"
                           className="h-8 w-8 p-0"
-                          onClick={() => toggleSection(group.drawing_type_id)}
-                        >
+                          onClick={() => toggleSection(group.drawing_type_id)}>
                           {isExpanded ? (
                             <ChevronUp className="h-4 w-4" />
                           ) : (
@@ -243,8 +242,9 @@ export default function ElementDrawing({
                         <Button
                           variant="customPadding"
                           size="noPadding"
-                          onClick={() => handleFileDownload(group.current.file)}
-                        >
+                          onClick={() =>
+                            handleFileDownload(group.current.file)
+                          }>
                           <Download className="" />
                           View File
                         </Button>
@@ -260,8 +260,7 @@ export default function ElementDrawing({
                     group.revisions.map((revision) => (
                       <TableRow
                         key={`revision-${revision.drawing_revision_id}`}
-                        className="bg-muted/30"
-                      >
+                        className="bg-muted/30">
                         <TableCell />
                         <TableCell className="font-medium">
                           {revision.version}
@@ -279,8 +278,7 @@ export default function ElementDrawing({
                               variant="customPadding"
                               size="noPadding"
                               className="h-auto p-0"
-                              onClick={() => handleFileDownload(revision.file)}
-                            >
+                              onClick={() => handleFileDownload(revision.file)}>
                               <Download className="mr-1 h-3 w-3" />
                               View File
                             </Button>

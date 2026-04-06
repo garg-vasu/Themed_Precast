@@ -90,7 +90,10 @@ export type UploadedFileResult = {
 export type SingleAssignment = {
   drawing_type_id: number | null;
   element_type_id: number | null;
+  revesion_id: string | null;
 };
+
+const pre_revesion_number = ["RV-1", "RV-2", "RV-3", "RV-4", "RV-5"];
 
 export const getColumns = (
   drawingTypes: DrawingType[],
@@ -99,8 +102,8 @@ export const getColumns = (
   assignments: Record<string, SingleAssignment>,
   onAssignmentChange: (
     savedName: string,
-    field: "drawing_type_id" | "element_type_id",
-    value: number,
+    field: "drawing_type_id" | "element_type_id" | "revesion_id",
+    value: number | string,
   ) => void,
 ): ColumnDef<UploadedFileResult>[] => [
   {
@@ -186,6 +189,51 @@ export const getColumns = (
             ))}
           </SelectContent>
         </Select>
+      );
+    },
+  },
+  {
+    id: "revesion_number",
+    header: "Revesion Number",
+    cell: ({ row }) => {
+      const savedName = row.original.path;
+      const assignment = assignments[savedName] || {
+        drawing_type_id: null,
+        element_type_id: null,
+        revesion_number: null,
+      };
+
+      return (
+        <div className="relative">
+          <Input
+            list={`revesion-options-${row.id}`}
+            placeholder="Revision Number"
+            value={
+              assignment.revesion_id !== null &&
+              assignment.revesion_id !== undefined
+                ? assignment.revesion_id
+                : pre_revesion_number[0]
+            }
+            onChange={(e) =>
+              onAssignmentChange(savedName, "revesion_id", e.target.value)
+            }
+            onBlur={(e) => {
+              if (!e.target.value.trim()) {
+                onAssignmentChange(
+                  savedName,
+                  "revesion_id",
+                  pre_revesion_number[0],
+                );
+              }
+            }}
+            className="w-[180px] h-9"
+          />
+          <datalist id={`revesion-options-${row.id}`}>
+            {pre_revesion_number.map((dt) => (
+              <option key={dt} value={dt} />
+            ))}
+          </datalist>
+        </div>
       );
     },
   },
@@ -350,8 +398,8 @@ export default function DrawingUploadTable({
 
   const handleAssignmentChange = (
     savedName: string,
-    field: "drawing_type_id" | "element_type_id",
-    value: number,
+    field: "drawing_type_id" | "element_type_id" | "revesion_id",
+    value: number | string,
   ) => {
     setAssignments((prev) => ({
       ...prev,
@@ -362,7 +410,7 @@ export default function DrawingUploadTable({
     }));
 
     if (field === "drawing_type_id") {
-      fetchElementTypesForDrawing(value);
+      fetchElementTypesForDrawing(value as number);
     }
   };
 
@@ -377,6 +425,7 @@ export default function DrawingUploadTable({
             unmapped_drawing_id: row.id,
             drawing_type_id: assign.drawing_type_id,
             element_type_id: assign.element_type_id,
+            revesion_id: assign.revesion_id || pre_revesion_number[0],
           });
         }
       });

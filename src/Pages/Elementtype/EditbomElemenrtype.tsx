@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { Switch } from "@/components/ui/switch";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Card,
   CardContent,
@@ -199,9 +199,9 @@ export default function EditbomElemenrtype() {
 
         const response = await apiClient.get(
           `/elementtype_fetch/${projectId}`,
-          { 
+          {
             cancelToken: source.token,
-            params 
+            params,
           },
         );
 
@@ -555,18 +555,17 @@ export default function EditbomElemenrtype() {
                 className="w-full max-w-sm"
               />
               <div className="flex items-center gap-2">
-                 <Button
-                    variant={hasActiveFilters() ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setFilterOpen((prev) => !prev)}
-                  >
-                    Advance Filter
+                <Button
+                  variant={hasActiveFilters() ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setFilterOpen((prev) => !prev)}>
+                  Advance Filter
+                </Button>
+                {hasActiveFilters() && (
+                  <Button variant="outline" size="sm" onClick={clearAllFilters}>
+                    Clear Filters
                   </Button>
-                  {hasActiveFilters() && (
-                    <Button variant="outline" size="sm" onClick={clearAllFilters}>
-                      Clear Filters
-                    </Button>
-                  )}
+                )}
               </div>
             </div>
 
@@ -608,7 +607,7 @@ export default function EditbomElemenrtype() {
                 </div>
 
                 <ScrollArea className="h-[360px] sm:h-[420px]">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                  <div className="grid grid-cols-4 md:grid-cols-6 gap-2">
                     {filteredElements.map((et) => {
                       const isChecked = selectedElementTypeIds.has(
                         et.element_type_id,
@@ -710,7 +709,7 @@ export default function EditbomElemenrtype() {
                 </div>
 
                 <ScrollArea className="h-[360px] sm:h-[420px]">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                  <div className="grid grid-cols-4 md:grid-cols-6 gap-2">
                     {filteredBoms.map((bom) => {
                       const isChecked = selectedBomIds.has(bom.bom_id);
                       return (
@@ -768,7 +767,7 @@ export default function EditbomElemenrtype() {
           <CardContent>
             <Separator className="mb-4" />
             <ScrollArea className="h-[400px] sm:h-[480px]">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 pr-3">
+              <div className="grid grid-cols-4 md:grid-cols-6 gap-2 ">
                 {Array.from(selectedBomIds).map((bomId) => {
                   const qty = quantities.get(bomId) ?? 1;
                   const unit = getBomUnit(bomId);
@@ -862,28 +861,25 @@ export default function EditbomElemenrtype() {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="flex items-center justify-center gap-4 rounded-lg border p-4 my-2">
-            <Label
-              htmlFor="pass-production-switch"
-              className={`text-sm font-medium cursor-pointer transition-colors ${
-                passProduction ? "text-foreground" : "text-muted-foreground"
-              }`}
-              onClick={() => setPassProduction(true)}>
-              Apply on all element type
-            </Label>
-            <Switch
-              id="pass-production-switch"
-              checked={!passProduction}
-              onCheckedChange={(checked) => setPassProduction(!checked)}
-            />
-            <Label
-              htmlFor="pass-production-switch"
-              className={`text-sm font-medium cursor-pointer transition-colors ${
-                !passProduction ? "text-foreground" : "text-muted-foreground"
-              }`}
-              onClick={() => setPassProduction(false)}>
-              Element which pass the production cycle
-            </Label>
+          <div className="flex flex-col gap-3 rounded-lg border p-4 my-2">
+            <RadioGroup
+              value={passProduction ? "all" : "production"}
+              onValueChange={(value) => setPassProduction(value === "all")}
+              className="flex flex-col space-y-2"
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="all" id="apply-all" />
+                <Label htmlFor="apply-all" className="cursor-pointer">
+                  Apply on all element type
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="production" id="apply-production" />
+                <Label htmlFor="apply-production" className="cursor-pointer">
+                  Element which pass the production cycle
+                </Label>
+              </div>
+            </RadioGroup>
           </div>
 
           <DialogFooter>
