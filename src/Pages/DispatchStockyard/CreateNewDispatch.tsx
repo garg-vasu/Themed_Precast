@@ -35,23 +35,38 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+export type DataWithLoad = {
+  load_id: number;
+  type: string;
+  address: string;
+  incharge: string;
+  capacity: number;
+  incharge_phone: string;
+  tower_name: string;
+  remaining_capacity: number;
+  item_no: number;
+  created_at: string;
+  created_by: string;
+  items: item[];
+};
+
+export type item = {
+  element_id: number;
+  element_name: string;
+  mass: number;
+  volume: number;
+  element_type: string;
+  element_type_name: string;
+  element_type_id: number;
+  floor_name: string;
+  tower_name: string;
+};
 // Constants
 const API_ENDPOINTS = {
   DISPATCH_ORDER: "/dispatch_order",
 } as const;
 
 // Types
-export type Element = {
-  element_id: number;
-  element_name: string;
-  element_type: string;
-  element_type_id: number;
-  element_type_name: string;
-  floor_name: string;
-  mass: number;
-  site_tower_name: string;
-  volume: number;
-};
 
 const getErrorMessage = (error: AxiosError | unknown, data: string): string => {
   if (axios.isAxiosError(error)) {
@@ -112,11 +127,15 @@ export default function CreateNewDispatch() {
   const navigate = useNavigate();
   const { projectId } = useParams<{ projectId: string }>();
 
-  const [data, setData] = useState<Element[]>([]);
+  const [data, setData] = useState<DataWithLoad[]>([]);
+  const [selectedLoadId, setSelectedLoadId] = useState<number | null>(null);
   const [vehicle, setVehicle] = useState<Vehicle[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [selectedItems, setSelectedItems] = useState<Set<number>>(new Set());
+
+  const currentLoad = data.find((load) => load.load_id === selectedLoadId);
+  const currentLoadItems = currentLoad?.items || [];
 
   const {
     register,
@@ -183,6 +202,9 @@ export default function CreateNewDispatch() {
 
         if (response.status === 200) {
           setData(response.data);
+          if (response.data && response.data.length > 0) {
+            setSelectedLoadId(response.data[0].load_id);
+          }
         } else {
           toast.error(response.data?.message || "Failed to fetch elements");
         }
@@ -249,20 +271,20 @@ export default function CreateNewDispatch() {
 
   // Select all items
   const handleSelectAll = useCallback(() => {
-    if (selectedItems.size === data.length) {
+    if (selectedItems.size === currentLoadItems.length) {
       setSelectedItems(new Set());
     } else {
-      setSelectedItems(new Set(data.map((e) => e.element_id)));
+      setSelectedItems(new Set(currentLoadItems.map((e) => e.element_id)));
     }
-  }, [data, selectedItems.size]);
+  }, [currentLoadItems, selectedItems.size]);
 
   // Calculate capacities
   const calculateSelectedCapacity = useCallback(() => {
     return Array.from(selectedItems).reduce((total, elementId) => {
-      const foundElement = data.find((e) => e.element_id === elementId);
+      const foundElement = currentLoadItems.find((e) => e.element_id === elementId);
       return total + (foundElement?.mass || 0);
     }, 0);
-  }, [selectedItems, data]);
+  }, [selectedItems, currentLoadItems]);
 
   const calculateLeftCapacity = useCallback(() => {
     const total = Number(vehicleCapacity) || 0;
@@ -318,7 +340,7 @@ export default function CreateNewDispatch() {
         <PageHeader title="Load Creation" />
         <Badge variant="outline" className="w-fit">
           <Truck className="mr-1 h-3 w-3" />
-          {data.length} Elements
+          {currentLoadItems.length} Elements
         </Badge>
       </div>
 
@@ -586,19 +608,42 @@ export default function CreateNewDispatch() {
               <div className="flex items-center justify-between">
                 <CardTitle className="flex items-center gap-2 text-sm font-semibold">
                   <Package className="h-4 w-4" />
-                  Available Elements ({data.length})
+                  Available Elements ({currentLoadItems.length})
                 </CardTitle>
-                {data.length > 0 && (
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={handleSelectAll}
-                    className="h-8 text-xs font-semibold">
-                    {selectedItems.size === data.length
-                      ? "Deselect All"
-                      : "Select All"}
-                  </Button>
-                )}
+                <div className="flex items-center gap-2">
+                  {data.length > 0 && (
+                    <Select
+                      value={selectedLoadId?.toString() || ""}
+                      onValueChange={(val) => {
+                        setSelectedLoadId(Number(val));
+                        setSelectedItems(new Set());
+                      }}>
+                      <SelectTrigger className="w-[180px] sm:w-[200px] h-8 text-xs">
+                        <SelectValue placeholder="Select Load" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {data.map((load) => (
+                          <SelectItem
+                            key={load.load_id}
+                            value={load.load_id.toString()}>
+                            Load {load.load_id} ({load.type})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                  {currentLoadItems.length > 0 && (
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={handleSelectAll}
+                      className="h-8 text-xs font-semibold">
+                      {selectedItems.size === currentLoadItems.length
+                        ? "Deselect All"
+                        : "Select All"}
+                    </Button>
+                  )}
+                </div>
               </div>
             </CardHeader>
             <CardContent className="">
@@ -606,10 +651,10 @@ export default function CreateNewDispatch() {
                 <div className="flex h-32 items-center justify-center">
                   <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                 </div>
-              ) : data.length > 0 ? (
+              ) : currentLoadItems.length > 0 ? (
                 <ScrollArea className="h-[calc(100vh-600px)] w-full ">
                   <div className="flex flex-col gap-1 pr-3 pb-2 grid grid-cols-1 md:grid-cols-2">
-                    {data.map((item) => {
+                    {currentLoadItems.map((item) => {
                       const isSelected = selectedItems.has(item.element_id);
                       return (
                         <div
