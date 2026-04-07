@@ -35,6 +35,7 @@ export type ListView = {
 
 export type Task = {
   task_id: number;
+  MeshRevisionID: string;
   element_type_name: string;
   MeshMold: boolean;
   Other: boolean;
@@ -277,6 +278,12 @@ export default function PendingTask() {
                           </DialogContent>
                         </Dialog>
                       </div>
+                      <div className="flex justify-between items-center mt-1">
+                        <span className="text-xs font-medium text-muted-foreground">
+                          Revision No:
+                        </span>
+                        <span className="text-sm">{activity.MeshRevisionID}</span>
+                      </div>
                       <div className="flex justify-between items-center">
                         <span className="text-xs font-medium text-muted-foreground">
                           Stage:
@@ -355,9 +362,10 @@ export default function PendingTask() {
 
               {/* Desktop Layout */}
               <div className="hidden md:block">
-                <div className="grid grid-cols-5 gap-2 py-1 px-2 text-xs font-medium text-muted-foreground bg-muted/50">
+                <div className="grid grid-cols-6 gap-2 py-1 px-2 text-xs font-medium text-muted-foreground bg-muted/50">
                   <div>Name</div>
                   <div>Drawing</div>
+                  <div>Revision No</div>
                   <div>Current Stage</div>
                   <div>QC Status</div>
                   <div>Update Status</div>
@@ -366,7 +374,7 @@ export default function PendingTask() {
                 {list.activities.map((activity) => (
                   <div
                     key={activity.id}
-                    className="grid grid-cols-5 py-1 px-2 border-t hover:bg-accent/50 transition-colors items-center">
+                    className="grid grid-cols-6 py-1 px-2 border-t hover:bg-accent/50 transition-colors items-center">
                     <div className="text-sm font-medium">
                       {activity.element_type_name} ({activity.element_id})
                     </div>
@@ -393,6 +401,7 @@ export default function PendingTask() {
                         </DialogContent>
                       </Dialog>
                     </div>
+                    <div className="text-sm">{activity.MeshRevisionID}</div>
                     <div className="text-sm">{activity.stage_name}</div>
                     <div className="text-sm">
                       {activity.qc ? (

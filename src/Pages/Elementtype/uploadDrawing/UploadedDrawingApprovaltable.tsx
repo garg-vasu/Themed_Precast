@@ -48,6 +48,17 @@ import { ProjectContext } from "@/Provider/ProjectProvider";
 import PageHeader from "@/components/ui/PageHeader";
 const baseUrl = import.meta.env.VITE_API_URL || "";
 
+const COLUMN_LABELS: Record<string, string> = {
+  path: "File Name",
+  drawing_type_name: "Drawing Type",
+  revision_id: "Revision Number",
+  element_type_name: "Element Type",
+};
+
+const getColumnDisplayName = (columnId: string): string =>
+  COLUMN_LABELS[columnId] ??
+  columnId.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+
 export type AlreadyErrectedElement = {
   id: number;
   unmapped_drawing_id: number;
@@ -409,7 +420,7 @@ export function UploadedDrawingApprovaltable() {
                       onCheckedChange={(value) =>
                         column.toggleVisibility(!!value)
                       }>
-                      {column.id}
+                      {getColumnDisplayName(column.id)}
                     </DropdownMenuCheckboxItem>
                   );
                 })}
