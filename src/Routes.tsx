@@ -69,6 +69,11 @@ const BomTable = lazy(() =>
 const MixPlanningApproval = lazy(
   () => import("./Pages/PlanningApproval/MixPlanningApproval"),
 );
+const UploadedDrawingApprovaltable = lazy(() =>
+  import("./Pages/Elementtype/uploadDrawing/UploadedDrawingApprovaltable").then((module) => ({
+    default: module.UploadedDrawingApprovaltable,
+  })),
+);
 const RetificationTable = lazy(() =>
   import("./Pages/Retification/RetificationTable").then((module) => ({
     default: module.RetificationTable,
@@ -567,6 +572,14 @@ const projectChildren: RouteObject[] = [
   {
     path: "plan",
     element: projectRoleGuard(["ViewPlan"], withSuspense(<MixPlan />), "/"),
+  },
+  {
+    path: "approve-uploaded-drawing",
+    element: projectRoleGuard(
+      ["ViewPlan"],
+      withSuspense(<UploadedDrawingApprovaltable />),
+      "/",
+    ),
   },
   {
     path: "bird-eye-view",

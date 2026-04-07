@@ -264,6 +264,12 @@ export default function ProjectSidebar({
       permissions: ["ViewPlan"],
     },
     {
+      name: "Approve Bulk Drawing",
+      href: `/project/${projectId}/approve-uploaded-drawing`,
+      icon: Calendar,
+      permissions: ["ViewPlan"],
+    },
+    {
       name: "Shop Floor Status",
       href: `/project/${projectId}/mix-stagewise`,
       icon: Clock,
