@@ -125,6 +125,11 @@ const menuItemsByRole: Record<string, NavigationItem[]> = {
       icon: Settings,
       children: [
         { name: "Roles", href: "/role", icon: Shield },
+        {
+          name: "Email Template",
+          href: "/email-templates",
+          icon: LayoutTemplate,
+        },
         { name: "Templates", href: "/templates", icon: LayoutTemplate },
         { name: "Logs", href: "/logs", icon: ScrollText },
         { name: "Privacy Policy", href: "/privacy-policy", icon: FileText },
