@@ -19,6 +19,17 @@ const Project = lazy(() => import("./Pages/Projects/Project"));
 const StoreWarehouse = lazy(
   () => import("./Pages/StoreWarehouse/StoreWarehouse"),
 );
+const EmailTemplateTable = lazy(() =>
+  import("./Pages/EmailTemplate/EmailTemplateTable").then((module) => ({
+    default: module.EmailTemplateTable,
+  })),
+);
+const AddEmailTemplate = lazy(
+  () => import("./Pages/EmailTemplate/EditEmailTemplate"),
+);
+const EditEmailTemplate = lazy(
+  () => import("./Pages/EmailTemplate/EditEmailTemplate"),
+);
 const Warehouse = lazy(() => import("./Pages/Warehouse/Warehouse"));
 const Tenants = lazy(() => import("./Pages/Tenants/Tenants"));
 const EndClient = lazy(() => import("./Pages/EndClient/EndClient"));
@@ -70,9 +81,11 @@ const MixPlanningApproval = lazy(
   () => import("./Pages/PlanningApproval/MixPlanningApproval"),
 );
 const UploadedDrawingApprovaltable = lazy(() =>
-  import("./Pages/Elementtype/uploadDrawing/UploadedDrawingApprovaltable").then((module) => ({
-    default: module.UploadedDrawingApprovaltable,
-  })),
+  import("./Pages/Elementtype/uploadDrawing/UploadedDrawingApprovaltable").then(
+    (module) => ({
+      default: module.UploadedDrawingApprovaltable,
+    }),
+  ),
 );
 const RetificationTable = lazy(() =>
   import("./Pages/Retification/RetificationTable").then((module) => ({
@@ -278,6 +291,30 @@ const mainChildren: RouteObject[] = [
         withSuspense(<MixInvoice />),
         "/login",
       ),
+    ),
+  },
+  {
+    path: "email-templates",
+    element: roleGuard(
+      ["superadmin", "admin"],
+      withSuspense(<EmailTemplateTable />),
+      "/login",
+    ),
+  },
+  {
+    path: "email-templates/create",
+    element: roleGuard(
+      ["superadmin", "admin"],
+      withSuspense(<AddEmailTemplate />),
+      "/login",
+    ),
+  },
+  {
+    path: "email-templates/edit/:id",
+    element: roleGuard(
+      ["superadmin", "admin"],
+      withSuspense(<EditEmailTemplate />),
+      "/login",
     ),
   },
   { path: "labour-summary", element: withSuspense(<LabourSummary />) },
