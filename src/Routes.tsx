@@ -13,6 +13,7 @@ import type { Capabilities } from "./Provider/UserProvider";
 import NotFound from "./Pages/NotFound/NotFound";
 
 const Login = lazy(() => import("./Pages/Login"));
+const Smtpformpage = lazy(() => import("./Pages/SMTP/Smtpformpage"));
 const Home = lazy(() => import("./Pages/Home"));
 const ProjectCardView = lazy(() => import("./Pages/Projects/ProjectCardView"));
 const Project = lazy(() => import("./Pages/Projects/Project"));
@@ -263,6 +264,10 @@ const mainChildren: RouteObject[] = [
   {
     path: "add-projects",
     element: roleGuard(["superadmin"], withSuspense(<AddProjects />), "/login"),
+  },
+  {
+    path: "smtp-settings",
+    element: roleGuard(["admin"], withSuspense(<Smtpformpage />), "/login"),
   },
   {
     path: "edit-projects/:project_id",

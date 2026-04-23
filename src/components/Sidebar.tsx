@@ -152,6 +152,7 @@ const menuItemsByRole: Record<string, NavigationItem[]> = {
     { name: "Calculator", href: "/calculator", icon: Calculator },
     { name: "Work Order", href: "/work-order", icon: ClipboardList },
     { name: "All Invoices", href: "/invoices", icon: Receipt },
+    { name: "SMTP Settings", href: "/smtp-settings", icon: Settings },
     {
       name: "Reports",
       icon: PieChart,
