@@ -78,6 +78,7 @@ const schema = z.object({
   profile_picture: z.string().optional(),
   emailsent: z.boolean().optional(),
   store_id: z.number().min(1, "Store ID is required"),
+  accent_color: z.string().optional(),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -100,7 +101,17 @@ export interface EditTenant {
   profile_picture?: string;
   store_id: number;
   emailsent?: boolean;
+  accent_color?: string;
 }
+
+const accentColors = [
+  { value: "red", label: "Red" },
+  { value: "green", label: "Green" },
+  { value: "blue", label: "Blue" },
+  { value: "purple", label: "Purple" },
+  { value: "orange", label: "Orange" },
+  { value: "all", label: "All" },
+];
 
 type TenantFormProps = {
   user?: EditTenant;
@@ -213,6 +224,7 @@ export default function AddTenants({ user }: TenantFormProps) {
         profile_picture: "",
         emailsent: false,
         store_id: 0,
+        accent_color: "",
       };
     }
 
@@ -227,12 +239,13 @@ export default function AddTenants({ user }: TenantFormProps) {
       state: user.state || "",
       country: user.country || "",
       zip_code: user.zip_code || "",
-     // employee_id: user.employee_id || "",
+      // employee_id: user.employee_id || "",
       phone_no: user.phone_no || "",
       phone_code: user.phone_code || 0,
       profile_picture: user.profile_picture || "",
       emailsent: user.emailsent ?? false,
       store_id: user.store_id || 0,
+      accent_color: user.accent_color || "",
     };
   };
 
@@ -332,6 +345,7 @@ export default function AddTenants({ user }: TenantFormProps) {
       const payload: any = {
         ...data,
         emailsent: data.emailsent ?? false,
+        accent_color: data.accent_color || "blue",
       };
 
       // Always set client_id in edit mode (before password check)
@@ -423,8 +437,7 @@ export default function AddTenants({ user }: TenantFormProps) {
                 size="icon"
                 className="absolute -top-2 -right-2 rounded-full w-8 h-8 shadow-lg"
                 onClick={handleRemoveImage}
-                disabled={isUploadingImage}
-              >
+                disabled={isUploadingImage}>
                 <X className="w-4 h-4" />
               </Button>
             )}
@@ -435,8 +448,7 @@ export default function AddTenants({ user }: TenantFormProps) {
               className={cn(
                 "flex items-center gap-2 px-4 py-2 rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground cursor-pointer transition-colors",
                 isUploadingImage && "opacity-50 cursor-not-allowed",
-              )}
-            >
+              )}>
               {isUploadingImage ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -591,8 +603,7 @@ export default function AddTenants({ user }: TenantFormProps) {
                     if (selectedPhoneCode) {
                       setValue("phone_code", selectedPhoneCode.id);
                     }
-                  }}
-                >
+                  }}>
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Select Phone Code" />
                   </SelectTrigger>
@@ -650,8 +661,7 @@ export default function AddTenants({ user }: TenantFormProps) {
                     if (selectedWarehouse) {
                       setValue("store_id", selectedWarehouse.id);
                     }
-                  }}
-                >
+                  }}>
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Select Store/Warehouse" />
                   </SelectTrigger>
@@ -661,8 +671,7 @@ export default function AddTenants({ user }: TenantFormProps) {
                       {warehouses.map((warehouse) => (
                         <SelectItem
                           key={warehouse.id}
-                          value={warehouse.id.toString()}
-                        >
+                          value={warehouse.id.toString()}>
                           {warehouse.name} - {warehouse.location}
                         </SelectItem>
                       ))}
@@ -755,6 +764,47 @@ export default function AddTenants({ user }: TenantFormProps) {
               {errors.zip_code?.message || "\u00A0"}
             </p>
           </div>
+
+          {/* accent color selection */}
+          <div className="grid w-full items-center gap-1.5">
+            <Label htmlFor="accent_color">
+              Accent Color <span className="text-red-500">*</span>
+            </Label>
+            <Controller
+              control={control}
+              name="accent_color"
+              render={({ field }) => (
+                <Select
+                  value={field.value}
+                  onValueChange={(val) => {
+                    field.onChange(val);
+                    const selectedStatus = accentColors.find(
+                      (status) => status.value === val,
+                    );
+                    if (selectedStatus) {
+                      setValue("accent_color", selectedStatus.value);
+                    }
+                  }}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select Accent Color" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectLabel>Accent Color</SelectLabel>
+                      {accentColors.map((color) => (
+                        <SelectItem key={color.value} value={color.value}>
+                          {color.label}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              )}
+            />
+            <p className="text-sm text-red-600 min-h-[20px]">
+              {errors.accent_color?.message || "\u00A0"}
+            </p>
+          </div>
         </div>
 
         {/* Form Actions */}
@@ -764,8 +814,7 @@ export default function AddTenants({ user }: TenantFormProps) {
             variant="outline"
             size="sm"
             onClick={() => navigate("/tenants")}
-            disabled={isSubmitting || isLoading}
-          >
+            disabled={isSubmitting || isLoading}>
             Cancel
           </Button>
           <Button type="submit" size="sm" disabled={isSubmitting || isLoading}>

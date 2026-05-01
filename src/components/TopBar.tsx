@@ -34,7 +34,8 @@
 import { Menu, LogOut } from "lucide-react";
 import { ModeToggle } from "@/components/mode-togglet";
 import { useNavigate } from "react-router-dom";
-import { useContext } from "react";
+import { useContext, useEffect } from "react";
+import { useTheme } from "@/components/theme-provider";
 import { UserContext } from "@/Provider/UserProvider";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -60,6 +61,18 @@ const buildAvatarSrc = (profilePicture?: string) => {
 export default function TopBar({ onToggleSidebar }: TopBarProps) {
   const navigate = useNavigate();
   const { user } = useContext(UserContext);
+  const { setAccentColor, accentColor } = useTheme();
+  const visible =
+    user?.role_name == "superadmin" ||
+    (user?.is_admin && user?.accent_color == "all");
+
+  useEffect(() => {
+    if (!visible && user?.accent_color && user.accent_color !== "all") {
+      if (user.accent_color !== accentColor) {
+        setAccentColor(user.accent_color as any);
+      }
+    }
+  }, [user?.accent_color, visible, accentColor, setAccentColor]);
 
   const handleLogout = () => {
     localStorage.removeItem("accessToken");
@@ -88,22 +101,20 @@ export default function TopBar({ onToggleSidebar }: TopBarProps) {
           <button
             onClick={onToggleSidebar}
             className="p-2 rounded-md hover:bg-accent transition-colors md:hidden"
-            aria-label="Toggle sidebar"
-          >
+            aria-label="Toggle sidebar">
             <Menu className="h-6 w-6" />
           </button>
         </div>
 
         {/* Right section - Theme toggle and User Profile */}
         <div className="flex items-center space-x-3 ml-auto">
-          <ModeToggle />
+          <ModeToggle visible={visible} />
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
                 className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-accent transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                aria-label="User menu"
-              >
+                aria-label="User menu">
                 <Avatar className="size-8">
                   <AvatarImage
                     src={buildAvatarSrc(user?.profile_picture)}
@@ -129,8 +140,7 @@ export default function TopBar({ onToggleSidebar }: TopBarProps) {
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={handleLogout}
-                className="text-destructive focus:text-destructive cursor-pointer"
-              >
+                className="text-destructive focus:text-destructive cursor-pointer">
                 <LogOut className="mr-2 h-4 w-4" />
                 Logout
               </DropdownMenuItem>

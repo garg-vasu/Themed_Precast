@@ -26,6 +26,8 @@ export interface User {
   phone_no: string;
   role: string;
   role_name: string;
+  role_id: string;
+  accent_color: string;
 }
 
 export type Capabilities = {
@@ -33,7 +35,7 @@ export type Capabilities = {
   work_order: boolean;
   invoice: boolean;
   calculator: boolean;
-}
+};
 
 interface UserContextType {
   user: User | null;

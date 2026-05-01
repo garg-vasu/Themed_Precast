@@ -9,11 +9,16 @@ import {
 import { Button } from "@/components/ui/button";
 import { Sun, Moon } from "lucide-react";
 
-export function ModeToggle() {
+type ModalProps = {
+  // if user is_admin = true then visible
+  visible?: boolean;
+};
+
+export function ModeToggle({ visible = false }: ModalProps) {
   const { setTheme } = useTheme();
   return (
     <div className="flex items-center gap-2">
-      <AccentSelector />
+      {visible ? <AccentSelector /> : null}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="outline" size="icon">
